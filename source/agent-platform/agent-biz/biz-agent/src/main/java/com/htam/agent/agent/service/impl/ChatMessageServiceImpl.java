@@ -1,0 +1,30 @@
+package com.htam.agent.agent.service.impl;
+
+import com.htam.agent.agent.mapper.ChatMessageMapper;
+import com.htam.agent.agent.service.ChatMessageService;
+import com.htam.agent.common.entity.ChatMessage;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.springframework.stereotype.Service;
+
+import java.util.Collections;
+import java.util.List;
+
+/**
+ * 聊天消息 Service 实现
+ *
+ * @author huxuehao
+ */
+@Service
+public class ChatMessageServiceImpl extends ServiceImpl<ChatMessageMapper, ChatMessage> implements ChatMessageService {
+
+    @Override
+    public List<ChatMessage> listByIdsOrderByDepth(List<Integer> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery()
+                .in(ChatMessage::getId, ids)
+                .orderByAsc(ChatMessage::getDepth)
+                .list();
+    }
+}
