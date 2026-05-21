@@ -3,7 +3,6 @@ package com.htam.agent.account.service;
 import com.htam.agent.common.dto.*;
 import com.htam.agent.common.entity.Account;
 import com.htam.agent.common.enums.Role;
-import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.List;
 
@@ -12,7 +11,14 @@ import java.util.List;
  *
  * @author huxuehao
  */
-public interface AccountService extends IService<Account> {
+public interface AccountService {
+    List<Account> list(AccountDTO query);
+
+    Account getById(Long id);
+
+    List<Account> listByIds(List<Long> ids);
+
+    boolean deleteByIds(List<Long> ids);
 
     /**
      * 用户登录

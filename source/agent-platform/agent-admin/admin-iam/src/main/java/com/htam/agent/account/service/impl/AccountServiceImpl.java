@@ -1,7 +1,6 @@
 package com.htam.agent.account.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-import com.htam.agent.account.mapper.AccountMapper;
 import com.htam.agent.account.service.AccountRoleService;
 import com.htam.agent.account.service.AccountService;
 import com.htam.agent.agent.service.AgentChatKeyService;
@@ -14,12 +13,11 @@ import com.htam.agent.common.entity.Account;
 import com.htam.agent.common.entity.AccountRole;
 import com.htam.agent.common.entity.AgentDefinition;
 import com.htam.agent.common.enums.Role;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.htam.agent.common.enums.WsMessageType;
 import com.htam.agent.common.exception.NotAuthException;
 import com.htam.agent.common.message.AccountRoleChangeMessage;
 import com.htam.agent.common.util.*;
+import com.htam.agent.repo.iam.AccountRepository;
 import com.htam.agent.websocket.model.WsServerMessage;
 import com.htam.agent.websocket.service.WebSocketPushService;
 import com.htam.agent.params.core.ParamsAdapter;
@@ -39,8 +37,9 @@ import java.util.concurrent.TimeUnit;
  */
 @Service
 @RequiredArgsConstructor
-public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> implements AccountService {
+public class AccountServiceImpl implements AccountService {
 
+    private final AccountRepository accountRepository;
     private final RedisUtils redisUtils;
     private final ParamsAdapter paramsAdapter;
     private final AccountRoleService accountRoleService;
@@ -49,19 +48,45 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     private final AgentDefinitionService agentDefinitionService;
 
     @Override
+    public List<Account> list(AccountDTO query) {
+        AccountDTO accountQuery = query == null ? new AccountDTO() : query;
+        return accountRepository.list(
+                accountQuery.getNickname(),
+                accountQuery.getEmail(),
+                accountQuery.getUsername(),
+                accountQuery.getEnabled());
+    }
+
+    @Override
+    public Account getById(Long id) {
+        return accountRepository.getById(id);
+    }
+
+    @Override
+    public List<Account> listByIds(List<Long> ids) {
+        return accountRepository.listByIds(ids);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean deleteByIds(List<Long> ids) {
+        for (Account account : listByIds(ids)) {
+            if (Objects.equals(account.getId(), SysConst.ADMIN_ACCOUNT_ID)) {
+                throw new RuntimeException("管理员账号不可删除");
+            }
+        }
+        accountRoleService.deleteByAccountIds(ids);
+        return accountRepository.deleteByIds(ids);
+    }
+
+    @Override
     public LoginResponse login(LoginRequest request) {
         if (FuncUtils.isEmpty(request.getUsername()) || FuncUtils.isEmpty(request.getPassword())) {
             throw new RuntimeException("用户名和密码不能为空");
         }
 
         // 查询用户（支持用户名或邮箱登录）
-        Account account = this.lambdaQuery()
-                .and(wrapper -> wrapper
-                        .eq(Account::getUsername, request.getUsername())
-                        .or()
-                        .eq(Account::getEmail, request.getUsername())
-                )
-                .one();
+        Account account = accountRepository.getByUsernameOrEmail(request.getUsername());
 
         if (account == null) {
             throw new RuntimeException("用户名或密码错误");
@@ -89,12 +114,12 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         validateRegisterRequest(request);
 
         // 检查用户名是否已存在
-        if (this.lambdaQuery().eq(Account::getUsername, request.getUsername()).exists()) {
+        if (accountRepository.existsByUsername(request.getUsername())) {
             throw new RuntimeException("用户名已存在");
         }
 
         // 检查邮箱是否已存在
-        if (this.lambdaQuery().eq(Account::getEmail, request.getEmail()).exists()) {
+        if (accountRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("邮箱已被注册");
         }
 
@@ -106,7 +131,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         account.setEnabled(true);
 
         // 保存以获取ID
-        this.save(account);
+        accountRepository.save(account);
 
         // 加密密码（使用用户ID作为盐值）
         String salt = account.getId().toString();
@@ -114,7 +139,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         account.setPassword(encryptedPassword);
 
         // 更新密码
-        this.updateById(account);
+        accountRepository.updateById(account);
 
         AuthInterceptor.setUserRole(account.getId(), Role.READ_ONLY);
 
@@ -134,7 +159,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
             String userId = claims.getId();
 
             // 查询用户
-            Account account = this.getById(userId);
+            Account account = accountRepository.getById(userId);
             if (account == null) {
                 throw new RuntimeException("用户不存在");
             }
@@ -168,7 +193,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
 
         // 获取当前用户ID
         Long userId = UserUtils.getId();
-        Account account = this.getById(userId);
+        Account account = getById(userId);
         if (account == null) {
             throw new RuntimeException("用户不存在");
         }
@@ -184,14 +209,14 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         String encryptedNewPassword = CryptoUtils.md5(request.getNewPassword(), salt);
         account.setPassword(encryptedNewPassword);
 
-        return this.updateById(account);
+        return accountRepository.updateById(account);
     }
 
     @Override
     public boolean updateProfile(UpdateProfileRequest request) {
         // 获取当前用户ID
         Long userId = UserUtils.getId();
-        Account account = this.getById(userId);
+        Account account = getById(userId);
         if (account == null) {
             throw new RuntimeException("用户不存在");
         }
@@ -204,21 +229,18 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         // 更新邮箱
         if (!FuncUtils.isEmpty(request.getEmail())) {
             // 检查邮箱是否已被其他用户使用
-            if (this.lambdaQuery()
-                    .eq(Account::getEmail, request.getEmail())
-                    .ne(Account::getId, userId)
-                    .exists()) {
+            if (accountRepository.existsByEmailExcludeId(request.getEmail(), userId)) {
                 throw new RuntimeException("邮箱已被其他用户使用");
             }
             account.setEmail(request.getEmail());
         }
 
-        return this.updateById(account);
+        return accountRepository.updateById(account);
     }
 
     @Override
     public boolean toggleEnabled(Long id, Boolean enabled) {
-        Account account = this.getById(id);
+        Account account = getById(id);
 
         if (account == null) {
             throw new RuntimeException("用户不存在");
@@ -229,7 +251,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         }
 
         account.setEnabled(enabled);
-        return this.updateById(account);
+        return accountRepository.updateById(account);
     }
 
     @Override
@@ -238,7 +260,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
             throw new RuntimeException("新密码不能为空");
         }
 
-        Account account = this.getById(id);
+        Account account = getById(id);
         if (account == null) {
             throw new RuntimeException("用户不存在");
         }
@@ -248,13 +270,13 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         String encryptedPassword = CryptoUtils.md5(newPassword, salt);
         account.setPassword(encryptedPassword);
 
-        return this.updateById(account);
+        return accountRepository.updateById(account);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean changeRole(Long id, List<Role> roles) {
-        Account account = this.getById(id);
+        Account account = getById(id);
         if (account == null) {
             throw new RuntimeException("账号不存在");
         }
@@ -267,7 +289,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
             throw new RuntimeException("管理员账号不可操作");
         }
 
-        accountRoleService.remove(Wrappers.<AccountRole>lambdaQuery().eq(AccountRole::getAccountId, id));
+        accountRoleService.deleteByAccountId(id);
         List<AccountRole> accountRoles = roles.stream()
                 .map((role) -> AccountRole.builder().accountId(id).role(role).build())
                 .toList();
@@ -291,9 +313,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
             return null;
         }
 
-        AgentDefinition agent = agentDefinitionService.lambdaQuery()
-                .eq(AgentDefinition::getAgentCode, agentCode)
-                .one();
+        AgentDefinition agent = agentDefinitionService.getByAgentCode(agentCode);
         if (agent == null || !Boolean.TRUE.equals(agent.getEnabled())) {
             return null;
         }

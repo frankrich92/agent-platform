@@ -1,7 +1,5 @@
 package com.htam.agent.agent.service.impl;
 
-import com.htam.agent.agent.mapper.AgentScopeSessionMapper;
-import com.htam.agent.agent.mapper.ChatSessionMapper;
 import com.htam.agent.agent.service.AgentDefinitionService;
 import com.htam.agent.agent.service.ChatMessageService;
 import com.htam.agent.agent.service.ChatSessionService;
@@ -19,10 +17,11 @@ import com.htam.agent.common.util.UserUtils;
 import com.htam.agent.common.vo.ChatMessageVO;
 import com.htam.agent.common.vo.ChatMessagePageVO;
 import com.htam.agent.common.vo.ChatSessionVO;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.htam.agent.common.mp.support.MP;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.htam.agent.repo.agent.AgentScopeSessionRepository;
+import com.htam.agent.repo.agent.ChatSessionRepository;
+import com.htam.agent.repo.support.RepoPage;
 import io.agentscope.spring.boot.agui.common.ThreadSessionManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -40,11 +39,12 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
-public class ChatSessionServiceImpl extends ServiceImpl<ChatSessionMapper, ChatSession> implements ChatSessionService {
+public class ChatSessionServiceImpl implements ChatSessionService {
 
+    private final ChatSessionRepository chatSessionRepository;
     private final ChatMessageService chatMessageService;
     private final ThreadSessionManager sessionManager;
-    private final AgentScopeSessionMapper agentScopeSessionMapper;
+    private final AgentScopeSessionRepository agentScopeSessionRepository;
     private final AgentDefinitionService agentDefinitionService;
 
     @Override
@@ -59,13 +59,9 @@ public class ChatSessionServiceImpl extends ServiceImpl<ChatSessionMapper, ChatS
         }
 
         // 校验智能体的合法性
-        AgentDefinition agentDefinition = agentDefinitionService.getOne(
-                new LambdaQueryWrapper<AgentDefinition>()
-                        .eq(AgentDefinition::getId, dto.getAgentId())
-                        .eq(AgentDefinition::getEnabled, true),
-                false);
+        AgentDefinition agentDefinition = agentDefinitionService.getById(dto.getAgentId());
 
-        if (agentDefinition == null) {
+        if (agentDefinition == null || !Boolean.TRUE.equals(agentDefinition.getEnabled())) {
             throw new RuntimeException("智能体不存在或已禁用");
         }
 
@@ -74,7 +70,7 @@ public class ChatSessionServiceImpl extends ServiceImpl<ChatSessionMapper, ChatS
         session.setAgentId(dto.getAgentId());
         session.setTitle(dto.getTitle() != null ? dto.getTitle() : "新对话");
 
-        save(session);
+        chatSessionRepository.save(session);
 
         ChatMessage root = new ChatMessage();
         root.setSessionId(session.getId());
@@ -87,7 +83,7 @@ public class ChatSessionServiceImpl extends ServiceImpl<ChatSessionMapper, ChatS
         chatMessageService.updateById(root);
 
         session.setCurrentMessageId(root.getId());
-        updateById(session);
+        chatSessionRepository.updateById(session);
 
         if (dto.getInitWorkspace() != null && dto.getInitWorkspace()) {
             FolderUtils.mkdirsByRelativePath(SysConst.WORKSPACE_PATH + "/" + session.getId());
@@ -121,12 +117,12 @@ public class ChatSessionServiceImpl extends ServiceImpl<ChatSessionMapper, ChatS
             throw new RuntimeException("消息不存在或不属于该会话");
         }
         session.setCurrentMessageId(messageId);
-        updateById(session);
+        chatSessionRepository.updateById(session);
     }
 
     @Override
     public List<ChatMessageVO> getCurrentMessages(Long sessionId) {
-        ChatSession session = getById(sessionId);
+        ChatSession session = chatSessionRepository.getById(sessionId);
         if (session == null) {
             return new ArrayList<>();
         }
@@ -155,7 +151,7 @@ public class ChatSessionServiceImpl extends ServiceImpl<ChatSessionMapper, ChatS
     @Override
     public ChatMessagePageVO getCurrentMessagesPaged(Long sessionId, Integer beforeDepth, int size) {
         // 1. 解析当前路径上的所有消息 ID
-        ChatSession session = getById(sessionId);
+        ChatSession session = chatSessionRepository.getById(sessionId);
         ChatMessagePageVO result = new ChatMessagePageVO();
         if (session == null || session.getCurrentMessageId() == null) {
             result.setMessages(new ArrayList<>());
@@ -214,12 +210,7 @@ public class ChatSessionServiceImpl extends ServiceImpl<ChatSessionMapper, ChatS
     @Override
     public List<ChatSessionVO> listSessions(ChatSessionQueryDTO query) {
         Long userId = query.getUserId() != null ? query.getUserId() : UserUtils.getId();
-        return lambdaQuery()
-                .eq(userId != null, ChatSession::getUserId, userId)
-                .eq(query.getAgentId() != null, ChatSession::getAgentId, query.getAgentId())
-                .orderByDesc(ChatSession::getIsPinned)
-                .orderByDesc(ChatSession::getUpdatedAt)
-                .list()
+        return chatSessionRepository.listSessions(userId, query.getAgentId())
                 .stream()
                 .map(this::toSessionVO)
                 .collect(Collectors.toList());
@@ -228,18 +219,19 @@ public class ChatSessionServiceImpl extends ServiceImpl<ChatSessionMapper, ChatS
     @Override
     public IPage<ChatSessionVO> pageSessions(PageParams pageParams, ChatSessionQueryDTO query) {
         Long userId = query.getUserId() != null ? query.getUserId() : UserUtils.getId();
-        LambdaQueryWrapper<ChatSession> wrapper = new LambdaQueryWrapper<ChatSession>()
-                .eq(userId != null, ChatSession::getUserId, userId)
-                .eq(query.getAgentId() != null, ChatSession::getAgentId, query.getAgentId())
-                .eq(query.getIsPinned() != null, ChatSession::getIsPinned, query.getIsPinned())
-                .orderByDesc(ChatSession::getUpdatedAt);
-        IPage<ChatSession> page = page(MP.getPage(pageParams), wrapper);
+        RepoPage<ChatSession> repoPage = chatSessionRepository.pageSessions(
+                pageParams,
+                userId,
+                query.getAgentId(),
+                query.getIsPinned());
+        IPage<ChatSession> page = new Page<>(repoPage.current(), repoPage.size(), repoPage.total());
+        page.setRecords(repoPage.records());
         return BeanUtils.copyPage(page, ChatSessionVO.class);
     }
 
     @Override
     public ChatSessionVO getSessionDetail(Long id) {
-        ChatSession session = getById(id);
+        ChatSession session = chatSessionRepository.getById(id);
         if (session == null) {
             return null;
         }
@@ -247,7 +239,7 @@ public class ChatSessionServiceImpl extends ServiceImpl<ChatSessionMapper, ChatS
     }
 
     private ChatSession getAndCheckSession(Long sessionId) {
-        ChatSession session = getById(sessionId);
+        ChatSession session = chatSessionRepository.getById(sessionId);
         if (session == null) {
             throw new RuntimeException("会话不存在或已删除");
         }
@@ -289,7 +281,7 @@ public class ChatSessionServiceImpl extends ServiceImpl<ChatSessionMapper, ChatS
         chatMessageService.updateById(msg);
 
         session.setCurrentMessageId(msg.getId());
-        updateById(session);
+        chatSessionRepository.updateById(session);
 
         return BeanUtils.copy(msg, ChatMessageVO.class);
     }
@@ -300,7 +292,7 @@ public class ChatSessionServiceImpl extends ServiceImpl<ChatSessionMapper, ChatS
         ChatSession session = getAndCheckSession(id);
         session.setIsPinned(true);
         session.setPinTime(java.time.LocalDateTime.now());
-        updateById(session);
+        chatSessionRepository.updateById(session);
     }
 
     @Override
@@ -309,7 +301,7 @@ public class ChatSessionServiceImpl extends ServiceImpl<ChatSessionMapper, ChatS
         ChatSession session = getAndCheckSession(id);
         session.setIsPinned(false);
         session.setPinTime(null);
-        updateById(session);
+        chatSessionRepository.updateById(session);
     }
 
     @Override
@@ -317,17 +309,17 @@ public class ChatSessionServiceImpl extends ServiceImpl<ChatSessionMapper, ChatS
     public void updateTitle(Long id, String title) {
         ChatSession session = getAndCheckSession(id);
         session.setTitle(title != null ? title : "新对话");
-        updateById(session);
+        chatSessionRepository.updateById(session);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteSession(Long id) {
         ChatSession session = getAndCheckSession(id);
-        chatMessageService.lambdaUpdate().eq(ChatMessage::getSessionId, session.getId()).remove();
-        removeById(id);
+        chatMessageService.deleteBySessionId(session.getId());
+        chatSessionRepository.deleteById(id);
 
-        agentScopeSessionMapper.deleteById(String.valueOf(session.getId()));
+        agentScopeSessionRepository.deleteById(String.valueOf(session.getId()));
 
         // 删除 agentscope session
         if (sessionManager != null) {

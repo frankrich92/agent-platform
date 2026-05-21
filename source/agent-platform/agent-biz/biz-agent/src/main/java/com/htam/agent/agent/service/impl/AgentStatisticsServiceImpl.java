@@ -1,9 +1,9 @@
 package com.htam.agent.agent.service.impl;
 
-import com.htam.agent.agent.mapper.ChatMessageMapper;
-import com.htam.agent.agent.mapper.ChatSessionMapper;
 import com.htam.agent.agent.service.AgentStatisticsService;
 import com.htam.agent.common.vo.AgentStatisticsVO;
+import com.htam.agent.repo.agent.ChatMessageRepository;
+import com.htam.agent.repo.agent.ChatSessionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -23,8 +23,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AgentStatisticsServiceImpl implements AgentStatisticsService {
 
-    private final ChatSessionMapper chatSessionMapper;
-    private final ChatMessageMapper chatMessageMapper;
+    private final ChatSessionRepository chatSessionRepository;
+    private final ChatMessageRepository chatMessageRepository;
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
@@ -42,10 +42,10 @@ public class AgentStatisticsServiceImpl implements AgentStatisticsService {
         List<String> dateRange = buildDateRange(startDate, endDate);
 
         // 查询各维度数据
-        List<Map<String, Object>> sessionData = chatSessionMapper.countSessionsByDay(agentId, startDateStr);
-        List<Map<String, Object>> activeUserData = chatSessionMapper.countActiveUsersByDay(agentId, startDateStr);
-        List<Map<String, Object>> messageData = chatMessageMapper.countMessagesByDay(agentId, startDateStr);
-        List<Map<String, Object>> avgRoundsData = chatMessageMapper.avgRoundsByDay(agentId, startDateStr);
+        List<Map<String, Object>> sessionData = chatSessionRepository.countSessionsByDay(agentId, startDateStr);
+        List<Map<String, Object>> activeUserData = chatSessionRepository.countActiveUsersByDay(agentId, startDateStr);
+        List<Map<String, Object>> messageData = chatMessageRepository.countMessagesByDay(agentId, startDateStr);
+        List<Map<String, Object>> avgRoundsData = chatMessageRepository.avgRoundsByDay(agentId, startDateStr);
 
         return AgentStatisticsVO.builder()
                 .sessionTrend(fillTrend(dateRange, sessionData))

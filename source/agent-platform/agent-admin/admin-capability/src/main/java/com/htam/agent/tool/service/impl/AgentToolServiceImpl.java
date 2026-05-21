@@ -1,13 +1,12 @@
 package com.htam.agent.tool.service.impl;
 
 import com.htam.agent.common.entity.AgentTool;
-import com.htam.agent.tool.mapper.AgentToolMapper;
+import com.htam.agent.repo.capability.AgentToolRepository;
 import com.htam.agent.tool.service.AgentToolService;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 智能体工具关联Service实现
@@ -15,33 +14,37 @@ import java.util.stream.Collectors;
  * @author huxuehao
  */
 @Service
-public class AgentToolServiceImpl extends ServiceImpl<AgentToolMapper, AgentTool> implements AgentToolService {
+@RequiredArgsConstructor
+public class AgentToolServiceImpl implements AgentToolService {
+    private final AgentToolRepository agentToolRepository;
 
     @Override
     public List<Long> getAgentIds(List<Long> tools) {
-        return lambdaQuery()
-                .in(AgentTool::getToolId, tools)
-                .list()
+        if (tools == null || tools.isEmpty()) {
+            return List.of();
+        }
+        return agentToolRepository.listByToolIds(tools)
                 .stream()
                 .map(AgentTool::getAgentDefinitionId)
                 .distinct()
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
     public List<Long> getToolIds(Long agentDefinitionId) {
-        return lambdaQuery()
-                .eq(AgentTool::getAgentDefinitionId, agentDefinitionId)
-                .list()
+        return agentToolRepository.listByAgentDefinitionId(agentDefinitionId)
                 .stream()
                 .map(AgentTool::getToolId)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
     public Boolean insertAgentTool(Long agentDefinitionId, List<Long> toolIds) {
+        if (toolIds == null || toolIds.isEmpty()) {
+            return true;
+        }
         toolIds.forEach(toolId -> {
-            save(new AgentTool(null, agentDefinitionId, toolId));
+            agentToolRepository.save(new AgentTool(null, agentDefinitionId, toolId));
         });
         return true;
     }
@@ -51,7 +54,15 @@ public class AgentToolServiceImpl extends ServiceImpl<AgentToolMapper, AgentTool
         if (agentIds == null || agentIds.isEmpty()) {
             return true;
         }
-        return lambdaUpdate().in(AgentTool::getAgentDefinitionId, agentIds).remove();
+        return agentToolRepository.deleteByAgentDefinitionIds(agentIds);
+    }
+
+    @Override
+    public Boolean deleteByToolIds(List<Long> toolIds) {
+        if (toolIds == null || toolIds.isEmpty()) {
+            return true;
+        }
+        return agentToolRepository.deleteByToolIds(toolIds);
     }
 
     @Override

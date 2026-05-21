@@ -1,8 +1,10 @@
 package com.htam.agent.hook.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.htam.agent.common.dto.HookConfigDTO;
 import com.htam.agent.common.entity.HookConfig;
+import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.common.wrapper.HookConfigWrapper;
-import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.List;
 
@@ -11,9 +13,19 @@ import java.util.List;
  *
  * @author huxuehao
  */
-public interface HookConfigService extends IService<HookConfig> {
+public interface HookConfigService {
+    IPage<HookConfig> page(PageParams pageParams, HookConfigDTO query);
+
+    HookConfig getById(Long id);
+
+    List<HookConfig> listByIds(List<Long> ids);
+
+    boolean save(HookConfig entity);
+
     void SyncConfigToDatabase(List<HookConfigWrapper> configWrappers);
+
     List<Object> usedWithAgent(List<Long> ids);
+
     boolean deleteByIds(List<Long> ids);
 
     /**

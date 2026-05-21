@@ -1,6 +1,5 @@
 package com.htam.agent.agent.service;
 
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.htam.agent.common.entity.AgentCodeExecution;
 
 import java.util.List;
@@ -10,7 +9,7 @@ import java.util.List;
  *
  * @author huxuehao
  **/
-public interface AgentCodeExecutionService extends IService<AgentCodeExecution> {
+public interface AgentCodeExecutionService {
     /**
      * 根据代码执行配置ID获取Agent ID列表
      *

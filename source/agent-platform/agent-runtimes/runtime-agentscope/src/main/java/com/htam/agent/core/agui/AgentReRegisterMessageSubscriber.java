@@ -33,7 +33,7 @@ public class AgentReRegisterMessageSubscriber implements ChannelSubscriber {
             return;
         }
 
-        AgentDefinition agentDefinition = agentDefinitionService.getById(message);
+        AgentDefinition agentDefinition = agentDefinitionService.getById(Long.valueOf(message));
         if (agentDefinition != null) {
             aguiAgentConfiguration.reRegisterAgent(agentDefinition);
         }

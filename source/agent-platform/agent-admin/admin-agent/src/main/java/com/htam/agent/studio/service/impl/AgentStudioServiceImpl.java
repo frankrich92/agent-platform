@@ -1,12 +1,14 @@
 package com.htam.agent.studio.service.impl;
 
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.htam.agent.common.entity.AgentStudio;
-import com.htam.agent.studio.mapper.AgentStudioMapper;
+import com.htam.agent.repo.agent.AgentStudioRepository;
 import com.htam.agent.studio.service.AgentStudioService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 描述：AgentStudioServiceImpl
@@ -14,12 +16,16 @@ import java.util.List;
  * @author huxuehao
  **/
 @Service
-public class AgentStudioServiceImpl extends ServiceImpl<AgentStudioMapper, AgentStudio> implements AgentStudioService {
+@RequiredArgsConstructor
+public class AgentStudioServiceImpl implements AgentStudioService {
+    private final AgentStudioRepository agentStudioRepository;
+
     @Override
     public List<Long> getAgentIds(List<Long> studioId) {
-        return lambdaQuery()
-                .in(AgentStudio::getStudioId, studioId)
-                .list()
+        if (studioId == null || studioId.isEmpty()) {
+            return List.of();
+        }
+        return agentStudioRepository.listByStudioIds(studioId)
                 .stream()
                 .map(AgentStudio::getAgentDefinitionId)
                 .distinct()
@@ -28,10 +34,21 @@ public class AgentStudioServiceImpl extends ServiceImpl<AgentStudioMapper, Agent
 
     @Override
     public Long getStudioIdByAgentId(Long agentId) {
-        return lambdaQuery()
-                .in(AgentStudio::getAgentDefinitionId, agentId)
-                .oneOpt()
-                .map(AgentStudio::getStudioId).orElse(null);
+        AgentStudio agentStudio = agentStudioRepository.getFirstByAgentId(agentId);
+        return agentStudio == null ? null : agentStudio.getStudioId();
+    }
+
+    @Override
+    public Map<Long, Long> getStudioIdsByAgentIds(List<Long> agentIds) {
+        if (agentIds == null || agentIds.isEmpty()) {
+            return Map.of();
+        }
+        return agentStudioRepository.listByAgentIds(agentIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        AgentStudio::getAgentDefinitionId,
+                        AgentStudio::getStudioId,
+                        (existing, replacement) -> existing));
     }
 
     @Override
@@ -40,7 +57,7 @@ public class AgentStudioServiceImpl extends ServiceImpl<AgentStudioMapper, Agent
             return false;
         }
         studioIds.forEach(studioId -> {
-            save(new AgentStudio(null, agentDefinitionId, studioId));
+            agentStudioRepository.save(new AgentStudio(null, agentDefinitionId, studioId));
         });
 
         return true;
@@ -51,7 +68,7 @@ public class AgentStudioServiceImpl extends ServiceImpl<AgentStudioMapper, Agent
         if (agentIds == null || agentIds.isEmpty()) {
             return true;
         }
-        return lambdaUpdate().in(AgentStudio::getAgentDefinitionId, agentIds).remove();
+        return agentStudioRepository.deleteByAgentIds(agentIds);
     }
 
     @Override

@@ -5,24 +5,19 @@ import com.htam.agent.account.service.AccountService;
 import com.htam.agent.common.config.auth.ChatKeyAccess;
 import com.htam.agent.common.config.auth.RoleNeed;
 import com.htam.agent.common.config.auth.SkAccess;
-import com.htam.agent.common.consts.SysConst;
 import com.htam.agent.common.dto.AccountDTO;
 import com.htam.agent.common.dto.RegisterRequest;
 import com.htam.agent.common.entity.Account;
 import com.htam.agent.common.entity.AccountRole;
 import com.htam.agent.common.enums.Role;
 import com.htam.agent.common.exception.BusinessException;
-import com.htam.agent.common.mp.support.MP;
 import com.htam.agent.common.r.R;
 import com.htam.agent.common.util.BeanUtils;
 import com.htam.agent.common.vo.AccountVO;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import lombok.RequiredArgsConstructor;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Objects;
 
 /**
  * 账号Controller
@@ -42,11 +37,11 @@ public class AccountController {
      */
     @GetMapping("/list")
     public R<List<AccountVO>> list(AccountDTO query) {
-        List<Account> list = accountService.list(MP.getQueryWrapper(query));
+        List<Account> list = accountService.list(query);
 
         List<AccountVO> accounts = BeanUtils.copyList(list, AccountVO.class);
         for (AccountVO account : accounts) {
-            List<AccountRole> accountRoles = accountRoleService.list(Wrappers.<AccountRole>lambdaQuery().eq(AccountRole::getAccountId, account.getId()));
+            List<AccountRole> accountRoles = accountRoleService.listByAccountId(account.getId());
             account.setRoles(accountRoles.stream().map(AccountRole::getRole).toList());
         }
 
@@ -66,7 +61,7 @@ public class AccountController {
         }
         AccountVO account = BeanUtils.copy(entity, AccountVO.class);
 
-        List<AccountRole> accountRoles = accountRoleService.list(Wrappers.<AccountRole>lambdaQuery().eq(AccountRole::getAccountId, account.getId()));
+        List<AccountRole> accountRoles = accountRoleService.listByAccountId(account.getId());
         account.setRoles(accountRoles.stream().map(AccountRole::getRole).toList());
 
         return R.data(account);
@@ -86,15 +81,8 @@ public class AccountController {
      */
     @DeleteMapping
     @RoleNeed({Role.ADMIN})
-    @Transactional(rollbackFor = Exception.class)
     public R<Boolean> delete(@RequestBody List<Long> ids) {
-        for (Account account : accountService.listByIds(ids)) {
-            if (Objects.equals(account.getId(), SysConst.ADMIN_ACCOUNT_ID)) {
-                throw new BusinessException("管理员账号不可删除");
-            }
-        }
-        accountRoleService.remove(Wrappers.<AccountRole>lambdaQuery().in(AccountRole::getAccountId, ids));
-        return R.data(accountService.removeByIds(ids));
+        return R.data(accountService.deleteByIds(ids));
     }
 
     /**

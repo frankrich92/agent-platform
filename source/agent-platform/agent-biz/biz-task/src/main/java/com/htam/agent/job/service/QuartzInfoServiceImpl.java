@@ -1,15 +1,16 @@
 package com.htam.agent.job.service;
 
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.htam.agent.agent.service.AgentDefinitionService;
 import com.htam.agent.common.entity.AgentDefinition;
 import com.htam.agent.common.entity.JobInfo;
 import com.htam.agent.common.util.CryptoUtils;
 import com.htam.agent.job.core.client.QuartzClient;
 import com.htam.agent.job.init.JobInit;
-import com.htam.agent.job.mapper.JobInfoMapper;
+import com.htam.agent.repo.agent.JobInfoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * 描述：定时任务管理服务实现
@@ -18,17 +19,35 @@ import org.springframework.stereotype.Service;
  **/
 @Service
 @RequiredArgsConstructor
-public class QuartzInfoServiceImpl extends ServiceImpl<JobInfoMapper, JobInfo> implements QuartzInfoService {
+public class QuartzInfoServiceImpl implements QuartzInfoService {
 
     private final QuartzClient quartzClient;
     private final AgentDefinitionService agentDefinitionService;
+    private final JobInfoRepository jobInfoRepository;
+
+    @Override
+    public List<JobInfo> list() {
+        return jobInfoRepository.list();
+    }
+
+    @Override
+    public List<JobInfo> listEnabled() {
+        return jobInfoRepository.listEnabled();
+    }
+
+    @Override
+    public JobInfo getById(String id) {
+        return jobInfoRepository.getById(id);
+    }
+
+    @Override
+    public JobInfo getAgentJobByBizId(String bizId) {
+        return jobInfoRepository.getAgentJobByBizId(bizId);
+    }
 
     @Override
     public void updateStatus(JobInfo jobStatus) {
-        lambdaUpdate()
-                .eq(JobInfo::getId, jobStatus.getId())
-                .set(JobInfo::isEnabled, jobStatus.isEnabled())
-                .update();
+        jobInfoRepository.updateStatus(jobStatus.getId(), jobStatus.isEnabled());
     }
 
     @Override
@@ -36,12 +55,12 @@ public class QuartzInfoServiceImpl extends ServiceImpl<JobInfoMapper, JobInfo> i
         checkAgent(jobInfo.getBizId());
         jobInfo.setId(CryptoUtils.uuid());
         try {
-            save(jobInfo);
+            jobInfoRepository.save(jobInfo);
             if (jobInfo.isEnabled()) {
                 quartzClient.create(JobInit.buildConfig(jobInfo));
             }
         } catch (Exception e) {
-            removeById(jobInfo.getId());
+            jobInfoRepository.deleteById(jobInfo.getId());
             throw new RuntimeException(e);
         }
     }
@@ -59,7 +78,7 @@ public class QuartzInfoServiceImpl extends ServiceImpl<JobInfoMapper, JobInfo> i
         } else {
             quartzClient.remove(JobInit.buildConfig(jobInfo));
         }
-        updateById(jobInfo);
+        jobInfoRepository.updateById(jobInfo);
     }
 
     @Override
@@ -77,7 +96,7 @@ public class QuartzInfoServiceImpl extends ServiceImpl<JobInfoMapper, JobInfo> i
             quartzClient.remove(JobInit.buildConfig(job));
             quartzClient.create(JobInit.buildConfig(job));
         }
-        updateById(job);
+        jobInfoRepository.updateById(job);
     }
 
     @Override
@@ -89,7 +108,7 @@ public class QuartzInfoServiceImpl extends ServiceImpl<JobInfoMapper, JobInfo> i
         if (jobInfo.isEnabled()) {
             quartzClient.remove(JobInit.buildConfig(jobInfo));
         }
-        return removeById(id);
+        return jobInfoRepository.deleteById(id);
     }
 
     @Override
@@ -119,7 +138,7 @@ public class QuartzInfoServiceImpl extends ServiceImpl<JobInfoMapper, JobInfo> i
         if (agentId == null) {
             return;
         }
-        AgentDefinition agentDefinition = agentDefinitionService.getById(agentId);
+        AgentDefinition agentDefinition = agentDefinitionService.getById(Long.valueOf(agentId));
         if (agentDefinition != null && !agentDefinition.getEnabled()) {
             throw new RuntimeException("智能体无效，不可设置定时");
         }

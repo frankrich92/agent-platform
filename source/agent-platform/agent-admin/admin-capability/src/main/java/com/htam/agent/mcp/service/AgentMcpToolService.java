@@ -1,6 +1,5 @@
 package com.htam.agent.mcp.service;
 
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.htam.agent.common.entity.AgentMcpTool;
 import java.util.List;
 
@@ -9,7 +8,7 @@ import java.util.List;
  *
  * @author huxuehao
  */
-public interface AgentMcpToolService extends IService<AgentMcpTool> {
+public interface AgentMcpToolService {
     List<Long> getToolIds(Long agentDefinitionId);
 
     Boolean replaceAgentMcpTools(Long agentDefinitionId, List<Long> mcpToolIds);

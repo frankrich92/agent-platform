@@ -1,20 +1,22 @@
 package com.htam.agent.sensitive.service.impl;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.htam.agent.cluster.core.MessagePublisher;
 import com.htam.agent.common.consts.RedisChannelTopic;
-import com.htam.agent.common.consts.TableConst;
+import com.htam.agent.common.dto.SensitiveWordConfigDTO;
 import com.htam.agent.common.entity.AgentDefinition;
 import com.htam.agent.common.entity.SensitiveWordConfig;
-import com.htam.agent.sensitive.mapper.SensitiveWordConfigMapper;
+import com.htam.agent.common.mp.support.PageParams;
+import com.htam.agent.repo.agent.AgentDefinitionRepository;
+import com.htam.agent.repo.capability.SensitiveWordConfigRepository;
+import com.htam.agent.repo.support.RepoPage;
 import com.htam.agent.sensitive.service.SensitiveWordConfigService;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 敏感词配置Service实现
@@ -23,9 +25,33 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
-public class SensitiveWordConfigServiceImpl extends ServiceImpl<SensitiveWordConfigMapper, SensitiveWordConfig> implements SensitiveWordConfigService {
-    private final JdbcTemplate jdbcTemplate;
+public class SensitiveWordConfigServiceImpl implements SensitiveWordConfigService {
+    private final AgentDefinitionRepository agentDefinitionRepository;
+    private final SensitiveWordConfigRepository sensitiveWordConfigRepository;
     private final MessagePublisher messagePublisher;
+
+    @Override
+    public IPage<SensitiveWordConfig> page(PageParams pageParams, SensitiveWordConfigDTO query) {
+        SensitiveWordConfigDTO configQuery = query == null ? new SensitiveWordConfigDTO() : query;
+        RepoPage<SensitiveWordConfig> repoPage = sensitiveWordConfigRepository.page(
+                pageParams,
+                configQuery.getCategory(),
+                configQuery.getName(),
+                configQuery.getEnabled());
+        IPage<SensitiveWordConfig> page = new Page<>(repoPage.current(), repoPage.size(), repoPage.total());
+        page.setRecords(repoPage.records());
+        return page;
+    }
+
+    @Override
+    public SensitiveWordConfig getById(Long id) {
+        return sensitiveWordConfigRepository.getById(id);
+    }
+
+    @Override
+    public boolean save(SensitiveWordConfig entity) {
+        return sensitiveWordConfigRepository.save(entity);
+    }
 
     @Override
     public List<Object> usedWithAgent(List<Long> ids) {
@@ -39,29 +65,21 @@ public class SensitiveWordConfigServiceImpl extends ServiceImpl<SensitiveWordCon
 
     @Override
     public List<String> listCategories() {
-        return this.lambdaQuery()
-                .select(SensitiveWordConfig::getCategory)
-                .isNotNull(SensitiveWordConfig::getCategory)
-                .groupBy(SensitiveWordConfig::getCategory)
-                .list()
-                .stream()
-                .map(SensitiveWordConfig::getCategory)
-                .filter(category -> category != null && !category.isEmpty())
-                .collect(Collectors.toList());
+        return sensitiveWordConfigRepository.listCategories();
     }
 
     @Override
     public boolean deleteByIds(List<Long> ids) {
         // 删除前先获取关联的智能体ID，以便后续触发重新注册
         List<Long> agentIds = getAgentDefinitions(ids).stream().map(AgentDefinition::getId).toList();
-        boolean result = removeByIds(ids);
+        boolean result = sensitiveWordConfigRepository.deleteByIds(ids);
         publishAgentReregister(agentIds);
         return result;
     }
 
     @Override
     public boolean doUpdate(SensitiveWordConfig entity) {
-        boolean result = updateById(entity);
+        boolean result = sensitiveWordConfigRepository.updateById(entity);
         List<Long> agentIds = getAgentDefinitions(List.of(entity.getId())).stream().map(AgentDefinition::getId).toList();
         publishAgentReregister(agentIds);
         return result;
@@ -72,21 +90,10 @@ public class SensitiveWordConfigServiceImpl extends ServiceImpl<SensitiveWordCon
                 messagePublisher.publish(RedisChannelTopic.AGENT_REREGISTER_CHANNEL, String.valueOf(agentId)));
     }
 
-    private List<AgentDefinition> getAgentDefinitions(List<Long> systemPromptId) {
-        if (systemPromptId == null || systemPromptId.isEmpty()) {
+    private List<AgentDefinition> getAgentDefinitions(List<Long> sensitiveWordConfigIds) {
+        if (sensitiveWordConfigIds == null || sensitiveWordConfigIds.isEmpty()) {
             return new ArrayList<>();
         }
-
-        String subSql = systemPromptId.stream().map(String::valueOf).collect(Collectors.joining(","));
-
-        String sql = String.format("SELECT * FROM %s WHERE sensitive_word_config_id IN (%s)", TableConst.AGENT, subSql);
-        return jdbcTemplate.query(sql, (rs, rowNum) -> {
-            AgentDefinition agent = new AgentDefinition();
-            // 手动映射字段
-            agent.setId(rs.getLong("id"));
-            agent.setName(rs.getString("name"));
-            agent.setDescription(rs.getString("description"));
-            return agent;
-        });
+        return agentDefinitionRepository.listBySensitiveWordConfigIds(sensitiveWordConfigIds);
     }
 }

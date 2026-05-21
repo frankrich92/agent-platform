@@ -1,13 +1,20 @@
 package com.htam.agent.job.service;
 
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.htam.agent.common.entity.JobLog;
-import com.htam.agent.job.mapper.JobLogMapper;
+import com.htam.agent.repo.task.JobLogRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 /**
  * @author huxuehao
  **/
 @Service
-public class QuartzLogServiceImpl extends ServiceImpl<JobLogMapper, JobLog> implements QuartzLogService {
+@RequiredArgsConstructor
+public class QuartzLogServiceImpl implements QuartzLogService {
+    private final JobLogRepository jobLogRepository;
+
+    @Override
+    public boolean save(JobLog jobLog) {
+        return jobLogRepository.save(jobLog);
+    }
 }

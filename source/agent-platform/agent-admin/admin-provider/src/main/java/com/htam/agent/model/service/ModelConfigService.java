@@ -1,8 +1,10 @@
 package com.htam.agent.model.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.htam.agent.common.dto.ModelConfigDTO;
 import com.htam.agent.common.entity.ModelConfig;
+import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.common.wrapper.ModelWrapper;
-import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.List;
 
@@ -11,8 +13,15 @@ import java.util.List;
  *
  * @author huxuehao
  */
-public interface ModelConfigService extends IService<ModelConfig> {
+public interface ModelConfigService {
+    IPage<ModelConfig> page(PageParams pageParams, ModelConfigDTO query);
+
+    ModelConfig getById(Long id);
+
+    boolean save(ModelConfig entity);
+
     ModelWrapper getModelWrapperById(Long id);
+
     List<Object> usedWithAgent(List<Long> ids);
 
     /**

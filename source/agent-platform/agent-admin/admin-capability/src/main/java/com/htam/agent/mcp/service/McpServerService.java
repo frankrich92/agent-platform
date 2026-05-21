@@ -1,8 +1,10 @@
 package com.htam.agent.mcp.service;
 
-import com.baomidou.mybatisplus.extension.service.IService;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.htam.agent.common.dto.McpToolEnabledDTO;
+import com.htam.agent.common.dto.McpServerDTO;
 import com.htam.agent.common.entity.McpServer;
+import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.common.vo.McpToolVO;
 import java.util.List;
 
@@ -11,7 +13,13 @@ import java.util.List;
  *
  * @author huxuehao
  */
-public interface McpServerService extends IService<McpServer> {
+public interface McpServerService {
+    IPage<McpServer> page(PageParams pageParams, McpServerDTO query);
+
+    McpServer getById(Long id);
+
+    boolean save(McpServer entity);
+
     List<Object> usedWithAgent(List<Long> ids);
 
     boolean deleteByIds(List<Long> ids);

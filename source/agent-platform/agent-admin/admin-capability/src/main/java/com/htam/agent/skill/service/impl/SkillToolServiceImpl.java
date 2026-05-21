@@ -1,13 +1,12 @@
 package com.htam.agent.skill.service.impl;
 
 import com.htam.agent.common.entity.SkillTool;
-import com.htam.agent.skill.mapper.SkillToolMapper;
+import com.htam.agent.repo.capability.SkillToolRepository;
 import com.htam.agent.skill.service.SkillToolService;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 技能工具关联Service实现
@@ -15,27 +14,28 @@ import java.util.stream.Collectors;
  * @author huxuehao
  */
 @Service
-public class SkillToolServiceImpl extends ServiceImpl<SkillToolMapper, SkillTool> implements SkillToolService {
+@RequiredArgsConstructor
+public class SkillToolServiceImpl implements SkillToolService {
+    private final SkillToolRepository skillToolRepository;
 
     @Override
     public List<Long> getToolIds(Long skillId) {
-        return lambdaQuery()
-                .eq(SkillTool::getSkillId, skillId)
-                .list()
+        return skillToolRepository.listBySkillId(skillId)
                 .stream()
                 .map(SkillTool::getToolId)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
     public List<Long> getSkillIds(List<Long> toolIds) {
-        return lambdaQuery()
-                .in(SkillTool::getToolId, toolIds)
-                .list()
+        if (toolIds == null || toolIds.isEmpty()) {
+            return List.of();
+        }
+        return skillToolRepository.listByToolIds(toolIds)
                 .stream()
                 .map(SkillTool::getSkillId)
                 .distinct()
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -43,7 +43,7 @@ public class SkillToolServiceImpl extends ServiceImpl<SkillToolMapper, SkillTool
         deleteSkillTool(List.of(skillId));
         if (toolIds != null && !toolIds.isEmpty()) {
             toolIds.forEach(toolId -> {
-                save(new SkillTool(null, skillId, toolId));
+                skillToolRepository.save(new SkillTool(null, skillId, toolId));
             });
         }
         return true;
@@ -54,6 +54,14 @@ public class SkillToolServiceImpl extends ServiceImpl<SkillToolMapper, SkillTool
         if (skillIds == null || skillIds.isEmpty()) {
             return true;
         }
-        return lambdaUpdate().in(SkillTool::getSkillId, skillIds).remove();
+        return skillToolRepository.deleteBySkillIds(skillIds);
+    }
+
+    @Override
+    public Boolean deleteByToolIds(List<Long> toolIds) {
+        if (toolIds == null || toolIds.isEmpty()) {
+            return true;
+        }
+        return skillToolRepository.deleteByToolIds(toolIds);
     }
 }

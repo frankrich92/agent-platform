@@ -5,7 +5,6 @@ import com.htam.agent.common.dto.ToolDTO;
 import com.htam.agent.common.entity.ToolConfig;
 import com.htam.agent.common.enums.Role;
 import com.htam.agent.common.enums.ToolType;
-import com.htam.agent.common.mp.support.MP;
 import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.common.r.R;
 import com.htam.agent.common.util.BeanUtils;
@@ -34,7 +33,7 @@ public class ToolController {
      */
     @GetMapping("/page")
     public R<IPage<ToolVO>> page(PageParams pageParams, ToolDTO query) {
-        IPage<ToolConfig> page = toolService.page(MP.getPage(pageParams), MP.getQueryWrapper(query));
+        IPage<ToolConfig> page = toolService.page(pageParams, query);
         return R.data(BeanUtils.copyPage(page, ToolVO.class));
     }
 

@@ -1,6 +1,5 @@
 package com.htam.agent.skill.imports;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.htam.agent.common.consts.SysConst;
 import com.htam.agent.common.entity.SkillPackage;
 import com.htam.agent.common.util.FolderUtils;
@@ -133,10 +132,7 @@ public class SkillImportService {
             AgentSkill agentSkill = repo.getSkill(skillName);
             SkillPackage skillPackage = SkillPackageBuilder.build(agentSkill, category);
 
-            SkillPackage oldSkillPackage = skillPackageService.getOne(
-                    new LambdaQueryWrapper<SkillPackage>()
-                            .eq(SkillPackage::getName, skillName),
-                    false);
+            SkillPackage oldSkillPackage = skillPackageService.getByName(skillName);
 
             if (oldSkillPackage == null) {
                 skillPackageService.save(skillPackage);

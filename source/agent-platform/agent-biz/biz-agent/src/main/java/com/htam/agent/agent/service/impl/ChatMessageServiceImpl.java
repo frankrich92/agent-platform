@@ -1,12 +1,11 @@
 package com.htam.agent.agent.service.impl;
 
-import com.htam.agent.agent.mapper.ChatMessageMapper;
 import com.htam.agent.agent.service.ChatMessageService;
 import com.htam.agent.common.entity.ChatMessage;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.htam.agent.repo.agent.ChatMessageRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -15,16 +14,35 @@ import java.util.List;
  * @author huxuehao
  */
 @Service
-public class ChatMessageServiceImpl extends ServiceImpl<ChatMessageMapper, ChatMessage> implements ChatMessageService {
+@RequiredArgsConstructor
+public class ChatMessageServiceImpl implements ChatMessageService {
+    private final ChatMessageRepository chatMessageRepository;
+
+    @Override
+    public ChatMessage getById(Integer id) {
+        return chatMessageRepository.getById(id);
+    }
+
+    @Override
+    public boolean save(ChatMessage entity) {
+        return chatMessageRepository.save(entity);
+    }
+
+    @Override
+    public boolean updateById(ChatMessage entity) {
+        return chatMessageRepository.updateById(entity);
+    }
+
+    @Override
+    public boolean deleteBySessionId(Long sessionId) {
+        return chatMessageRepository.deleteBySessionId(sessionId);
+    }
 
     @Override
     public List<ChatMessage> listByIdsOrderByDepth(List<Integer> ids) {
         if (ids == null || ids.isEmpty()) {
-            return Collections.emptyList();
+            return List.of();
         }
-        return lambdaQuery()
-                .in(ChatMessage::getId, ids)
-                .orderByAsc(ChatMessage::getDepth)
-                .list();
+        return chatMessageRepository.listByIdsOrderByDepth(ids);
     }
 }

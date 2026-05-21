@@ -1,6 +1,5 @@
 package com.htam.agent.mcp.service;
 
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.htam.agent.common.entity.McpServer;
 import com.htam.agent.common.entity.McpTool;
 import com.htam.agent.common.vo.McpToolVO;
@@ -13,7 +12,7 @@ import java.util.Map;
  *
  * @author huxuehao
  */
-public interface McpToolService extends IService<McpTool> {
+public interface McpToolService {
     List<McpToolVO> listToolVos(Long mcpServerId);
 
     void ensureBackfilledFromCache(McpServer mcpServer);

@@ -1,14 +1,16 @@
 package com.htam.agent.agent.service;
 
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.htam.agent.common.entity.AgentChatKey;
+import java.util.List;
 
 /**
  * 描述：智能体对话Key服务
  *
  * @author huxuehao
  **/
-public interface AgentChatKeyService extends IService<AgentChatKey> {
+public interface AgentChatKeyService {
+    List<AgentChatKey> list();
+
     /**
      * 获取或生成智能体对话Key
      *

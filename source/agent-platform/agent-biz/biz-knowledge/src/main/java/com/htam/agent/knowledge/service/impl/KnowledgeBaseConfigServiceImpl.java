@@ -1,23 +1,23 @@
 package com.htam.agent.knowledge.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.htam.agent.cluster.core.MessagePublisher;
 import com.htam.agent.common.consts.RedisChannelTopic;
-import com.htam.agent.common.consts.TableConst;
-import com.htam.agent.common.entity.AgentDefinition;
-import com.htam.agent.common.entity.AgentKnowledgeBase;
+import com.htam.agent.common.dto.KnowledgeBaseConfigDTO;
 import com.htam.agent.common.entity.KnowledgeBaseConfig;
-import com.htam.agent.knowledge.mapper.KnowledgeBaseConfigMapper;
+import com.htam.agent.common.mp.support.PageParams;
+import com.htam.agent.knowledge.service.AgentKnowledgeBaseService;
 import com.htam.agent.knowledge.service.KnowledgeBaseConfigService;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.htam.agent.repo.agent.AgentDefinitionRepository;
+import com.htam.agent.repo.knowledge.KnowledgeBaseConfigRepository;
+import com.htam.agent.repo.support.RepoPage;
 import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 知识库配置Service实现
@@ -26,15 +26,38 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
-public class KnowledgeBaseConfigServiceImpl extends ServiceImpl<KnowledgeBaseConfigMapper, KnowledgeBaseConfig> implements KnowledgeBaseConfigService {
-    private final JdbcTemplate jdbcTemplate;
-    private final AgentKnowledgeBaseServiceImpl agentKnowledgeBaseService;
+public class KnowledgeBaseConfigServiceImpl implements KnowledgeBaseConfigService {
+    private final AgentDefinitionRepository agentDefinitionRepository;
+    private final KnowledgeBaseConfigRepository knowledgeBaseConfigRepository;
+    private final AgentKnowledgeBaseService agentKnowledgeBaseService;
     private final MessagePublisher messagePublisher;
+
+    @Override
+    public IPage<KnowledgeBaseConfig> page(PageParams pageParams, KnowledgeBaseConfigDTO query) {
+        RepoPage<KnowledgeBaseConfig> repoPage = knowledgeBaseConfigRepository.page(
+                pageParams,
+                query.getName(),
+                query.getKbType(),
+                query.getEnabled());
+        IPage<KnowledgeBaseConfig> page = new Page<>(repoPage.current(), repoPage.size(), repoPage.total());
+        page.setRecords(repoPage.records());
+        return page;
+    }
+
+    @Override
+    public KnowledgeBaseConfig getById(Long id) {
+        return knowledgeBaseConfigRepository.getById(id);
+    }
+
+    @Override
+    public boolean save(KnowledgeBaseConfig entity) {
+        return knowledgeBaseConfigRepository.save(entity);
+    }
 
     @Override
     public List<Object> usedWithAgent(List<Long> ids) {
         List<Object> names = new ArrayList<>();
-        getAgentDefinitions(agentKnowledgeBaseService.getAgentIds(ids)).forEach(agentDefinition -> {
+        agentDefinitionRepository.listByIds(agentKnowledgeBaseService.getAgentIds(ids)).forEach(agentDefinition -> {
             names.add(agentDefinition.getName());
         });
 
@@ -49,7 +72,7 @@ public class KnowledgeBaseConfigServiceImpl extends ServiceImpl<KnowledgeBaseCon
             return null;
         }
 
-        List<KnowledgeBaseConfig> knowledgeBaseConfigs = listByIds(knowledgeIds);
+        List<KnowledgeBaseConfig> knowledgeBaseConfigs = knowledgeBaseConfigRepository.listByIds(knowledgeIds);
         if (knowledgeBaseConfigs == null) {
             return null;
         }
@@ -62,15 +85,15 @@ public class KnowledgeBaseConfigServiceImpl extends ServiceImpl<KnowledgeBaseCon
     public boolean deleteByIds(List<Long> ids) {
         // 删除前先获取关联的智能体ID，以便后续触发重新注册
         List<Long> agentIds = agentKnowledgeBaseService.getAgentIds(ids);
-        removeByIds(ids);
-        boolean result = agentKnowledgeBaseService.remove(new LambdaQueryWrapper<AgentKnowledgeBase>().in(AgentKnowledgeBase::getKnowledgeBaseConfigId, ids));
+        knowledgeBaseConfigRepository.deleteByIds(ids);
+        boolean result = agentKnowledgeBaseService.deleteByKnowledgeIds(ids);
         publishAgentReregister(agentIds);
         return result;
     }
 
     @Override
     public boolean doUpdate(KnowledgeBaseConfig entity) {
-        boolean result = updateById(entity);
+        boolean result = knowledgeBaseConfigRepository.updateById(entity);
         publishAgentReregister(agentKnowledgeBaseService.getAgentIds(List.of(entity.getId())));
         return result;
     }
@@ -80,21 +103,4 @@ public class KnowledgeBaseConfigServiceImpl extends ServiceImpl<KnowledgeBaseCon
                 messagePublisher.publish(RedisChannelTopic.AGENT_REREGISTER_CHANNEL, String.valueOf(agentId)));
     }
 
-    private List<AgentDefinition> getAgentDefinitions(List<Long> agentIds) {
-        if (agentIds == null || agentIds.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        String subSql = agentIds.stream().map(String::valueOf).collect(Collectors.joining(","));
-
-        String sql = String.format("SELECT * FROM %s WHERE id IN (%s)", TableConst.AGENT, subSql);
-        return jdbcTemplate.query(sql, (rs, rowNum) -> {
-            AgentDefinition agent = new AgentDefinition();
-            // 手动映射字段
-            agent.setId(rs.getLong("id"));
-            agent.setName(rs.getString("name"));
-            agent.setDescription(rs.getString("description"));
-            return agent;
-        });
-    }
 }

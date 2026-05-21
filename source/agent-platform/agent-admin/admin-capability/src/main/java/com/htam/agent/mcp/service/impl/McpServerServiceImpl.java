@@ -1,17 +1,15 @@
 package com.htam.agent.mcp.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.htam.agent.cluster.core.MessagePublisher;
 import com.htam.agent.common.consts.RedisChannelTopic;
-import com.htam.agent.common.consts.TableConst;
+import com.htam.agent.common.dto.McpServerDTO;
 import com.htam.agent.common.dto.McpToolEnabledDTO;
 import com.htam.agent.common.entity.AgentDefinition;
-import com.htam.agent.common.entity.AgentMcpServer;
 import com.htam.agent.common.entity.McpServer;
 import com.htam.agent.common.entity.McpTool;
 import com.htam.agent.common.enums.HealthStatus;
@@ -22,23 +20,24 @@ import com.htam.agent.common.enums.McpProtocol;
 import com.htam.agent.common.exception.BusinessException;
 import com.htam.agent.common.mcp.ToolSchemaRefreshResult;
 import com.htam.agent.common.mcp.ToolSchemaRefresher;
+import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.common.util.CryptoUtils;
 import com.htam.agent.common.vo.McpToolVO;
-import com.htam.agent.mcp.mapper.McpServerMapper;
 import com.htam.agent.mcp.service.AgentMcpServerService;
 import com.htam.agent.mcp.service.AgentMcpToolService;
 import com.htam.agent.mcp.service.McpRuntimeDegradeService;
 import com.htam.agent.mcp.service.McpServerService;
 import com.htam.agent.mcp.service.McpToolService;
+import com.htam.agent.repo.agent.AgentDefinitionRepository;
+import com.htam.agent.repo.capability.McpServerRepository;
+import com.htam.agent.repo.support.RepoPage;
 import io.modelcontextprotocol.spec.McpSchema;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -51,11 +50,12 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
  */
 @Service
 @RequiredArgsConstructor
-public class McpServerServiceImpl extends ServiceImpl<McpServerMapper, McpServer> implements McpServerService {
+public class McpServerServiceImpl implements McpServerService {
     private static final String CONFIG_HASH_SALT = "MCP_CONFIG_HASH";
     private static final int DEFAULT_RUNTIME_FAIL_THRESHOLD = 3;
 
-    private final JdbcTemplate jdbcTemplate;
+    private final McpServerRepository mcpServerRepository;
+    private final AgentDefinitionRepository agentDefinitionRepository;
     private final AgentMcpServerService agentMcpServerService;
     private final AgentMcpToolService agentMcpToolService;
     private final McpToolService mcpToolService;
@@ -63,6 +63,24 @@ public class McpServerServiceImpl extends ServiceImpl<McpServerMapper, McpServer
     private final ToolSchemaRefresher toolSchemaRefresher;
     private final McpRuntimeDegradeService mcpRuntimeDegradeService;
     private final ObjectMapper objectMapper;
+
+    @Override
+    public IPage<McpServer> page(PageParams pageParams, McpServerDTO query) {
+        McpServerDTO serverQuery = query == null ? new McpServerDTO() : query;
+        RepoPage<McpServer> repoPage = mcpServerRepository.page(
+                pageParams,
+                serverQuery.getName(),
+                serverQuery.getProtocol(),
+                serverQuery.getEnabled());
+        IPage<McpServer> page = new Page<>(repoPage.current(), repoPage.size(), repoPage.total());
+        page.setRecords(repoPage.records());
+        return page;
+    }
+
+    @Override
+    public McpServer getById(Long id) {
+        return mcpServerRepository.getById(id);
+    }
 
     @Override
     public List<Object> usedWithAgent(List<Long> ids) {
@@ -82,9 +100,8 @@ public class McpServerServiceImpl extends ServiceImpl<McpServerMapper, McpServer
                 .toList();
         agentMcpToolService.deleteByMcpToolIds(mcpToolIds);
         mcpToolService.deleteByMcpServerIds(ids);
-        removeByIds(ids);
-        boolean result = agentMcpServerService.remove(
-                new LambdaQueryWrapper<AgentMcpServer>().in(AgentMcpServer::getMcpServerId, ids));
+        mcpServerRepository.deleteByIds(ids);
+        boolean result = agentMcpServerService.deleteByMcpServerIds(ids);
         publishAgentReregisterAfterCommit(agentIds);
         return result;
     }
@@ -105,7 +122,7 @@ public class McpServerServiceImpl extends ServiceImpl<McpServerMapper, McpServer
                 entity.getMode(),
                 entity.getTimeout(),
                 entity.getProtocolConfig()));
-        return super.save(entity);
+        return mcpServerRepository.save(entity);
     }
 
     @Override
@@ -132,7 +149,7 @@ public class McpServerServiceImpl extends ServiceImpl<McpServerMapper, McpServer
                 firstNonNull(entity.getProtocolConfig(), current.getProtocolConfig()));
         entity.setConfigHash(mergedConfigHash);
 
-        updateById(entity);
+        mcpServerRepository.updateById(entity);
 
         McpServer updated = requireServer(entity.getId());
         boolean configChanged = !Objects.equals(oldConfigHash, mergedConfigHash);
@@ -249,23 +266,11 @@ public class McpServerServiceImpl extends ServiceImpl<McpServerMapper, McpServer
         update.setConfigHash(configHash);
         update.setNeedsSync(true);
 
-        LambdaUpdateWrapper<McpServer> wrapper = new LambdaUpdateWrapper<McpServer>()
-                .eq(McpServer::getId, current.getId());
-        if (current.getActivationRequestId() == null) {
-            wrapper.isNull(McpServer::getActivationRequestId);
-        } else {
-            wrapper.eq(McpServer::getActivationRequestId, current.getActivationRequestId());
-        }
-
-        return baseMapper.update(update, wrapper) > 0;
+        return mcpServerRepository.beginActivation(current.getId(), current.getActivationRequestId(), update);
     }
 
     private boolean finishActivation(Long id, String requestId, String configHash, McpServer update) {
-        LambdaUpdateWrapper<McpServer> wrapper = new LambdaUpdateWrapper<McpServer>()
-                .eq(McpServer::getId, id)
-                .eq(McpServer::getActivationRequestId, requestId)
-                .eq(McpServer::getConfigHash, configHash);
-        return baseMapper.update(update, wrapper) > 0;
+        return mcpServerRepository.finishActivation(id, requestId, configHash, update);
     }
 
     private McpServer requireServer(Long id) {
@@ -351,14 +356,6 @@ public class McpServerServiceImpl extends ServiceImpl<McpServerMapper, McpServer
             return new ArrayList<>();
         }
 
-        String subSql = agentIds.stream().map(String::valueOf).collect(Collectors.joining(","));
-        String sql = String.format("SELECT * FROM %s WHERE id IN (%s)", TableConst.AGENT, subSql);
-        return jdbcTemplate.query(sql, (rs, rowNum) -> {
-            AgentDefinition agent = new AgentDefinition();
-            agent.setId(rs.getLong("id"));
-            agent.setName(rs.getString("name"));
-            agent.setDescription(rs.getString("description"));
-            return agent;
-        });
+        return agentDefinitionRepository.listByIds(agentIds);
     }
 }

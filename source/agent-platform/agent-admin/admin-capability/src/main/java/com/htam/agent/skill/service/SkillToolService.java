@@ -1,7 +1,6 @@
 package com.htam.agent.skill.service;
 
 import com.htam.agent.common.entity.SkillTool;
-import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.List;
 
@@ -10,7 +9,7 @@ import java.util.List;
  *
  * @author huxuehao
  */
-public interface SkillToolService extends IService<SkillTool> {
+public interface SkillToolService {
     /**
      * 获取技能关联的工具ID列表
      *
@@ -43,4 +42,12 @@ public interface SkillToolService extends IService<SkillTool> {
      * @return 是否成功
      */
     Boolean deleteSkillTool(List<Long> skillIds);
+
+    /**
+     * 删除指定工具的技能工具关联
+     *
+     * @param toolIds 工具ID列表
+     * @return 是否成功
+     */
+    Boolean deleteByToolIds(List<Long> toolIds);
 }

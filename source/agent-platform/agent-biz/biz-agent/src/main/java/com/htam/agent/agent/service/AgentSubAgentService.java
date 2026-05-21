@@ -1,7 +1,6 @@
 package com.htam.agent.agent.service;
 
 import com.htam.agent.common.entity.AgentSubAgent;
-import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.List;
 
@@ -10,7 +9,7 @@ import java.util.List;
  *
  * @author huxuehao
  */
-public interface AgentSubAgentService extends IService<AgentSubAgent> {
+public interface AgentSubAgentService {
     List<Long> getSubAgentIds(Long agentDefinitionId);
     Boolean insertSubAgent(Long agentDefinitionId, List<Long> subAgentIds);
     Boolean deleteSubAgent(List<Long> agentIds);

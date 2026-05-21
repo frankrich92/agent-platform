@@ -4,7 +4,6 @@ import com.htam.agent.common.config.auth.RoleNeed;
 import com.htam.agent.common.dto.SystemPromptTemplateDTO;
 import com.htam.agent.common.entity.SystemPromptTemplate;
 import com.htam.agent.common.enums.Role;
-import com.htam.agent.common.mp.support.MP;
 import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.common.r.R;
 import com.htam.agent.common.util.BeanUtils;
@@ -33,7 +32,7 @@ public class SystemPromptTemplateController {
      */
     @GetMapping("/page")
     public R<IPage<SystemPromptTemplateVO>> page(PageParams pageParams, SystemPromptTemplateDTO query) {
-        IPage<SystemPromptTemplate> page = systemPromptTemplateService.page(MP.getPage(pageParams), MP.getQueryWrapper(query));
+        IPage<SystemPromptTemplate> page = systemPromptTemplateService.page(pageParams, query);
         return R.data(BeanUtils.copyPage(page, SystemPromptTemplateVO.class));
     }
 

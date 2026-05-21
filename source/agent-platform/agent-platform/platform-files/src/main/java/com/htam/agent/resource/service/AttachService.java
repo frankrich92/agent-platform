@@ -1,7 +1,8 @@
 package com.htam.agent.resource.service;
 
-import com.baomidou.mybatisplus.extension.service.IService;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.htam.agent.common.entity.Attach;
+import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.common.wrapper.FileBase64Wrapper;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -13,7 +14,12 @@ import java.util.List;
  *
  * @author huxuehao
  **/
-public interface AttachService extends IService<Attach> {
+public interface AttachService {
+    IPage<Attach> page(PageParams pageParams, Attach query);
+
+    Attach getById(Long id);
+
+    List<Attach> listByIds(List<Long> ids);
 
     /**
      * 批量删除

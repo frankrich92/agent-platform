@@ -3,7 +3,6 @@ package com.htam.agent.params.controller;
 import com.htam.agent.common.config.auth.RoleNeed;
 import com.htam.agent.common.entity.Params;
 import com.htam.agent.common.enums.Role;
-import com.htam.agent.common.mp.support.MP;
 import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.common.r.R;
 import com.htam.agent.params.service.ParamsService;
@@ -27,7 +26,7 @@ public class ParamsController {
 
     @GetMapping(value = "/page", name = "分页")
     public R<?> page(Params params, PageParams pageParams) {
-        return R.data(paramsService.page(MP.getPage(pageParams), MP.getQueryWrapper(params)));
+        return R.data(paramsService.page(pageParams, params));
     }
 
     @RoleNeed({Role.ADMIN, Role.EDIT})

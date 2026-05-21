@@ -1,6 +1,5 @@
 package com.htam.agent.skill;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.htam.agent.common.entity.SkillPackage;
 import com.htam.agent.skill.service.SkillPackageService;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +23,7 @@ public class InitLoadSkillScript implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        List<SkillPackage> list = skillPackageService.list(new LambdaQueryWrapper<SkillPackage>().ne(SkillPackage::getScripts, "[]"));
+        List<SkillPackage> list = skillPackageService.listWithScripts();
         for (SkillPackage skillPackage : list) {
             SkillScriptLoadHelper.loadScripts(skillPackage);
             log.info("已经重新导入{}的脚本到本地", skillPackage.getName());

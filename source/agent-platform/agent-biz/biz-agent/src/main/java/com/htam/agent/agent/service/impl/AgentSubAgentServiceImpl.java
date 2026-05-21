@@ -1,9 +1,9 @@
 package com.htam.agent.agent.service.impl;
 
-import com.htam.agent.agent.mapper.AgentSubAgentMapper;
 import com.htam.agent.agent.service.AgentSubAgentService;
 import com.htam.agent.common.entity.AgentSubAgent;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.htam.agent.repo.agent.AgentSubAgentRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,20 +14,24 @@ import java.util.List;
  * @author huxuehao
  */
 @Service
-public class AgentSubAgentServiceImpl extends ServiceImpl<AgentSubAgentMapper, AgentSubAgent> implements AgentSubAgentService {
+@RequiredArgsConstructor
+public class AgentSubAgentServiceImpl implements AgentSubAgentService {
+    private final AgentSubAgentRepository agentSubAgentRepository;
+
     @Override
     public List<Long> getSubAgentIds(Long agentDefinitionId) {
-        return lambdaQuery()
-                .eq(AgentSubAgent::getParentAgentId, agentDefinitionId)
-                .list()
+        return agentSubAgentRepository.listByParentAgentId(agentDefinitionId)
                 .stream()
                 .map(AgentSubAgent::getSubAgentId).toList();
     }
 
     @Override
     public Boolean insertSubAgent(Long agentDefinitionId, List<Long> subAgentIds) {
+        if (subAgentIds == null || subAgentIds.isEmpty()) {
+            return Boolean.TRUE;
+        }
         subAgentIds.forEach(subAgentId -> {
-            save(new AgentSubAgent(null, agentDefinitionId, subAgentId));
+            agentSubAgentRepository.save(new AgentSubAgent(null, agentDefinitionId, subAgentId));
         });
 
         return true;
@@ -38,7 +42,7 @@ public class AgentSubAgentServiceImpl extends ServiceImpl<AgentSubAgentMapper, A
         if (agentIds == null || agentIds.isEmpty()) {
             return true;
         }
-        return lambdaUpdate().in(AgentSubAgent::getParentAgentId, agentIds).remove();
+        return agentSubAgentRepository.deleteByParentAgentIds(agentIds);
     }
 
     @Override

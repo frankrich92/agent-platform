@@ -1,6 +1,5 @@
 package com.htam.agent.mcp.service.impl;
 
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,12 +8,11 @@ import com.htam.agent.common.entity.McpTool;
 import com.htam.agent.common.util.BeanUtils;
 import com.htam.agent.common.util.CryptoUtils;
 import com.htam.agent.common.vo.McpToolVO;
-import com.htam.agent.mcp.mapper.McpToolMapper;
 import com.htam.agent.mcp.service.McpToolService;
+import com.htam.agent.repo.capability.McpToolRepository;
 import io.modelcontextprotocol.spec.McpSchema;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -33,9 +31,10 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @RequiredArgsConstructor
-public class McpToolServiceImpl extends ServiceImpl<McpToolMapper, McpTool> implements McpToolService {
+public class McpToolServiceImpl implements McpToolService {
     private static final String SCHEMA_HASH_SALT = "MCP_TOOL_SCHEMA_HASH";
 
+    private final McpToolRepository mcpToolRepository;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -43,11 +42,7 @@ public class McpToolServiceImpl extends ServiceImpl<McpToolMapper, McpTool> impl
         McpServer mcpServer = BeanUtils.getBean(com.htam.agent.mcp.service.McpServerService.class)
                 .getById(mcpServerId);
         ensureBackfilledFromCache(mcpServer);
-        return lambdaQuery()
-                .eq(McpTool::getMcpServerId, mcpServerId)
-                .orderByAsc(McpTool::getSort)
-                .orderByAsc(McpTool::getToolName)
-                .list()
+        return mcpToolRepository.listByServerIdOrdered(mcpServerId)
                 .stream()
                 .map(item -> BeanUtils.copy(item, McpToolVO.class))
                 .toList();
@@ -58,7 +53,7 @@ public class McpToolServiceImpl extends ServiceImpl<McpToolMapper, McpTool> impl
         if (mcpServer == null || mcpServer.getId() == null) {
             return;
         }
-        long count = lambdaQuery().eq(McpTool::getMcpServerId, mcpServer.getId()).count();
+        long count = mcpToolRepository.countByServerId(mcpServer.getId());
         if (count > 0) {
             return;
         }
@@ -76,9 +71,7 @@ public class McpToolServiceImpl extends ServiceImpl<McpToolMapper, McpTool> impl
             return;
         }
 
-        List<McpTool> existing = lambdaQuery()
-                .eq(McpTool::getMcpServerId, mcpServer.getId())
-                .list();
+        List<McpTool> existing = mcpToolRepository.listByServerId(mcpServer.getId());
         Map<String, McpTool> existingMap = existing.stream().collect(Collectors.toMap(
                 McpTool::getToolName,
                 Function.identity(),
@@ -114,10 +107,10 @@ public class McpToolServiceImpl extends ServiceImpl<McpToolMapper, McpTool> impl
                     : existingTool.getEnabled());
 
             if (existingTool == null) {
-                save(entity);
+                mcpToolRepository.save(entity);
             } else {
                 entity.setId(existingTool.getId());
-                updateById(entity);
+                mcpToolRepository.updateById(entity);
             }
         }
 
@@ -128,7 +121,7 @@ public class McpToolServiceImpl extends ServiceImpl<McpToolMapper, McpTool> impl
             McpTool update = new McpTool();
             update.setId(item.getId());
             update.setMissing(true);
-            updateById(update);
+            mcpToolRepository.updateById(update);
         });
     }
 
@@ -147,31 +140,17 @@ public class McpToolServiceImpl extends ServiceImpl<McpToolMapper, McpTool> impl
             throw new RuntimeException("存在不属于当前 MCP 的工具");
         }
 
-        lambdaUpdate()
-                .in(McpTool::getId, toolIds)
-                .set(McpTool::getEnabled, enabled)
-                .update();
+        mcpToolRepository.updateEnabledByIds(toolIds, enabled);
     }
 
     @Override
     public List<McpTool> listRuntimeTools(Long mcpServerId) {
-        return lambdaQuery()
-                .eq(McpTool::getMcpServerId, mcpServerId)
-                .eq(McpTool::getEnabled, true)
-                .eq(McpTool::getMissing, false)
-                .orderByAsc(McpTool::getSort)
-                .orderByAsc(McpTool::getToolName)
-                .list();
+        return mcpToolRepository.listRuntimeTools(mcpServerId);
     }
 
     @Override
     public List<McpTool> listByServerIds(List<Long> mcpServerIds) {
-        if (mcpServerIds == null || mcpServerIds.isEmpty()) {
-            return List.of();
-        }
-        return lambdaQuery()
-                .in(McpTool::getMcpServerId, mcpServerIds)
-                .list();
+        return mcpToolRepository.listByServerIds(mcpServerIds);
     }
 
     @Override
@@ -179,7 +158,7 @@ public class McpToolServiceImpl extends ServiceImpl<McpToolMapper, McpTool> impl
         if (ids == null || ids.isEmpty()) {
             return List.of();
         }
-        List<McpTool> tools = listByIds(ids);
+        List<McpTool> tools = mcpToolRepository.listByIds(ids);
         Map<Long, McpTool> toolMap = tools.stream().collect(Collectors.toMap(McpTool::getId, Function.identity()));
         List<McpTool> ordered = new ArrayList<>();
         for (Long id : ids) {
@@ -193,27 +172,12 @@ public class McpToolServiceImpl extends ServiceImpl<McpToolMapper, McpTool> impl
 
     @Override
     public Map<Long, Integer> countAvailableTools(List<Long> mcpServerIds) {
-        if (mcpServerIds == null || mcpServerIds.isEmpty()) {
-            return Collections.emptyMap();
-        }
-        return lambdaQuery()
-                .in(McpTool::getMcpServerId, mcpServerIds)
-                .eq(McpTool::getEnabled, true)
-                .eq(McpTool::getMissing, false)
-                .list()
-                .stream()
-                .collect(Collectors.toMap(
-                        McpTool::getMcpServerId,
-                        item -> 1,
-                        Integer::sum));
+        return mcpToolRepository.countAvailableTools(mcpServerIds);
     }
 
     @Override
     public void deleteByMcpServerIds(List<Long> mcpServerIds) {
-        if (mcpServerIds == null || mcpServerIds.isEmpty()) {
-            return;
-        }
-        lambdaUpdate().in(McpTool::getMcpServerId, mcpServerIds).remove();
+        mcpToolRepository.deleteByMcpServerIds(mcpServerIds);
     }
 
     private List<McpSchema.Tool> parseCachedTools(String toolSchemasJson) {

@@ -1,8 +1,10 @@
 package com.htam.agent.skill.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.htam.agent.common.dto.SkillPackageDTO;
 import com.htam.agent.common.entity.SkillPackage;
+import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.common.vo.SkillPackageVO;
-import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.List;
 
@@ -11,7 +13,23 @@ import java.util.List;
  *
  * @author huxuehao
  */
-public interface SkillPackageService extends IService<SkillPackage> {
+public interface SkillPackageService {
+    IPage<SkillPackage> page(PageParams pageParams, SkillPackageDTO query);
+
+    SkillPackage getById(Long id);
+
+    SkillPackage getByName(String name);
+
+    List<SkillPackage> listByIds(List<Long> ids);
+
+    List<SkillPackage> listEnabledBriefByIds(List<Long> ids);
+
+    List<SkillPackage> listWithScripts();
+
+    boolean save(SkillPackage entity);
+
+    boolean updateById(SkillPackage entity);
+
     List<Object> usedWithAgent(List<Long> ids);
 
     /**

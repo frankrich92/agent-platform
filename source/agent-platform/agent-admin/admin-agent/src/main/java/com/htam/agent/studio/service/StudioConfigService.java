@@ -1,6 +1,5 @@
 package com.htam.agent.studio.service;
 
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.htam.agent.common.entity.StudioConfig;
 
 import java.util.List;
@@ -10,6 +9,11 @@ import java.util.List;
  *
  * @author huxuehao
  **/
-public interface StudioConfigService extends IService<StudioConfig> {
+public interface StudioConfigService {
+    List<StudioConfig> list();
+    StudioConfig getById(Long id);
+    Boolean save(StudioConfig entity);
+    Boolean updateById(StudioConfig entity);
+    Boolean removeByIds(List<Long> ids);
     List<Object> usedWithAgent(List<Long> ids);
 }

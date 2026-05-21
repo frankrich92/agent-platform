@@ -1,12 +1,12 @@
 package com.htam.agent.mcp.service.impl;
 
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.htam.agent.common.entity.AgentMcpTool;
-import com.htam.agent.mcp.mapper.AgentMcpToolMapper;
 import com.htam.agent.mcp.service.AgentMcpToolService;
+import com.htam.agent.repo.capability.AgentMcpToolRepository;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 /**
@@ -15,14 +15,13 @@ import org.springframework.stereotype.Service;
  * @author huxuehao
  */
 @Service
-public class AgentMcpToolServiceImpl extends ServiceImpl<AgentMcpToolMapper, AgentMcpTool>
-        implements AgentMcpToolService {
+@RequiredArgsConstructor
+public class AgentMcpToolServiceImpl implements AgentMcpToolService {
+    private final AgentMcpToolRepository agentMcpToolRepository;
 
     @Override
     public List<Long> getToolIds(Long agentDefinitionId) {
-        return lambdaQuery()
-                .eq(AgentMcpTool::getAgentDefinitionId, agentDefinitionId)
-                .list()
+        return agentMcpToolRepository.listByAgentDefinitionId(agentDefinitionId)
                 .stream()
                 .map(AgentMcpTool::getMcpToolId)
                 .toList();
@@ -36,7 +35,7 @@ public class AgentMcpToolServiceImpl extends ServiceImpl<AgentMcpToolMapper, Age
         }
 
         Set<Long> distinctIds = new LinkedHashSet<>(mcpToolIds);
-        distinctIds.forEach(toolId -> save(new AgentMcpTool(null, agentDefinitionId, toolId)));
+        distinctIds.forEach(toolId -> agentMcpToolRepository.save(new AgentMcpTool(null, agentDefinitionId, toolId)));
         return Boolean.TRUE;
     }
 
@@ -45,7 +44,7 @@ public class AgentMcpToolServiceImpl extends ServiceImpl<AgentMcpToolMapper, Age
         if (agentIds == null || agentIds.isEmpty()) {
             return Boolean.TRUE;
         }
-        return lambdaUpdate().in(AgentMcpTool::getAgentDefinitionId, agentIds).remove();
+        return agentMcpToolRepository.deleteByAgentDefinitionIds(agentIds);
     }
 
     @Override
@@ -53,6 +52,6 @@ public class AgentMcpToolServiceImpl extends ServiceImpl<AgentMcpToolMapper, Age
         if (mcpToolIds == null || mcpToolIds.isEmpty()) {
             return Boolean.TRUE;
         }
-        return lambdaUpdate().in(AgentMcpTool::getMcpToolId, mcpToolIds).remove();
+        return agentMcpToolRepository.deleteByMcpToolIds(mcpToolIds);
     }
 }

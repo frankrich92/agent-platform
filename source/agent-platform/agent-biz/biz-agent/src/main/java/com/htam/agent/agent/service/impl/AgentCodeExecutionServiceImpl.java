@@ -1,9 +1,9 @@
 package com.htam.agent.agent.service.impl;
 
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.htam.agent.agent.mapper.AgentCodeExecutionMapper;
 import com.htam.agent.agent.service.AgentCodeExecutionService;
 import com.htam.agent.common.entity.AgentCodeExecution;
+import com.htam.agent.repo.agent.AgentCodeExecutionRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,12 +14,16 @@ import java.util.List;
  * @author huxuehao
  **/
 @Service
-public class AgentCodeExecutionServiceImpl extends ServiceImpl<AgentCodeExecutionMapper, AgentCodeExecution> implements AgentCodeExecutionService {
+@RequiredArgsConstructor
+public class AgentCodeExecutionServiceImpl implements AgentCodeExecutionService {
+    private final AgentCodeExecutionRepository agentCodeExecutionRepository;
+
     @Override
     public List<Long> getAgentIds(List<Long> codeExecutionIds) {
-        return lambdaQuery()
-                .in(AgentCodeExecution::getCodeExecutionId, codeExecutionIds)
-                .list()
+        if (codeExecutionIds == null || codeExecutionIds.isEmpty()) {
+            return List.of();
+        }
+        return agentCodeExecutionRepository.listByCodeExecutionIds(codeExecutionIds)
                 .stream()
                 .map(AgentCodeExecution::getAgentDefinitionId)
                 .distinct()
@@ -28,11 +32,8 @@ public class AgentCodeExecutionServiceImpl extends ServiceImpl<AgentCodeExecutio
 
     @Override
     public Long getCodeExecutionIdByAgentId(Long agentId) {
-        return lambdaQuery()
-                .eq(AgentCodeExecution::getAgentDefinitionId, agentId)
-                .oneOpt()
-                .map(AgentCodeExecution::getCodeExecutionId)
-                .orElse(null);
+        AgentCodeExecution item = agentCodeExecutionRepository.getByAgentId(agentId);
+        return item == null ? null : item.getCodeExecutionId();
     }
 
     @Override
@@ -41,7 +42,7 @@ public class AgentCodeExecutionServiceImpl extends ServiceImpl<AgentCodeExecutio
             return false;
         }
         codeExecutionIds.forEach(codeExecutionId -> {
-            save(new AgentCodeExecution(null, agentDefinitionId, codeExecutionId));
+            agentCodeExecutionRepository.save(new AgentCodeExecution(null, agentDefinitionId, codeExecutionId));
         });
 
         return true;
@@ -52,7 +53,7 @@ public class AgentCodeExecutionServiceImpl extends ServiceImpl<AgentCodeExecutio
         if (agentIds == null || agentIds.isEmpty()) {
             return true;
         }
-        return lambdaUpdate().in(AgentCodeExecution::getAgentDefinitionId, agentIds).remove();
+        return agentCodeExecutionRepository.deleteByAgentIds(agentIds);
     }
 
     @Override

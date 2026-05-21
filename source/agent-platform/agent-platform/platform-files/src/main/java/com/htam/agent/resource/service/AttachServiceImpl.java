@@ -3,22 +3,23 @@ package com.htam.agent.resource.service;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.io.file.FileNameUtil;
 import com.amazonaws.util.IOUtils;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.htam.agent.common.entity.Attach;
 import com.htam.agent.common.entity.AttachChunk;
 import com.htam.agent.common.entity.AttachLog;
 import com.htam.agent.common.enums.ModelType;
+import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.common.wrapper.FileBase64Wrapper;
 import com.htam.agent.params.core.ParamsAdapter;
+import com.htam.agent.repo.file.AttachChunkRepository;
+import com.htam.agent.repo.file.AttachRepository;
+import com.htam.agent.repo.support.RepoPage;
 import com.htam.agent.resource.enums.AttachOptType;
 import com.htam.agent.common.util.FuncUtils;
 import com.htam.agent.common.util.UserUtils;
 import com.htam.agent.common.util.WebUtils;
-import com.htam.agent.resource.mapper.AttachChunkMapper;
-import com.htam.agent.resource.mapper.AttachMapper;
 import com.htam.agent.resource.storage.core.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,18 +48,45 @@ import java.util.zip.ZipOutputStream;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class AttachServiceImpl extends ServiceImpl<AttachMapper, Attach> implements AttachService {
+public class AttachServiceImpl implements AttachService {
     private final ParamsAdapter paramsAdapter;
     private final StorageProtocolService storageProtocolService;
     private final AttachLogService attachLogService;
-    private final AttachChunkMapper attachChunkMapper;
+    private final AttachRepository attachRepository;
+    private final AttachChunkRepository attachChunkRepository;
+
+    @Override
+    public IPage<Attach> page(PageParams pageParams, Attach query) {
+        Attach attach = query == null ? new Attach() : query;
+        RepoPage<Attach> repoPage = attachRepository.page(
+                pageParams,
+                attach.getFileId(),
+                attach.getLink(),
+                attach.getDomain(),
+                attach.getName(),
+                attach.getOriginalName(),
+                attach.getExtension());
+        IPage<Attach> page = new Page<>(repoPage.current(), repoPage.size(), repoPage.total());
+        page.setRecords(repoPage.records());
+        return page;
+    }
+
+    @Override
+    public Attach getById(Long id) {
+        return attachRepository.getById(id);
+    }
+
+    @Override
+    public List<Attach> listByIds(List<Long> ids) {
+        return attachRepository.listByIds(ids);
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean batchDeleteV2(List<Long> ids) {
         List<Attach> attaches = listByIds(ids);
         for (Attach attach : attaches) {
-            removeById(attach.getId());
+            attachRepository.deleteById(attach.getId());
 
             /*
              * NOTE:获取文件存储服务，并删除真实存储的文件，请结合实际，自行决定是否删除真实存储的文件
@@ -181,9 +209,7 @@ public class AttachServiceImpl extends ServiceImpl<AttachMapper, Attach> impleme
     }
 
     private List<AttachChunk> getChunksByFileKey(String fileKey) {
-        QueryWrapper<AttachChunk> chunkQw = new QueryWrapper<>();
-        chunkQw.eq("file_key", fileKey);
-        return attachChunkMapper.selectList(chunkQw);
+        return attachChunkRepository.listByFileKey(fileKey);
     }
 
     public void saveFileChunkInfo(String hash, int totalSize, int index, int totalChunks, String key, String fileName) {
@@ -194,12 +220,10 @@ public class AttachServiceImpl extends ServiceImpl<AttachMapper, Attach> impleme
         chunk.setFileKey(key);
         chunk.setFileTotalSize(totalSize);
         chunk.setFileName(fileName);
-        attachChunkMapper.insert(chunk);
+        attachChunkRepository.save(chunk);
     }
     public void deleteFileChunkInfo(String key) {
-        UpdateWrapper<AttachChunk> uw = new UpdateWrapper<>();
-        uw.eq("file_key", key);
-        attachChunkMapper.delete(uw);
+        attachChunkRepository.deleteByFileKey(key);
     }
 
     // 保存附件信息
@@ -217,7 +241,7 @@ public class AttachServiceImpl extends ServiceImpl<AttachMapper, Attach> impleme
         LocalDateTime now = LocalDateTime.now();
         attach.setCreateAt(now);
         attach.setUpdateAt(now);
-        this.baseMapper.insert(attach);
+        attachRepository.save(attach);
         return attach;
     }
 

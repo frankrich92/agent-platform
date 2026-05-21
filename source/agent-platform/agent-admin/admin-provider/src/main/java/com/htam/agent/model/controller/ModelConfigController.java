@@ -4,7 +4,6 @@ import com.htam.agent.common.config.auth.RoleNeed;
 import com.htam.agent.common.dto.ModelConfigDTO;
 import com.htam.agent.common.entity.ModelConfig;
 import com.htam.agent.common.enums.Role;
-import com.htam.agent.common.mp.support.MP;
 import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.common.r.R;
 import com.htam.agent.common.util.BeanUtils;
@@ -33,7 +32,7 @@ public class ModelConfigController {
      */
     @GetMapping("/page")
     public R<IPage<ModelConfigVO>> page(PageParams pageParams, ModelConfigDTO query) {
-        IPage<ModelConfig> page = modelConfigService.page(MP.getPage(pageParams), MP.getQueryWrapper(query));
+        IPage<ModelConfig> page = modelConfigService.page(pageParams, query);
         return R.data(BeanUtils.copyPage(page, ModelConfigVO.class));
     }
 

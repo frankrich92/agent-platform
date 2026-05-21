@@ -1,8 +1,8 @@
 package com.htam.agent.a2a.service;
 
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.htam.agent.a2a.mapper.AgentA2aMapper;
 import com.htam.agent.common.entity.AgentA2A;
+import com.htam.agent.repo.agent.AgentA2aRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,26 +14,28 @@ import java.util.List;
  * @author huxuehao
  **/
 @Service
-public class AgentA2aServiceImpl extends ServiceImpl<AgentA2aMapper, AgentA2A> implements AgentA2aService {
+@RequiredArgsConstructor
+public class AgentA2aServiceImpl implements AgentA2aService {
+    private final AgentA2aRepository agentA2aRepository;
+
     @Override
     public AgentA2A getA2aConfigByAgentId(Long agentId) {
-        return lambdaQuery().eq(AgentA2A::getAgentDefinitionId, agentId).one();
+        return agentA2aRepository.getByAgentId(agentId);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean saveA2aConfig(AgentA2A agentA2A) {
-        lambdaUpdate()
-                .eq(AgentA2A::getAgentDefinitionId, agentA2A.getAgentDefinitionId())
-                .remove();
+        agentA2aRepository.deleteByAgentIds(List.of(agentA2A.getAgentDefinitionId()));
 
-        return save(agentA2A);
+        return agentA2aRepository.save(agentA2A);
     }
 
     @Override
     public boolean deleteA2aConfig(List<Long> agentIds) {
-        return lambdaUpdate()
-                .in(AgentA2A::getAgentDefinitionId, agentIds)
-                .remove();
+        if (agentIds == null || agentIds.isEmpty()) {
+            return true;
+        }
+        return agentA2aRepository.deleteByAgentIds(agentIds);
     }
 }

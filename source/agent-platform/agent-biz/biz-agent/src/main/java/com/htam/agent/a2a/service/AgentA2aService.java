@@ -1,6 +1,5 @@
 package com.htam.agent.a2a.service;
 
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.htam.agent.common.entity.AgentA2A;
 
 import java.util.List;
@@ -10,7 +9,7 @@ import java.util.List;
  *
  * @author huxuehao
  **/
-public interface AgentA2aService extends IService<AgentA2A> {
+public interface AgentA2aService {
     AgentA2A getA2aConfigByAgentId(Long agentId);
     boolean saveA2aConfig(AgentA2A agentA2A);
     boolean deleteA2aConfig(List<Long> agentIds);

@@ -1,7 +1,9 @@
 package com.htam.agent.prompt.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.htam.agent.common.dto.SystemPromptTemplateDTO;
 import com.htam.agent.common.entity.SystemPromptTemplate;
-import com.baomidou.mybatisplus.extension.service.IService;
+import com.htam.agent.common.mp.support.PageParams;
 
 import java.util.List;
 
@@ -10,7 +12,13 @@ import java.util.List;
  *
  * @author huxuehao
  */
-public interface SystemPromptTemplateService extends IService<SystemPromptTemplate> {
+public interface SystemPromptTemplateService {
+    IPage<SystemPromptTemplate> page(PageParams pageParams, SystemPromptTemplateDTO query);
+
+    SystemPromptTemplate getById(Long id);
+
+    boolean save(SystemPromptTemplate entity);
+
     List<Object> usedWithAgent(List<Long> ids);
 
     /**

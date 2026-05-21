@@ -1,6 +1,5 @@
 package com.htam.agent.sk.service;
 
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.htam.agent.common.entity.SecretKey;
 import com.htam.agent.common.vo.SecretKeyVo;
 
@@ -11,7 +10,7 @@ import java.util.List;
  *
  * @author huxuehao
  **/
-public interface SecretKeyService extends IService<SecretKey> {
+public interface SecretKeyService {
 
     /**
      * 创建秘钥

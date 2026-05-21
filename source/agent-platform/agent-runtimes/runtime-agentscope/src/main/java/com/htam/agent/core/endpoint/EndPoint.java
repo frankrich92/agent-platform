@@ -1,6 +1,5 @@
 package com.htam.agent.core.endpoint;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.htam.agent.common.config.auth.ChatKeyAccess;
 import com.htam.agent.common.config.auth.SkAccess;
 import com.htam.agent.common.entity.ToolConfig;
@@ -34,7 +33,7 @@ public class EndPoint {
     @ChatKeyAccess
     @PostMapping("/do/{toolName}/tool")
     public R<?> doTool(@PathVariable("toolName") String toolName , @RequestBody LinkedHashMap<String, Object> args) {
-        ToolConfig toolConfig = toolService.getOne(new LambdaQueryWrapper<ToolConfig>().eq(ToolConfig::getToolId, toolName));
+        ToolConfig toolConfig = toolService.getByToolId(toolName);
 
         if (toolConfig == null) {
             return R.data("工具调用失败");

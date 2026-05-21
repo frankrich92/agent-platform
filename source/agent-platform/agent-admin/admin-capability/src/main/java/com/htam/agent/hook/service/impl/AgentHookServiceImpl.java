@@ -1,9 +1,9 @@
 package com.htam.agent.hook.service.impl;
 
 import com.htam.agent.common.entity.AgentHook;
-import com.htam.agent.hook.mapper.AgentHookMapper;
 import com.htam.agent.hook.service.AgentHookService;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.htam.agent.repo.capability.AgentHookRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,12 +14,16 @@ import java.util.List;
  * @author huxuehao
  */
 @Service
-public class AgentHookServiceImpl extends ServiceImpl<AgentHookMapper, AgentHook> implements AgentHookService {
+@RequiredArgsConstructor
+public class AgentHookServiceImpl implements AgentHookService {
+    private final AgentHookRepository agentHookRepository;
+
     @Override
     public List<Long> getAgentIds(List<Long> hookIds) {
-        return lambdaQuery()
-                .in(AgentHook::getHookConfigId, hookIds)
-                .list()
+        if (hookIds == null || hookIds.isEmpty()) {
+            return List.of();
+        }
+        return agentHookRepository.listByHookConfigIds(hookIds)
                 .stream()
                 .map(AgentHook::getAgentDefinitionId)
                 .distinct()
@@ -28,9 +32,7 @@ public class AgentHookServiceImpl extends ServiceImpl<AgentHookMapper, AgentHook
 
     @Override
     public List<Long> getHookIds(Long agentDefinitionId) {
-        return lambdaQuery()
-                .eq(AgentHook::getAgentDefinitionId, agentDefinitionId)
-                .list()
+        return agentHookRepository.listByAgentDefinitionId(agentDefinitionId)
                 .stream()
                 .map(AgentHook::getHookConfigId)
                 .toList();
@@ -38,8 +40,11 @@ public class AgentHookServiceImpl extends ServiceImpl<AgentHookMapper, AgentHook
 
     @Override
     public Boolean insertAgentHook(Long agentDefinitionId, List<Long> hookIds) {
+        if (hookIds == null || hookIds.isEmpty()) {
+            return true;
+        }
         hookIds.forEach(hookId -> {
-            save(new AgentHook(null, agentDefinitionId, hookId));
+            agentHookRepository.save(new AgentHook(null, agentDefinitionId, hookId));
         });
         return true;
     }
@@ -49,7 +54,15 @@ public class AgentHookServiceImpl extends ServiceImpl<AgentHookMapper, AgentHook
         if (agentIds == null || agentIds.isEmpty()) {
             return true;
         }
-        return lambdaUpdate().in(AgentHook::getAgentDefinitionId, agentIds).remove();
+        return agentHookRepository.deleteByAgentDefinitionIds(agentIds);
+    }
+
+    @Override
+    public Boolean deleteByHookConfigIds(List<Long> hookIds) {
+        if (hookIds == null || hookIds.isEmpty()) {
+            return true;
+        }
+        return agentHookRepository.deleteByHookConfigIds(hookIds);
     }
 
     @Override

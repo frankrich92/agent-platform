@@ -1,20 +1,19 @@
 package com.htam.agent.agent.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.htam.agent.agent.mapper.AgentChatKeyMapper;
 import com.htam.agent.agent.service.AgentChatKeyService;
 import com.htam.agent.agent.service.AgentDefinitionService;
 import com.htam.agent.common.consts.SysConst;
 import com.htam.agent.common.entity.AgentChatKey;
 import com.htam.agent.common.entity.AgentDefinition;
 import com.htam.agent.common.util.RedisUtils;
+import com.htam.agent.repo.agent.AgentChatKeyRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.ByteBuffer;
 import java.util.Base64;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -25,7 +24,8 @@ import java.util.concurrent.TimeUnit;
  **/
 @Service
 @RequiredArgsConstructor
-public class AgentChatKeyServiceImpl extends ServiceImpl<AgentChatKeyMapper, AgentChatKey> implements AgentChatKeyService {
+public class AgentChatKeyServiceImpl implements AgentChatKeyService {
+    private final AgentChatKeyRepository agentChatKeyRepository;
     private final AgentDefinitionService agentDefinitionService;
     private final RedisUtils redisUtils;
 
@@ -45,6 +45,11 @@ public class AgentChatKeyServiceImpl extends ServiceImpl<AgentChatKeyMapper, Age
     private static final long NULL_CACHE_EXPIRE_MINUTES = 5;
 
     @Override
+    public List<AgentChatKey> list() {
+        return agentChatKeyRepository.list();
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public String getChatKey(Long agentId, boolean refresh) {
         if (agentId == null || agentId <= 0) {
@@ -59,9 +64,7 @@ public class AgentChatKeyServiceImpl extends ServiceImpl<AgentChatKeyMapper, Age
         String agentCode = agent.getAgentCode();
 
         synchronized (agentCode.intern()) {
-            AgentChatKey existingKey = getOne(
-                    new LambdaQueryWrapper<AgentChatKey>().eq(AgentChatKey::getAgentCode, agentCode)
-                    , false);
+            AgentChatKey existingKey = agentChatKeyRepository.getByAgentCode(agentCode);
 
             // 不需要刷新且有现有Key
             if (!refresh && existingKey != null) {
@@ -72,11 +75,11 @@ public class AgentChatKeyServiceImpl extends ServiceImpl<AgentChatKeyMapper, Age
             String newChatKey = generateRandomKey(agentId);
 
             // 先删除在保存
-            remove(new LambdaQueryWrapper<AgentChatKey>().eq(AgentChatKey::getAgentCode, agentCode));
+            agentChatKeyRepository.deleteByAgentCode(agentCode);
             AgentChatKey item = new AgentChatKey();
             item.setAgentCode(agentCode);
             item.setChatKey(newChatKey);
-            save(item);
+            agentChatKeyRepository.save(item);
 
             // 删除旧的 ChatKey -> AgentCode 的映射关系
             if (existingKey != null) {
@@ -111,9 +114,7 @@ public class AgentChatKeyServiceImpl extends ServiceImpl<AgentChatKeyMapper, Age
         }
 
         // 2. 缓存未命中，从数据库查询
-        AgentChatKey agentChatKey = getOne(
-                new LambdaQueryWrapper<AgentChatKey>().eq(AgentChatKey::getChatKey, chatKey),
-                false);
+        AgentChatKey agentChatKey = agentChatKeyRepository.getByChatKey(chatKey);
 
         if (agentChatKey != null) {
             // 查询到数据，回填Redis缓存
@@ -134,9 +135,7 @@ public class AgentChatKeyServiceImpl extends ServiceImpl<AgentChatKeyMapper, Age
             throw new RuntimeException("无效的 " + chatKey);
         }
 
-        AgentDefinition agentDefinition = agentDefinitionService.getOne(
-                new LambdaQueryWrapper<AgentDefinition>().eq(AgentDefinition::getAgentCode, agentCode),
-                false);
+        AgentDefinition agentDefinition = agentDefinitionService.getByAgentCode(agentCode);
 
         if (agentDefinition == null) {
             throw new RuntimeException("为找到对应的智能体");

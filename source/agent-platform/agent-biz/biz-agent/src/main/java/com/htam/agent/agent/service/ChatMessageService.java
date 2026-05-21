@@ -1,7 +1,6 @@
 package com.htam.agent.agent.service;
 
 import com.htam.agent.common.entity.ChatMessage;
-import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.List;
 
@@ -10,7 +9,14 @@ import java.util.List;
  *
  * @author huxuehao
  */
-public interface ChatMessageService extends IService<ChatMessage> {
+public interface ChatMessageService {
+    ChatMessage getById(Integer id);
+
+    boolean save(ChatMessage entity);
+
+    boolean updateById(ChatMessage entity);
+
+    boolean deleteBySessionId(Long sessionId);
 
     /**
      * 根据路径上的 id 列表查询消息，按 depth 升序（回显当前完整对话，O(depth)）

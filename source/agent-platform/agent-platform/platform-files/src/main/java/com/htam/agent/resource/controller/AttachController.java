@@ -1,12 +1,10 @@
 package com.htam.agent.resource.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.htam.agent.common.config.auth.ChatKeyAccess;
 import com.htam.agent.common.config.auth.SkAccess;
 import com.htam.agent.common.entity.Attach;
 import com.htam.agent.common.entity.AttachLog;
-import com.htam.agent.common.mp.support.MP;
 import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.common.r.R;
 import com.htam.agent.common.util.FuncUtils;
@@ -39,16 +37,12 @@ public class AttachController {
 
     @GetMapping(value = "/page", name = "分页")
     public R<IPage<Attach>> page(Attach attach, PageParams pageParams) {
-        QueryWrapper<Attach> qw = MP.getQueryWrapper(attach);
-        qw.last("ORDER BY create_at DESC");
-        return R.data(attachService.page(MP.getPage(pageParams), qw));
+        return R.data(attachService.page(pageParams, attach));
     }
 
     @GetMapping(value = "/log/page", name = "日志:分页")
     public R<IPage<AttachLog>> LogPage(AttachLog attachLog, PageParams pageParams) {
-        QueryWrapper<AttachLog> qw = MP.getQueryWrapper(attachLog);
-        qw.last("ORDER BY opt_time DESC");
-        return R.data(attachLogService.page(MP.getPage(pageParams), qw));
+        return R.data(attachLogService.page(pageParams, attachLog));
     }
 
     @ChatKeyAccess

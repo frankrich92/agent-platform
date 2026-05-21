@@ -1,6 +1,5 @@
 package com.htam.agent.job.init;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.htam.agent.common.util.JsonUtils;
 import com.htam.agent.common.wrapper.AgentJobWrapper;
 import com.htam.agent.job.consts.JobConst;
@@ -32,8 +31,7 @@ public class JobInit implements SmartInitializingSingleton {
     }
 
     public void doJobInit() {
-        LambdaQueryWrapper<JobInfo> qw = new LambdaQueryWrapper<JobInfo>().eq(JobInfo::isEnabled, true);
-        List<JobInfo> list = quartzInfoService.list(qw);
+        List<JobInfo> list = quartzInfoService.listEnabled();
         for (JobInfo jobInfo : list) {
             try {
                 quartzClient.create(buildConfig(jobInfo));

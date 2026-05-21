@@ -92,10 +92,7 @@ public class JobController {
      */
     @GetMapping("/getByBizId")
     public R<JobInfo> getByBizId(@RequestParam("bizId") String bizId) {
-        return R.data(quartzInfoService.lambdaQuery()
-                .eq(JobInfo::getBizId, bizId)
-                .eq(JobInfo::getType, "AGENT")
-                .one());
+        return R.data(quartzInfoService.getAgentJobByBizId(bizId));
     }
 
     /**
@@ -108,10 +105,7 @@ public class JobController {
     @GetMapping("/deleteByBizId")
     @RoleNeed({Role.ADMIN, Role.EDIT})
     public R<Boolean> deleteByBizId(@RequestParam("bizId") String bizId) throws ClassNotFoundException {
-        JobInfo jobInfo = quartzInfoService.lambdaQuery()
-                .eq(JobInfo::getBizId, bizId)
-                .eq(JobInfo::getType, "AGENT")
-                .one();
+        JobInfo jobInfo = quartzInfoService.getAgentJobByBizId(bizId);
         if (jobInfo != null) {
             String jobId = jobInfo.getId();
             // 如果任务正在运行，先停止

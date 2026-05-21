@@ -1,9 +1,9 @@
 package com.htam.agent.skill.service.impl;
 
 import com.htam.agent.common.entity.AgentSkillPackage;
-import com.htam.agent.skill.mapper.AgentSkillPackageMapper;
+import com.htam.agent.repo.capability.AgentSkillPackageRepository;
 import com.htam.agent.skill.service.AgentSkillPackageService;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,12 +14,16 @@ import java.util.List;
  * @author huxuehao
  */
 @Service
-public class AgentSkillPackageServiceImpl extends ServiceImpl<AgentSkillPackageMapper, AgentSkillPackage> implements AgentSkillPackageService {
+@RequiredArgsConstructor
+public class AgentSkillPackageServiceImpl implements AgentSkillPackageService {
+    private final AgentSkillPackageRepository agentSkillPackageRepository;
+
     @Override
     public List<Long> getAgentIds(List<Long> skillIds) {
-        return lambdaQuery()
-                .in(AgentSkillPackage::getSkillPackageId, skillIds)
-                .list()
+        if (skillIds == null || skillIds.isEmpty()) {
+            return List.of();
+        }
+        return agentSkillPackageRepository.listBySkillPackageIds(skillIds)
                 .stream()
                 .map(AgentSkillPackage::getAgentDefinitionId)
                 .distinct()
@@ -28,9 +32,7 @@ public class AgentSkillPackageServiceImpl extends ServiceImpl<AgentSkillPackageM
 
     @Override
     public List<Long> getSkillPackageIds(Long agentDefinitionId) {
-        return lambdaQuery()
-                .eq(AgentSkillPackage::getAgentDefinitionId, agentDefinitionId)
-                .list()
+        return agentSkillPackageRepository.listByAgentDefinitionId(agentDefinitionId)
                 .stream()
                 .map(AgentSkillPackage::getSkillPackageId)
                 .toList();
@@ -38,8 +40,11 @@ public class AgentSkillPackageServiceImpl extends ServiceImpl<AgentSkillPackageM
 
     @Override
     public Boolean insertAgentSkillPackage(Long agentDefinitionId, List<Long> skillPackageIds) {
+        if (skillPackageIds == null || skillPackageIds.isEmpty()) {
+            return true;
+        }
         skillPackageIds.forEach(skillPackageId -> {
-            save(new AgentSkillPackage(null, agentDefinitionId, skillPackageId));
+            agentSkillPackageRepository.save(new AgentSkillPackage(null, agentDefinitionId, skillPackageId));
         });
 
         return true;
@@ -50,7 +55,15 @@ public class AgentSkillPackageServiceImpl extends ServiceImpl<AgentSkillPackageM
         if (agentIds == null || agentIds.isEmpty()) {
             return true;
         }
-        return lambdaUpdate().in(AgentSkillPackage::getAgentDefinitionId, agentIds).remove();
+        return agentSkillPackageRepository.deleteByAgentDefinitionIds(agentIds);
+    }
+
+    @Override
+    public Boolean deleteBySkillPackageIds(List<Long> skillPackageIds) {
+        if (skillPackageIds == null || skillPackageIds.isEmpty()) {
+            return true;
+        }
+        return agentSkillPackageRepository.deleteBySkillPackageIds(skillPackageIds);
     }
 
     @Override

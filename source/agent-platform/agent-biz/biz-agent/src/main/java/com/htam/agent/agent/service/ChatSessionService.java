@@ -9,7 +9,6 @@ import com.htam.agent.common.vo.ChatMessageVO;
 import com.htam.agent.common.vo.ChatMessagePageVO;
 import com.htam.agent.common.vo.ChatSessionVO;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.List;
 
@@ -18,7 +17,7 @@ import java.util.List;
  *
  * @author huxuehao
  */
-public interface ChatSessionService extends IService<ChatSession> {
+public interface ChatSessionService {
 
     /**
      * 创建新会话：插入根消息并设置 current_message_id

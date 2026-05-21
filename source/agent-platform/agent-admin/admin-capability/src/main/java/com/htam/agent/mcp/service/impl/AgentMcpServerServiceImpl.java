@@ -4,11 +4,10 @@ import com.htam.agent.common.entity.AgentMcpServer;
 import com.htam.agent.common.entity.McpTool;
 import com.htam.agent.common.enums.McpToolExposureMode;
 import com.htam.agent.common.vo.AgentMcpBindingVO;
-import com.htam.agent.mcp.mapper.AgentMcpServerMapper;
 import com.htam.agent.mcp.service.AgentMcpToolService;
 import com.htam.agent.mcp.service.AgentMcpServerService;
 import com.htam.agent.mcp.service.McpToolService;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.htam.agent.repo.capability.AgentMcpServerRepository;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -26,8 +25,8 @@ import lombok.RequiredArgsConstructor;
  */
 @Service
 @RequiredArgsConstructor
-public class AgentMcpServerServiceImpl extends ServiceImpl<AgentMcpServerMapper, AgentMcpServer>
-        implements AgentMcpServerService {
+public class AgentMcpServerServiceImpl implements AgentMcpServerService {
+    private final AgentMcpServerRepository agentMcpServerRepository;
     private final AgentMcpToolService agentMcpToolService;
     private final McpToolService mcpToolService;
 
@@ -36,9 +35,7 @@ public class AgentMcpServerServiceImpl extends ServiceImpl<AgentMcpServerMapper,
         if (mcpIds == null || mcpIds.isEmpty()) {
             return List.of();
         }
-        return lambdaQuery()
-                .in(AgentMcpServer::getMcpServerId, mcpIds)
-                .list()
+        return agentMcpServerRepository.listByMcpServerIds(mcpIds)
                 .stream()
                 .map(AgentMcpServer::getAgentDefinitionId)
                 .distinct()
@@ -55,9 +52,7 @@ public class AgentMcpServerServiceImpl extends ServiceImpl<AgentMcpServerMapper,
 
     @Override
     public List<AgentMcpServer> listByAgentDefinitionId(Long agentDefinitionId) {
-        return lambdaQuery()
-                .eq(AgentMcpServer::getAgentDefinitionId, agentDefinitionId)
-                .list();
+        return agentMcpServerRepository.listByAgentDefinitionId(agentDefinitionId);
     }
 
     @Override
@@ -92,7 +87,7 @@ public class AgentMcpServerServiceImpl extends ServiceImpl<AgentMcpServerMapper,
         if (mcpIds == null || mcpIds.isEmpty()) {
             return Boolean.TRUE;
         }
-        mcpIds.forEach(mcpId -> save(new AgentMcpServer(
+        mcpIds.forEach(mcpId -> agentMcpServerRepository.save(new AgentMcpServer(
                 null,
                 agentDefinitionId,
                 mcpId,
@@ -107,7 +102,15 @@ public class AgentMcpServerServiceImpl extends ServiceImpl<AgentMcpServerMapper,
             return true;
         }
         agentMcpToolService.deleteAgentMcpToolByAgentIds(agentIds);
-        return lambdaUpdate().in(AgentMcpServer::getAgentDefinitionId, agentIds).remove();
+        return agentMcpServerRepository.deleteByAgentDefinitionIds(agentIds);
+    }
+
+    @Override
+    public Boolean deleteByMcpServerIds(List<Long> mcpServerIds) {
+        if (mcpServerIds == null || mcpServerIds.isEmpty()) {
+            return Boolean.TRUE;
+        }
+        return agentMcpServerRepository.deleteByMcpServerIds(mcpServerIds);
     }
 
     @Override
@@ -116,7 +119,7 @@ public class AgentMcpServerServiceImpl extends ServiceImpl<AgentMcpServerMapper,
         List<Long> selectedToolIds = collectAndValidateToolIds(normalizedBindings);
 
         deleteAgentMcpServer(List.of(agentDefinitionId));
-        normalizedBindings.forEach(binding -> save(new AgentMcpServer(
+        normalizedBindings.forEach(binding -> agentMcpServerRepository.save(new AgentMcpServer(
                 null,
                 agentDefinitionId,
                 binding.getMcpServerId(),

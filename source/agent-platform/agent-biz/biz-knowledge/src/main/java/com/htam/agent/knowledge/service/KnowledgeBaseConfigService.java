@@ -1,7 +1,9 @@
 package com.htam.agent.knowledge.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.htam.agent.common.dto.KnowledgeBaseConfigDTO;
 import com.htam.agent.common.entity.KnowledgeBaseConfig;
-import com.baomidou.mybatisplus.extension.service.IService;
+import com.htam.agent.common.mp.support.PageParams;
 
 import java.util.List;
 
@@ -10,7 +12,13 @@ import java.util.List;
  *
  * @author huxuehao
  */
-public interface KnowledgeBaseConfigService extends IService<KnowledgeBaseConfig> {
+public interface KnowledgeBaseConfigService {
+    IPage<KnowledgeBaseConfig> page(PageParams pageParams, KnowledgeBaseConfigDTO query);
+
+    KnowledgeBaseConfig getById(Long id);
+
+    boolean save(KnowledgeBaseConfig entity);
+
     List<Object> usedWithAgent(List<Long> ids);
 
     KnowledgeBaseConfig getByAgentId(Long agentId);

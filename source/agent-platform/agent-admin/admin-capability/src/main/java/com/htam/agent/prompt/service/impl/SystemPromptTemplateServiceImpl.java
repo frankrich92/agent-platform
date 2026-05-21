@@ -1,20 +1,22 @@
 package com.htam.agent.prompt.service.impl;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.htam.agent.cluster.core.MessagePublisher;
 import com.htam.agent.common.consts.RedisChannelTopic;
-import com.htam.agent.common.consts.TableConst;
+import com.htam.agent.common.dto.SystemPromptTemplateDTO;
 import com.htam.agent.common.entity.AgentDefinition;
 import com.htam.agent.common.entity.SystemPromptTemplate;
-import com.htam.agent.prompt.mapper.SystemPromptTemplateMapper;
+import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.prompt.service.SystemPromptTemplateService;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.htam.agent.repo.agent.AgentDefinitionRepository;
+import com.htam.agent.repo.capability.SystemPromptTemplateRepository;
+import com.htam.agent.repo.support.RepoPage;
 import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 系统提示词模板Service实现
@@ -23,9 +25,33 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
-public class SystemPromptTemplateServiceImpl extends ServiceImpl<SystemPromptTemplateMapper, SystemPromptTemplate> implements SystemPromptTemplateService {
-    private final JdbcTemplate jdbcTemplate;
+public class SystemPromptTemplateServiceImpl implements SystemPromptTemplateService {
+    private final AgentDefinitionRepository agentDefinitionRepository;
+    private final SystemPromptTemplateRepository systemPromptTemplateRepository;
     private final MessagePublisher messagePublisher;
+
+    @Override
+    public IPage<SystemPromptTemplate> page(PageParams pageParams, SystemPromptTemplateDTO query) {
+        SystemPromptTemplateDTO templateQuery = query == null ? new SystemPromptTemplateDTO() : query;
+        RepoPage<SystemPromptTemplate> repoPage = systemPromptTemplateRepository.page(
+                pageParams,
+                templateQuery.getCategory(),
+                templateQuery.getName(),
+                templateQuery.getEnabled());
+        IPage<SystemPromptTemplate> page = new Page<>(repoPage.current(), repoPage.size(), repoPage.total());
+        page.setRecords(repoPage.records());
+        return page;
+    }
+
+    @Override
+    public SystemPromptTemplate getById(Long id) {
+        return systemPromptTemplateRepository.getById(id);
+    }
+
+    @Override
+    public boolean save(SystemPromptTemplate entity) {
+        return systemPromptTemplateRepository.save(entity);
+    }
 
     @Override
     public List<Object> usedWithAgent(List<Long> ids) {
@@ -39,29 +65,21 @@ public class SystemPromptTemplateServiceImpl extends ServiceImpl<SystemPromptTem
 
     @Override
     public List<String> listCategories() {
-        return this.lambdaQuery()
-                .select(SystemPromptTemplate::getCategory)
-                .isNotNull(SystemPromptTemplate::getCategory)
-                .groupBy(SystemPromptTemplate::getCategory)
-                .list()
-                .stream()
-                .map(SystemPromptTemplate::getCategory)
-                .filter(category -> category != null && !category.isEmpty())
-                .collect(Collectors.toList());
+        return systemPromptTemplateRepository.listCategories();
     }
 
     @Override
     public boolean deleteByIds(List<Long> ids) {
         // 删除前先获取关联的智能体ID，以便后续触发重新注册
         List<Long> agentIds = getAgentDefinitions(ids).stream().map(AgentDefinition::getId).toList();
-        boolean result = removeByIds(ids);
+        boolean result = systemPromptTemplateRepository.deleteByIds(ids);
         publishAgentReregister(agentIds);
         return result;
     }
 
     @Override
     public boolean doUpdate(SystemPromptTemplate entity) {
-        boolean result = updateById(entity);
+        boolean result = systemPromptTemplateRepository.updateById(entity);
         List<Long> agentIds = getAgentDefinitions(List.of(entity.getId())).stream().map(AgentDefinition::getId).toList();
         publishAgentReregister(agentIds);
         return result;
@@ -77,16 +95,6 @@ public class SystemPromptTemplateServiceImpl extends ServiceImpl<SystemPromptTem
             return new ArrayList<>();
         }
 
-        String subSql = systemPromptId.stream().map(String::valueOf).collect(Collectors.joining(","));
-
-        String sql = String.format("SELECT * FROM %s WHERE system_prompt_template_id IN (%s)", TableConst.AGENT, subSql);
-        return jdbcTemplate.query(sql, (rs, rowNum) -> {
-            AgentDefinition agent = new AgentDefinition();
-            // 手动映射字段
-            agent.setId(rs.getLong("id"));
-            agent.setName(rs.getString("name"));
-            agent.setDescription(rs.getString("description"));
-            return agent;
-        });
+        return agentDefinitionRepository.listBySystemPromptTemplateIds(systemPromptId);
     }
 }

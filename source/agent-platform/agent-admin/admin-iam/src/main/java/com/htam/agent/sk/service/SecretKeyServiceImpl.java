@@ -1,13 +1,12 @@
 package com.htam.agent.sk.service;
 
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.htam.agent.common.config.auth.AuthInterceptor;
 import com.htam.agent.common.config.auth.SkIdSyncPublisher;
 import com.htam.agent.common.entity.SecretKey;
 import com.htam.agent.common.util.BeanUtils;
 import com.htam.agent.common.util.TokenUtils;
 import com.htam.agent.common.vo.SecretKeyVo;
-import com.htam.agent.sk.mapper.SecretKeyMapper;
+import com.htam.agent.repo.iam.SecretKeyRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,8 +20,9 @@ import java.util.List;
  **/
 @Service
 @RequiredArgsConstructor
-public class SecretKeyServiceImpl extends ServiceImpl<SecretKeyMapper, SecretKey> implements SecretKeyService {
+public class SecretKeyServiceImpl implements SecretKeyService {
 
+    private final SecretKeyRepository secretKeyRepository;
     private final SkIdSyncPublisher skIdSyncPublisher;
 
     /** 秘钥前缀 */
@@ -38,7 +38,7 @@ public class SecretKeyServiceImpl extends ServiceImpl<SecretKeyMapper, SecretKey
         entity.setName(vo.getName());
         entity.setExpireTime(vo.getExpireTime());
         entity.setRemark(vo.getRemark());
-        save(entity);
+        secretKeyRepository.save(entity);
 
         // 计算过期时间（毫秒）
         long ttlMillis;
@@ -58,7 +58,7 @@ public class SecretKeyServiceImpl extends ServiceImpl<SecretKeyMapper, SecretKey
         // 更新value字段
         entity.setValue(value);
 
-        updateById(entity);
+        secretKeyRepository.updateById(entity);
 
         // 将SK ID添加到本地有效集合中
         AuthInterceptor.addSkId(entity.getId());
@@ -71,15 +71,12 @@ public class SecretKeyServiceImpl extends ServiceImpl<SecretKeyMapper, SecretKey
 
     @Override
     public boolean updateName(SecretKeyVo vo) {
-        return lambdaUpdate()
-                .eq(SecretKey::getId, vo.getId())
-                .set(SecretKey::getName, vo.getName())
-                .update();
+        return secretKeyRepository.updateName(vo.getId(), vo.getName());
     }
 
     @Override
     public boolean delete(List<Long> ids) {
-        boolean success = removeByIds(ids);
+        boolean success = secretKeyRepository.deleteByIds(ids);
         if (success) {
             // 从本地有效集合中移除已删除的SK ID
             AuthInterceptor.removeSkIds(ids);
@@ -92,7 +89,7 @@ public class SecretKeyServiceImpl extends ServiceImpl<SecretKeyMapper, SecretKey
 
     @Override
     public List<SecretKeyVo> listAll() {
-        List<SecretKey> list = lambdaQuery().list();
+        List<SecretKey> list = secretKeyRepository.list();
         List<SecretKeyVo> result = BeanUtils.copyList(list, SecretKeyVo.class);
         // 对value进行脱敏处理
         result.forEach(vo -> vo.setValue(maskValue(vo.getValue())));

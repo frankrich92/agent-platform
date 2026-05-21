@@ -1,9 +1,7 @@
 package com.htam.agent.params.core;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.htam.agent.common.entity.Params;
-import com.htam.agent.params.mapper.ParamsMapper;
+import com.htam.agent.repo.system.ParamsRepository;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -19,9 +17,9 @@ public class ParamsAdapter {
     // 注册表
     private static final Map<String, ParamsCore> registryMap = new ConcurrentHashMap<>();
 
-    private final ParamsMapper paramsMapper;
-    public ParamsAdapter(ParamsMapper paramsMapper) {
-        this.paramsMapper = paramsMapper;
+    private final ParamsRepository paramsRepository;
+    public ParamsAdapter(ParamsRepository paramsRepository) {
+        this.paramsRepository = paramsRepository;
     }
 
     public void register(String key, ParamsCore paramsCore) {
@@ -30,11 +28,9 @@ public class ParamsAdapter {
     }
 
     public String getValue(String key) {
-        QueryWrapper<Params> qw = new QueryWrapper<>();
-        qw.eq("param_key", key);
         ParamsCore paramsCore = registryMap.get(key);
         try {
-            Params params = paramsMapper.selectOne(qw);
+            Params params = paramsRepository.getByKey(key);
             if (params == null) {
                 return paramsCore == null ? null : paramsCore.getDefaultValue();
             }
@@ -46,22 +42,19 @@ public class ParamsAdapter {
             throw new RuntimeException("不存在唯一Key:" + key, e);
         }
     }
-    public int saveParams(Params params) {
+    public boolean saveParams(Params params) {
         ParamsCore paramsCore = registryMap.get(params.getParamKey());
         if (paramsCore != null) {
             params.setParamValue(paramsCore.checkAndFormatValue(params.getParamValue()));
         }
-        return paramsMapper.insert(params);
+        return paramsRepository.save(params);
     }
 
-    public int updateParams(Params params) {
+    public boolean updateParams(Params params) {
         ParamsCore paramsCore = registryMap.get(params.getParamKey());
         if (paramsCore != null) {
             params.setParamValue(paramsCore.checkAndFormatValue(params.getParamValue()));
         }
-        return paramsMapper.update(
-                new UpdateWrapper<Params>()
-                        .eq("id", params.getId())
-                        .set("param_value", params.getParamValue()));
+        return paramsRepository.updateValue(params.getId(), params.getParamValue());
     }
 }

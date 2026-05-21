@@ -4,7 +4,6 @@ import com.htam.agent.common.config.auth.RoleNeed;
 import com.htam.agent.common.dto.KnowledgeBaseConfigDTO;
 import com.htam.agent.common.entity.KnowledgeBaseConfig;
 import com.htam.agent.common.enums.Role;
-import com.htam.agent.common.mp.support.MP;
 import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.common.r.R;
 import com.htam.agent.common.util.BeanUtils;
@@ -33,7 +32,7 @@ public class KnowledgeBaseConfigController {
      */
     @GetMapping("/page")
     public R<IPage<KnowledgeBaseConfigVO>> page(PageParams pageParams, KnowledgeBaseConfigDTO query) {
-        IPage<KnowledgeBaseConfig> page = knowledgeBaseConfigService.page(MP.getPage(pageParams), MP.getQueryWrapper(query));
+        IPage<KnowledgeBaseConfig> page = knowledgeBaseConfigService.page(pageParams, query);
         return R.data(BeanUtils.copyPage(page, KnowledgeBaseConfigVO.class));
     }
 

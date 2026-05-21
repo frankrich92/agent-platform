@@ -7,7 +7,6 @@ import com.htam.agent.common.consts.SysConst;
 import com.htam.agent.common.dto.SkillPackageDTO;
 import com.htam.agent.common.entity.SkillPackage;
 import com.htam.agent.common.enums.Role;
-import com.htam.agent.common.mp.support.MP;
 import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.common.r.R;
 import com.htam.agent.common.util.BeanUtils;
@@ -54,7 +53,7 @@ public class SkillPackageController {
      */
     @GetMapping("/page")
     public R<IPage<SkillPackageVO>> page(PageParams pageParams, SkillPackageDTO query) {
-        IPage<SkillPackage> page = skillPackageService.page(MP.getPage(pageParams), MP.getQueryWrapper(query));
+        IPage<SkillPackage> page = skillPackageService.page(pageParams, query);
         return R.data(BeanUtils.copyPage(page, SkillPackageVO.class));
     }
 

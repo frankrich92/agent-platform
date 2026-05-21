@@ -1,10 +1,8 @@
 package com.htam.agent.rag.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.htam.agent.common.config.auth.RoleNeed;
 import com.htam.agent.common.entity.KnowledgeBaseConfig;
 import com.htam.agent.common.entity.RagDocument;
-import com.htam.agent.common.entity.RagDocumentChunk;
 import com.htam.agent.common.enums.KbType;
 import com.htam.agent.common.enums.RagDocumentStatus;
 import com.htam.agent.common.enums.Role;
@@ -12,9 +10,9 @@ import com.htam.agent.common.r.R;
 import com.htam.agent.common.vo.RagDocumentChunkVO;
 import com.htam.agent.core.rag.DocumentParser;
 import com.htam.agent.knowledge.service.KnowledgeBaseConfigService;
-import com.htam.agent.core.rag.mapper.RagDocumentChunkMapper;
-import com.htam.agent.core.rag.mapper.RagDocumentMapper;
 import com.htam.agent.core.rag.service.LocalRagService;
+import com.htam.agent.repo.knowledge.RagDocumentChunkRepository;
+import com.htam.agent.repo.knowledge.RagDocumentRepository;
 import com.htam.agent.resource.service.AttachService;
 import com.htam.agent.common.entity.Attach;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -45,8 +43,8 @@ public class RagDocumentController {
 
     private final LocalRagService localRagService;
     private final DocumentParser documentParser;
-    private final RagDocumentMapper ragDocumentMapper;
-    private final RagDocumentChunkMapper ragDocumentChunkMapper;
+    private final RagDocumentRepository ragDocumentRepository;
+    private final RagDocumentChunkRepository ragDocumentChunkRepository;
     private final KnowledgeBaseConfigService knowledgeBaseConfigService;
     private final AttachService attachService;
 
@@ -87,7 +85,7 @@ public class RagDocumentController {
                     .updatedAt(LocalDateTime.now())
                     .build();
 
-            ragDocumentMapper.insert(document);
+            ragDocumentRepository.save(document);
 
             // 异步处理文档，从已保存的附件中读取文件流
             localRagService.reprocessDocument(document, attach, kbConfig);
@@ -103,11 +101,7 @@ public class RagDocumentController {
      */
     @GetMapping("/list")
     public R<List<RagDocument>> list(@RequestParam("knowledgeBaseConfigId") Long kbConfigId) {
-        LambdaQueryWrapper<RagDocument> wrapper = new LambdaQueryWrapper<RagDocument>()
-                .eq(RagDocument::getKnowledgeBaseConfigId, kbConfigId)
-                .orderByDesc(RagDocument::getCreatedAt);
-        List<RagDocument> documents = ragDocumentMapper.selectList(wrapper);
-        return R.data(documents);
+        return R.data(ragDocumentRepository.listByKnowledgeBaseConfigId(kbConfigId));
     }
 
     /**
@@ -128,10 +122,7 @@ public class RagDocumentController {
     @GetMapping("/chunks")
     public R<List<com.htam.agent.common.entity.RagDocumentChunk>> chunks(
             @RequestParam("documentId") Long documentId) {
-        LambdaQueryWrapper<RagDocumentChunk> chunkWrapper = new LambdaQueryWrapper<RagDocumentChunk>()
-                .eq(RagDocumentChunk::getDocumentId, documentId)
-                .orderByAsc(RagDocumentChunk::getChunkIndex);
-        return R.data(ragDocumentChunkMapper.selectList(chunkWrapper));
+        return R.data(ragDocumentChunkRepository.listByDocumentId(documentId));
     }
 
     /**
@@ -209,7 +200,7 @@ public class RagDocumentController {
     @GetMapping("/download/{id}")
     @RoleNeed({Role.ADMIN, Role.EDIT})
     public void download(@PathVariable("id") Long id, HttpServletResponse response) {
-        RagDocument document = ragDocumentMapper.selectById(id);
+        RagDocument document = ragDocumentRepository.getById(id);
         if (document == null) {
             throw new RuntimeException("文档不存在");
         }
@@ -236,7 +227,7 @@ public class RagDocumentController {
     @RoleNeed({Role.ADMIN, Role.EDIT})
     public R<Boolean> reUpload(@PathVariable("id") Long id,
                                @RequestParam("file") MultipartFile file) {
-        RagDocument document = ragDocumentMapper.selectById(id);
+        RagDocument document = ragDocumentRepository.getById(id);
         if (document == null) {
             return R.fail("文档不存在");
         }
@@ -258,7 +249,7 @@ public class RagDocumentController {
             // 删除旧附件并上传新附件
             Attach oldAttach = attachService.getById(Long.valueOf(document.getFilePath()));
             if (oldAttach != null) {
-                attachService.removeById(oldAttach.getId());
+                attachService.batchDeleteV2(List.of(oldAttach.getId()));
             }
 
             Attach newAttach = attachService.upload(file, fileName);
@@ -272,7 +263,7 @@ public class RagDocumentController {
             document.setStatus(RagDocumentStatus.PENDING);
             document.setErrorMessage(null);
             document.setUpdatedAt(LocalDateTime.now());
-            ragDocumentMapper.updateById(document);
+            ragDocumentRepository.updateById(document);
 
             // 异步重新处理文档，从已保存的附件中读取文件流
             localRagService.reprocessDocument(document, newAttach, kbConfig);
@@ -289,7 +280,7 @@ public class RagDocumentController {
     @PostMapping("/re-chunk/{id}")
     @RoleNeed({Role.ADMIN, Role.EDIT})
     public R<Boolean> reChunk(@PathVariable("id") Long id) {
-        RagDocument document = ragDocumentMapper.selectById(id);
+        RagDocument document = ragDocumentRepository.getById(id);
         if (document == null) {
             return R.fail("文档不存在");
         }
@@ -313,7 +304,7 @@ public class RagDocumentController {
             document.setStatus(RagDocumentStatus.PROCESSING);
             document.setErrorMessage(null);
             document.setUpdatedAt(LocalDateTime.now());
-            ragDocumentMapper.updateById(document);
+            ragDocumentRepository.updateById(document);
 
             // 异步重新处理文档
             localRagService.reprocessDocument(document, attach, kbConfig);
@@ -323,7 +314,7 @@ public class RagDocumentController {
             document.setStatus(RagDocumentStatus.FAILED);
             document.setErrorMessage(e.getMessage());
             document.setUpdatedAt(LocalDateTime.now());
-            ragDocumentMapper.updateById(document);
+            ragDocumentRepository.updateById(document);
             return R.fail("重新分块失败: " + e.getMessage());
         }
     }

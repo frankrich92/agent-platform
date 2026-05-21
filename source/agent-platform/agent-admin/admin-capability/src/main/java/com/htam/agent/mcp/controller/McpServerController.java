@@ -6,7 +6,6 @@ import com.htam.agent.common.dto.McpServerDTO;
 import com.htam.agent.common.dto.McpToolEnabledDTO;
 import com.htam.agent.common.entity.McpServer;
 import com.htam.agent.common.enums.Role;
-import com.htam.agent.common.mp.support.MP;
 import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.common.r.R;
 import com.htam.agent.common.util.BeanUtils;
@@ -45,7 +44,7 @@ public class McpServerController {
      */
     @GetMapping("/page")
     public R<IPage<McpServerVO>> page(PageParams pageParams, McpServerDTO query) {
-        IPage<McpServer> page = mcpServerService.page(MP.getPage(pageParams), MP.getQueryWrapper(query));
+        IPage<McpServer> page = mcpServerService.page(pageParams, query);
         IPage<McpServerVO> pageVo = BeanUtils.copyPage(page, McpServerVO.class);
         fillAvailableToolCount(pageVo.getRecords());
         return R.data(pageVo);

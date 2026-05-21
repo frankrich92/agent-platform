@@ -1,15 +1,14 @@
 package com.htam.agent.mcp.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.htam.agent.cluster.core.MessagePublisher;
 import com.htam.agent.common.consts.RedisChannelTopic;
 import com.htam.agent.common.entity.McpServer;
 import com.htam.agent.common.enums.HealthStatus;
 import com.htam.agent.common.enums.McpActivationStatus;
 import com.htam.agent.common.enums.McpFailureSource;
-import com.htam.agent.mcp.mapper.McpServerMapper;
 import com.htam.agent.mcp.service.AgentMcpServerService;
 import com.htam.agent.mcp.service.McpRuntimeDegradeService;
+import com.htam.agent.repo.capability.McpServerRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -69,7 +68,7 @@ public class McpRuntimeDegradeServiceImpl implements McpRuntimeDegradeService {
 
     private final StringRedisTemplate stringRedisTemplate;
     private final McpRuntimeFailureClassifier failureClassifier;
-    private final McpServerMapper mcpServerMapper;
+    private final McpServerRepository mcpServerRepository;
     private final AgentMcpServerService agentMcpServerService;
     private final MessagePublisher messagePublisher;
 
@@ -137,7 +136,7 @@ public class McpRuntimeDegradeServiceImpl implements McpRuntimeDegradeService {
             return;
         }
 
-        McpServer current = mcpServerMapper.selectById(serverId);
+        McpServer current = mcpServerRepository.getById(serverId);
         if (current == null
                 || !Boolean.TRUE.equals(current.getEnabled())
                 || current.getActivationStatus() != McpActivationStatus.ACTIVE
@@ -161,14 +160,7 @@ public class McpRuntimeDegradeServiceImpl implements McpRuntimeDegradeService {
         update.setLastHealthCheck(now);
         update.setNeedsSync(true);
 
-        LambdaUpdateWrapper<McpServer> wrapper = new LambdaUpdateWrapper<McpServer>()
-                .eq(McpServer::getId, serverId)
-                .eq(McpServer::getEnabled, true)
-                .eq(McpServer::getActivationStatus, McpActivationStatus.ACTIVE)
-                .eq(McpServer::getActivationRevision, activationRevision)
-                .eq(McpServer::getConfigHash, configHash);
-        int updated = mcpServerMapper.update(update, wrapper);
-        if (updated <= 0) {
+        if (!mcpServerRepository.autoDegrade(serverId, activationRevision, configHash, update)) {
             return;
         }
 

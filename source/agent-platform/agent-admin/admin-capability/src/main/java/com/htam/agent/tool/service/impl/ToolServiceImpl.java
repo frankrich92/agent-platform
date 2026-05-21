@@ -1,29 +1,27 @@
 package com.htam.agent.tool.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.htam.agent.cluster.core.MessagePublisher;
 import com.htam.agent.common.consts.RedisChannelTopic;
-import com.htam.agent.common.consts.TableConst;
-import com.htam.agent.common.entity.AgentDefinition;
-import com.htam.agent.common.entity.AgentTool;
-import com.htam.agent.common.entity.SkillTool;
+import com.htam.agent.common.dto.ToolDTO;
 import com.htam.agent.common.entity.ToolConfig;
 import com.htam.agent.common.enums.ToolType;
+import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.common.util.JsonUtils;
 import com.htam.agent.common.wrapper.ToolInfoWrapper;
-import com.htam.agent.tool.mapper.ISkillToolMapper;
-import com.htam.agent.tool.mapper.ToolMapper;
+import com.htam.agent.repo.agent.AgentDefinitionRepository;
+import com.htam.agent.repo.capability.ToolConfigRepository;
+import com.htam.agent.repo.support.RepoPage;
+import com.htam.agent.skill.service.SkillToolService;
 import com.htam.agent.tool.service.AgentToolService;
 import com.htam.agent.tool.service.ToolService;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 工具Service实现
@@ -32,11 +30,52 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
-public class ToolServiceImpl extends ServiceImpl<ToolMapper, ToolConfig> implements ToolService {
-    private final JdbcTemplate jdbcTemplate;
-    private final ISkillToolMapper iSkillToolMapper;
+public class ToolServiceImpl implements ToolService {
+    private final AgentDefinitionRepository agentDefinitionRepository;
+    private final ToolConfigRepository toolConfigRepository;
+    private final SkillToolService skillToolService;
     private final AgentToolService agentToolService;
     private final MessagePublisher messagePublisher;
+
+    @Override
+    public IPage<ToolConfig> page(PageParams pageParams, ToolDTO query) {
+        ToolDTO toolQuery = query == null ? new ToolDTO() : query;
+        RepoPage<ToolConfig> repoPage = toolConfigRepository.page(
+                pageParams,
+                toolQuery.getName(),
+                toolQuery.getToolId(),
+                toolQuery.getToolType(),
+                toolQuery.getCategory(),
+                toolQuery.getEnabled());
+        IPage<ToolConfig> page = new Page<>(repoPage.current(), repoPage.size(), repoPage.total());
+        page.setRecords(repoPage.records());
+        return page;
+    }
+
+    @Override
+    public ToolConfig getById(Long id) {
+        return toolConfigRepository.getById(id);
+    }
+
+    @Override
+    public ToolConfig getByToolId(String toolId) {
+        return toolConfigRepository.getByToolId(toolId);
+    }
+
+    @Override
+    public List<ToolConfig> listByIds(List<Long> ids) {
+        return toolConfigRepository.listByIds(ids);
+    }
+
+    @Override
+    public List<ToolConfig> listEnabledBriefByIds(List<Long> ids) {
+        return toolConfigRepository.listEnabledBriefByIds(ids);
+    }
+
+    @Override
+    public boolean save(ToolConfig entity) {
+        return toolConfigRepository.save(entity);
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -45,12 +84,12 @@ public class ToolServiceImpl extends ServiceImpl<ToolMapper, ToolConfig> impleme
         List<Long> agentIds = agentToolService.getAgentIds(ids);
         listByIds(ids).forEach(toolConfig -> {
             if (toolConfig.getToolType() != ToolType.BUILTIN) {
-                removeById(toolConfig.getId());
+                toolConfigRepository.deleteById(toolConfig.getId());
             }
         });
 
-        agentToolService.remove(new LambdaQueryWrapper<AgentTool>().in(AgentTool::getToolId, ids));
-        iSkillToolMapper.delete(new LambdaQueryWrapper<SkillTool>().in(SkillTool::getToolId, ids));
+        agentToolService.deleteByToolIds(ids);
+        skillToolService.deleteByToolIds(ids);
         publishAgentReregister(agentIds);
 
         return true;
@@ -58,15 +97,11 @@ public class ToolServiceImpl extends ServiceImpl<ToolMapper, ToolConfig> impleme
 
     @Override
     public void SyncConfigToDatabase(List<ToolInfoWrapper> toolInfos) {
-        lambdaUpdate()
-                .notIn(ToolConfig::getClassPath, toolInfos.stream().map(ToolInfoWrapper::getClassPath).toList())
-                .eq(ToolConfig::getToolType, ToolType.BUILTIN)
-                .remove();
+        toolConfigRepository.deleteBuiltinNotInClassPaths(toolInfos.stream()
+                .map(ToolInfoWrapper::getClassPath)
+                .toList());
         toolInfos.forEach(toolInfo -> {
-            List<ToolConfig> list = lambdaQuery()
-                    .eq(ToolConfig::getToolType, ToolType.BUILTIN)
-                    .eq(ToolConfig::getClassPath, toolInfo.getClassPath())
-                    .list();
+            List<ToolConfig> list = toolConfigRepository.listBuiltinByClassPath(toolInfo.getClassPath());
             if (list.isEmpty()) {
                 ToolConfig toolConfig = new ToolConfig();
                 toolConfig.setName(toolInfo.getName());
@@ -77,7 +112,7 @@ public class ToolServiceImpl extends ServiceImpl<ToolMapper, ToolConfig> impleme
                 toolConfig.setClassPath(toolInfo.getClassPath());
                 toolConfig.setInputSchema(JsonUtils.toJsonNode(toolInfo.getParams()));
                 toolConfig.setEnabled(true);
-                save(toolConfig);
+                toolConfigRepository.save(toolConfig);
             } else {
                 for (int i = 0; i < list.size(); i++) {
                     if (i == 0) {
@@ -85,9 +120,9 @@ public class ToolServiceImpl extends ServiceImpl<ToolMapper, ToolConfig> impleme
                         list.get(i).setToolType(ToolType.BUILTIN);
                         list.get(i).setClassPath(toolInfo.getClassPath());
                         list.get(i).setInputSchema(JsonUtils.toJsonNode(toolInfo.getParams()));
-                        updateById(list.get(i));
+                        toolConfigRepository.updateById(list.get(i));
                     } else {
-                        removeById(list.get(i));
+                        toolConfigRepository.deleteById(list.get(i).getId());
                     }
                 }
             }
@@ -97,7 +132,7 @@ public class ToolServiceImpl extends ServiceImpl<ToolMapper, ToolConfig> impleme
     @Override
     public List<Object> usedWithAgent(List<Long> ids) {
         List<Object> names = new ArrayList<>();
-        getAgentDefinitions(agentToolService.getAgentIds(ids)).forEach(agentDefinition -> {
+        agentDefinitionRepository.listByIds(agentToolService.getAgentIds(ids)).forEach(agentDefinition -> {
             names.add(agentDefinition.getName());
         });
 
@@ -106,31 +141,16 @@ public class ToolServiceImpl extends ServiceImpl<ToolMapper, ToolConfig> impleme
 
     @Override
     public List<String> listCategories() {
-        return this.lambdaQuery()
-                .select(ToolConfig::getCategory)
-                .isNotNull(ToolConfig::getCategory)
-                .groupBy(ToolConfig::getCategory)
-                .list()
-                .stream()
-                .map(ToolConfig::getCategory)
-                .filter(category -> category != null && !category.isEmpty())
-                .collect(Collectors.toList());
+        return toolConfigRepository.listCategories();
     }
 
     @Override
     public Boolean doUpdate(ToolConfig toolConfig) {
         boolean result;
         if (toolConfig.getToolType() != ToolType.BUILTIN) {
-            result = updateById(toolConfig);
+            result = toolConfigRepository.updateById(toolConfig);
         } else {
-            result = lambdaUpdate()
-                    .eq(ToolConfig::getId, toolConfig.getId())
-                    .set(ToolConfig::getName, toolConfig.getName())
-                    .set(ToolConfig::getCategory, toolConfig.getCategory())
-                    .set(ToolConfig::getDescription, toolConfig.getDescription())
-                    .set(ToolConfig::getNeedConfirm, toolConfig.getNeedConfirm())
-                    .set(ToolConfig::getVersion, toolConfig.getVersion())
-                    .update();
+            result = toolConfigRepository.updateBuiltinEditableFields(toolConfig);
         }
         publishAgentReregister(agentToolService.getAgentIds(List.of(toolConfig.getId())));
         return result;
@@ -141,21 +161,4 @@ public class ToolServiceImpl extends ServiceImpl<ToolMapper, ToolConfig> impleme
                 messagePublisher.publish(RedisChannelTopic.AGENT_REREGISTER_CHANNEL, String.valueOf(agentId)));
     }
 
-    private List<AgentDefinition> getAgentDefinitions(List<Long> agentIds) {
-        if (agentIds == null || agentIds.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        String subSql = agentIds.stream().map(String::valueOf).collect(Collectors.joining(","));
-
-        String sql = String.format("SELECT * FROM %s WHERE id IN (%s)", TableConst.AGENT, subSql);
-        return jdbcTemplate.query(sql, (rs, rowNum) -> {
-            AgentDefinition agent = new AgentDefinition();
-            // 手动映射字段
-            agent.setId(rs.getLong("id"));
-            agent.setName(rs.getString("name"));
-            agent.setDescription(rs.getString("description"));
-            return agent;
-        });
-    }
 }

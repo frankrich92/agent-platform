@@ -4,7 +4,6 @@ import com.htam.agent.common.config.auth.RoleNeed;
 import com.htam.agent.common.dto.ModelProviderDTO;
 import com.htam.agent.common.entity.ModelProvider;
 import com.htam.agent.common.enums.Role;
-import com.htam.agent.common.mp.support.MP;
 import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.common.r.R;
 import com.htam.agent.common.util.BeanUtils;
@@ -33,7 +32,7 @@ public class ModelProviderController {
      */
     @GetMapping("/page")
     public R<IPage<ModelProviderVO>> page(PageParams pageParams, ModelProviderDTO query) {
-        IPage<ModelProvider> page = modelProviderService.page(MP.getPage(pageParams), MP.getQueryWrapper(query));
+        IPage<ModelProvider> page = modelProviderService.page(pageParams, query);
         return R.data(BeanUtils.copyPage(page, ModelProviderVO.class));
     }
 

@@ -1,9 +1,8 @@
 package com.htam.agent.knowledge.service.impl;
 
 import com.htam.agent.common.entity.AgentKnowledgeBase;
-import com.htam.agent.knowledge.mapper.AgentKnowledgeBaseMapper;
 import com.htam.agent.knowledge.service.AgentKnowledgeBaseService;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.htam.agent.repo.knowledge.AgentKnowledgeBaseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,12 +15,15 @@ import java.util.List;
  */
 @Service
 @RequiredArgsConstructor
-public class AgentKnowledgeBaseServiceImpl extends ServiceImpl<AgentKnowledgeBaseMapper, AgentKnowledgeBase> implements AgentKnowledgeBaseService {
+public class AgentKnowledgeBaseServiceImpl implements AgentKnowledgeBaseService {
+    private final AgentKnowledgeBaseRepository agentKnowledgeBaseRepository;
+
     @Override
     public List<Long> getAgentIds(List<Long> knowledgeIds) {
-        return lambdaQuery()
-                .in(AgentKnowledgeBase::getKnowledgeBaseConfigId, knowledgeIds)
-                .list()
+        if (knowledgeIds == null || knowledgeIds.isEmpty()) {
+            return List.of();
+        }
+        return agentKnowledgeBaseRepository.listByKnowledgeIds(knowledgeIds)
                 .stream()
                 .map(AgentKnowledgeBase::getAgentDefinitionId)
                 .distinct()
@@ -30,9 +32,7 @@ public class AgentKnowledgeBaseServiceImpl extends ServiceImpl<AgentKnowledgeBas
 
     @Override
     public List<Long> getKnowledgeIds(Long agentDefinitionId) {
-        return lambdaQuery()
-                .eq(AgentKnowledgeBase::getAgentDefinitionId, agentDefinitionId)
-                .list()
+        return agentKnowledgeBaseRepository.listByAgentId(agentDefinitionId)
                 .stream()
                 .map(AgentKnowledgeBase::getKnowledgeBaseConfigId)
                 .toList();
@@ -40,8 +40,11 @@ public class AgentKnowledgeBaseServiceImpl extends ServiceImpl<AgentKnowledgeBas
 
     @Override
     public Boolean insertAgentKnowledge(Long agentDefinitionId, List<Long> knowledgeIds) {
+        if (knowledgeIds == null || knowledgeIds.isEmpty()) {
+            return Boolean.TRUE;
+        }
         knowledgeIds.forEach(knowledgeId -> {
-            save(new AgentKnowledgeBase(null, agentDefinitionId, knowledgeId));
+            agentKnowledgeBaseRepository.save(new AgentKnowledgeBase(null, agentDefinitionId, knowledgeId));
         });
 
         return true;
@@ -52,7 +55,15 @@ public class AgentKnowledgeBaseServiceImpl extends ServiceImpl<AgentKnowledgeBas
         if (agentIds == null || agentIds.isEmpty()) {
             return true;
         }
-        return lambdaUpdate().in(AgentKnowledgeBase::getAgentDefinitionId, agentIds).remove();
+        return agentKnowledgeBaseRepository.deleteByAgentIds(agentIds);
+    }
+
+    @Override
+    public Boolean deleteByKnowledgeIds(List<Long> knowledgeIds) {
+        if (knowledgeIds == null || knowledgeIds.isEmpty()) {
+            return true;
+        }
+        return agentKnowledgeBaseRepository.deleteByKnowledgeIds(knowledgeIds);
     }
 
     @Override

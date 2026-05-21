@@ -39,5 +39,13 @@
       <groupId>com.htam.agent</groupId>
       <artifactId>adapter-websocket</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>repo-spi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>repo-mybatis</artifactId>
+    </dependency>
   </dependencies>
 </project>

@@ -1,11 +1,9 @@
 package com.htam.agent.resource.controller;
 
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.htam.agent.common.config.auth.RoleNeed;
 import com.htam.agent.common.entity.StorageProtocol;
 import com.htam.agent.common.enums.Role;
-import com.htam.agent.common.mp.support.MP;
 import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.common.r.R;
 import com.htam.agent.resource.service.StorageProtocolService;
@@ -45,7 +43,7 @@ public class StorageProtocolController {
 
     @GetMapping(value = "/page", name = "分页")
     public R<IPage<StorageProtocol>> page(StorageProtocol storageProtocol, PageParams pageParams) {
-        return R.data(storageProtocolService.page(MP.getPage(pageParams), MP.getQueryWrapper(storageProtocol)));
+        return R.data(storageProtocolService.page(pageParams, storageProtocol));
     }
 
     @GetMapping(value = "/selectOne", name = "根据ID唯一获取")
@@ -62,9 +60,6 @@ public class StorageProtocolController {
     @RoleNeed({Role.ADMIN, Role.EDIT})
     @PostMapping(value = "/updateProtocol", name = "更新协议配置")
     public R<Boolean> updateProtocol(@RequestBody StorageProtocol body) {
-        UpdateWrapper<StorageProtocol> uw = new UpdateWrapper<>();
-        uw.eq("id", body.getId());
-        uw.set("protocol_config", body.getProtocolConfig());
-        return R.data(storageProtocolService.update(uw));
+        return R.data(storageProtocolService.updateProtocolConfig(body.getId(), body.getProtocolConfig()));
     }
 }

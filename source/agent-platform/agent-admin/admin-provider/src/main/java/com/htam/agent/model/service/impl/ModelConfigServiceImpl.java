@@ -1,23 +1,25 @@
 package com.htam.agent.model.service.impl;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.htam.agent.cluster.core.MessagePublisher;
 import com.htam.agent.common.consts.RedisChannelTopic;
-import com.htam.agent.common.consts.TableConst;
+import com.htam.agent.common.dto.ModelConfigDTO;
 import com.htam.agent.common.entity.AgentDefinition;
 import com.htam.agent.common.entity.ModelConfig;
 import com.htam.agent.common.entity.ModelProvider;
+import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.common.wrapper.ModelWrapper;
-import com.htam.agent.model.mapper.ModelConfigMapper;
 import com.htam.agent.model.service.ModelConfigService;
 import com.htam.agent.model.service.ModelProviderService;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.htam.agent.repo.agent.AgentDefinitionRepository;
+import com.htam.agent.repo.provider.ModelConfigRepository;
+import com.htam.agent.repo.support.RepoPage;
 import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 模型配置Service实现
@@ -26,10 +28,34 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
-public class ModelConfigServiceImpl extends ServiceImpl<ModelConfigMapper, ModelConfig> implements ModelConfigService {
-    private final JdbcTemplate jdbcTemplate;
+public class ModelConfigServiceImpl implements ModelConfigService {
+    private final AgentDefinitionRepository agentDefinitionRepository;
+    private final ModelConfigRepository modelConfigRepository;
     private final ModelProviderService modelProviderService;
     private final MessagePublisher messagePublisher;
+
+    @Override
+    public IPage<ModelConfig> page(PageParams pageParams, ModelConfigDTO query) {
+        ModelConfigDTO configQuery = query == null ? new ModelConfigDTO() : query;
+        RepoPage<ModelConfig> repoPage = modelConfigRepository.page(
+                pageParams,
+                configQuery.getProviderId(),
+                configQuery.getName(),
+                configQuery.getEnabled());
+        IPage<ModelConfig> page = new Page<>(repoPage.current(), repoPage.size(), repoPage.total());
+        page.setRecords(repoPage.records());
+        return page;
+    }
+
+    @Override
+    public ModelConfig getById(Long id) {
+        return modelConfigRepository.getById(id);
+    }
+
+    @Override
+    public boolean save(ModelConfig entity) {
+        return modelConfigRepository.save(entity);
+    }
 
     @Override
     public ModelWrapper getModelWrapperById(Long id) {
@@ -71,14 +97,14 @@ public class ModelConfigServiceImpl extends ServiceImpl<ModelConfigMapper, Model
     public boolean deleteByIds(List<Long> ids) {
         // 删除前先获取关联的智能体ID，以便后续触发重新注册
         List<Long> agentIds = getAgentDefinitions(ids).stream().map(AgentDefinition::getId).toList();
-        boolean result = removeByIds(ids);
+        boolean result = modelConfigRepository.deleteByIds(ids);
         publishAgentReregister(agentIds);
         return result;
     }
 
     @Override
     public boolean doUpdate(ModelConfig entity) {
-        boolean result = updateById(entity);
+        boolean result = modelConfigRepository.updateById(entity);
         List<Long> agentIds = getAgentDefinitions(List.of(entity.getId())).stream().map(AgentDefinition::getId).toList();
         publishAgentReregister(agentIds);
         return result;
@@ -89,21 +115,10 @@ public class ModelConfigServiceImpl extends ServiceImpl<ModelConfigMapper, Model
                 messagePublisher.publish(RedisChannelTopic.AGENT_REREGISTER_CHANNEL, String.valueOf(agentId)));
     }
 
-    private List<AgentDefinition> getAgentDefinitions(List<Long> systemPromptId) {
-        if (systemPromptId == null || systemPromptId.isEmpty()) {
+    private List<AgentDefinition> getAgentDefinitions(List<Long> modelConfigIds) {
+        if (modelConfigIds == null || modelConfigIds.isEmpty()) {
             return new ArrayList<>();
         }
-
-        String subSql = systemPromptId.stream().map(String::valueOf).collect(Collectors.joining(","));
-
-        String sql = String.format("SELECT * FROM %s WHERE model_config_id IN (%s)", TableConst.AGENT, subSql);
-        return jdbcTemplate.query(sql, (rs, rowNum) -> {
-            AgentDefinition agent = new AgentDefinition();
-            // 手动映射字段
-            agent.setId(rs.getLong("id"));
-            agent.setName(rs.getString("name"));
-            agent.setDescription(rs.getString("description"));
-            return agent;
-        });
+        return agentDefinitionRepository.listByModelConfigIds(modelConfigIds);
     }
 }

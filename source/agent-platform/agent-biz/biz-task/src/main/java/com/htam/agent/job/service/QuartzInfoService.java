@@ -1,14 +1,22 @@
 package com.htam.agent.job.service;
 
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.htam.agent.common.entity.JobInfo;
+
+import java.util.List;
 
 /**
  * 描述：定时任务管理服务接口
  *
  * @author huxuehao
  **/
-public interface QuartzInfoService extends IService<JobInfo> {
+public interface QuartzInfoService {
+    List<JobInfo> list();
+
+    List<JobInfo> listEnabled();
+
+    JobInfo getById(String id);
+
+    JobInfo getAgentJobByBizId(String bizId);
 
     /**
      * 更新任务状态

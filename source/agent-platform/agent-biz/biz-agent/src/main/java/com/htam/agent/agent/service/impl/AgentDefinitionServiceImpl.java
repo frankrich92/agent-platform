@@ -1,17 +1,18 @@
 package com.htam.agent.agent.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.htam.agent.a2a.service.AgentA2aService;
-import com.htam.agent.agent.mapper.AgentDefinitionMapper;
-import com.htam.agent.agent.mapper.IJobInfoMapper;
 import com.htam.agent.agent.service.AgentDefinitionService;
 import com.htam.agent.agent.service.AgentSubAgentService;
 import com.htam.agent.cluster.core.MessagePublisher;
 import com.htam.agent.common.consts.RedisChannelTopic;
+import com.htam.agent.common.dto.AgentDefinitionDTO;
 import com.htam.agent.common.entity.*;
 import com.htam.agent.common.enums.AgentType;
 import com.htam.agent.common.enums.ModelType;
+import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.common.util.BeanUtils;
 import com.htam.agent.common.util.JsonUtils;
 import com.htam.agent.common.vo.AgentDefinitionVO;
@@ -27,15 +28,19 @@ import com.htam.agent.skill.service.SkillPackageService;
 import com.htam.agent.studio.service.AgentStudioService;
 import com.htam.agent.tool.service.AgentToolService;
 import com.htam.agent.agent.service.AgentCodeExecutionService;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.htam.agent.tool.service.ToolService;
+import com.htam.agent.repo.agent.AgentDefinitionRepository;
+import com.htam.agent.repo.agent.JobInfoRepository;
+import com.htam.agent.repo.support.RepoPage;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -45,7 +50,9 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
-public class AgentDefinitionServiceImpl extends ServiceImpl<AgentDefinitionMapper, AgentDefinition> implements AgentDefinitionService {
+@Slf4j
+public class AgentDefinitionServiceImpl implements AgentDefinitionService {
+    private final AgentDefinitionRepository agentDefinitionRepository;
     private final AgentHookService agentHookService;
     private final AgentToolService agentToolService;
     private final ToolService toolService;
@@ -58,9 +65,40 @@ public class AgentDefinitionServiceImpl extends ServiceImpl<AgentDefinitionMappe
     private final ParamsAdapter paramsAdapter;
     private final AgentA2aService agentA2aService;
     private final AgentStudioService agentStudioService;
-    private final IJobInfoMapper iJobInfoMapper;
+    private final JobInfoRepository jobInfoRepository;
     private final AgentCodeExecutionService agentCodeExecutionService;
     private final MessagePublisher messagePublisher;
+
+    @Override
+    public IPage<AgentDefinitionVO> pageAgentDefinitions(PageParams pageParams, AgentDefinitionDTO query) {
+        RepoPage<AgentDefinition> repoPage = agentDefinitionRepository.page(
+                pageParams,
+                query.getName(),
+                query.getAgentType(),
+                query.getAgentCode(),
+                query.getTag(),
+                query.getEnabled());
+        IPage<AgentDefinition> page = new Page<>(repoPage.current(), repoPage.size(), repoPage.total());
+        page.setRecords(repoPage.records());
+        IPage<AgentDefinitionVO> pageVo = BeanUtils.copyPage(page, AgentDefinitionVO.class);
+        fillListDerivedFields(pageVo.getRecords());
+        return pageVo;
+    }
+
+    @Override
+    public List<AgentDefinition> list() {
+        return agentDefinitionRepository.list();
+    }
+
+    @Override
+    public AgentDefinition getById(Long id) {
+        return agentDefinitionRepository.getById(id);
+    }
+
+    @Override
+    public AgentDefinition getByAgentCode(String agentCode) {
+        return agentDefinitionRepository.getByAgentCode(agentCode);
+    }
 
     @Override
     public AgentDefinitionVO agentDefinitionDetail(Long id) {
@@ -72,6 +110,11 @@ public class AgentDefinitionServiceImpl extends ServiceImpl<AgentDefinitionMappe
         AgentDefinitionVO vo = BeanUtils.copy(entity, AgentDefinitionVO.class);
 
         vo.setHook(agentHookService.getHookIds(id));
+        vo.setUsed(usedWithAgent(List.of(id)));
+        List<JobInfo> agentJobs = jobInfoRepository.listAgentJobsByBizId(id);
+        if (agentJobs.size() == 1) {
+            vo.setJobInfo(agentJobs.getFirst());
+        }
         Long studioConfigId = agentStudioService.getStudioIdByAgentId(id);
         if (studioConfigId != null) {
             vo.setStudioConfigId(studioConfigId);
@@ -95,11 +138,35 @@ public class AgentDefinitionServiceImpl extends ServiceImpl<AgentDefinitionMappe
         return vo;
     }
 
+    private void fillListDerivedFields(List<AgentDefinitionVO> records) {
+        if (records == null || records.isEmpty()) {
+            return;
+        }
+        List<JobInfo> agentJobs = jobInfoRepository.listAgentJobs();
+        Map<String, JobInfo> jobMap = agentJobs.stream().collect(Collectors.toMap(
+                JobInfo::getBizId,
+                item -> item,
+                (existing, replacement) -> existing));
+        Map<Long, Long> studioMap = agentStudioService.getStudioIdsByAgentIds(records.stream()
+                .map(AgentDefinitionVO::getId)
+                .toList());
+        records.forEach(agentVo -> {
+            JobInfo jobInfo = jobMap.get(String.valueOf(agentVo.getId()));
+            if (jobInfo != null) {
+                agentVo.setJobInfo(jobInfo);
+            }
+            Long studioId = studioMap.get(agentVo.getId());
+            if (studioId != null) {
+                agentVo.setStudioConfigId(studioId);
+            }
+        });
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean saveAgentDefinition(AgentDefinitionVO vo) {
         AgentDefinition agentDefinition = BeanUtils.copy(vo, AgentDefinition.class);
-        save(agentDefinition);
+        agentDefinitionRepository.save(agentDefinition);
         vo.setId(agentDefinition.getId());
 
         saveSubItems(vo);
@@ -110,13 +177,10 @@ public class AgentDefinitionServiceImpl extends ServiceImpl<AgentDefinitionMappe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateAgentDefinition(AgentDefinitionVO vo) {
-        updateById(BeanUtils.copy(vo, AgentDefinition.class));
+        agentDefinitionRepository.updateById(BeanUtils.copy(vo, AgentDefinition.class));
 
         if (vo.getAgentCode() == null) {
-            List<JobInfo> agent = iJobInfoMapper.selectList(
-                    new LambdaQueryWrapper<JobInfo>()
-                            .eq(JobInfo::getType, "AGENT")
-                            .eq(JobInfo::getBizId, vo.getId()));
+            List<JobInfo> agent = jobInfoRepository.listAgentJobsByBizId(vo.getId());
             if (!agent.isEmpty() && agent.getFirst().isEnabled()) {
                 throw new RuntimeException("请先禁用定时任务");
             }
@@ -164,17 +228,14 @@ public class AgentDefinitionServiceImpl extends ServiceImpl<AgentDefinitionMappe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean deleteAgentDefinition(List<Long> ids) {
-        List<JobInfo> agent = iJobInfoMapper.selectList(
-                new LambdaQueryWrapper<JobInfo>()
-                        .eq(JobInfo::getType, "AGENT")
-                        .in(JobInfo::getBizId, ids));
+        List<JobInfo> agent = jobInfoRepository.listAgentJobsByBizIds(ids);
         if (!agent.isEmpty()) {
             throw new RuntimeException("请先解绑定时任务");
         }
 
-        List<AgentDefinition> agents = listByIds(ids);
+        List<AgentDefinition> agents = agentDefinitionRepository.listByIds(ids);
 
-        removeByIds(ids);
+        agentDefinitionRepository.deleteByIds(ids);
         agentA2aService.deleteA2aConfig(ids);
         agentSubAgentService.deleteSubAgent(ids);
         agentHookService.deleteAgentHook(ids);
@@ -209,15 +270,7 @@ public class AgentDefinitionServiceImpl extends ServiceImpl<AgentDefinitionMappe
 
     @Override
     public List<String> listTags() {
-        return this.lambdaQuery()
-                .select(AgentDefinition::getTag)
-                .isNotNull(AgentDefinition::getTag)
-                .groupBy(AgentDefinition::getTag)
-                .list()
-                .stream()
-                .map(AgentDefinition::getTag)
-                .filter(category -> category != null && !category.isEmpty())
-                .collect(Collectors.toList());
+        return agentDefinitionRepository.listTags();
     }
 
     @Override
@@ -260,11 +313,7 @@ public class AgentDefinitionServiceImpl extends ServiceImpl<AgentDefinitionMappe
     public List<ToolConfig> getEnabledToolsOfAgent(Long agentId) {
         List<Long> toolIds = agentToolService.getToolIds(agentId);
         if (!toolIds.isEmpty()) {
-            return toolService.list(
-                    new LambdaQueryWrapper<ToolConfig>()
-                            .select(ToolConfig::getId, ToolConfig::getName, ToolConfig::getToolId, ToolConfig::getDescription)
-                            .eq(ToolConfig::getEnabled, true)
-                            .in(ToolConfig::getId, toolIds));
+            return toolService.listEnabledBriefByIds(toolIds);
         }
         return List.of();
     }
@@ -273,11 +322,7 @@ public class AgentDefinitionServiceImpl extends ServiceImpl<AgentDefinitionMappe
     public List<SkillPackage> getEnabledSkillsOfAgent(Long agentId) {
         List<Long> skillPackageIds = agentSkillPackageService.getSkillPackageIds(agentId);
         if (!skillPackageIds.isEmpty()) {
-            return skillPackageService.list(
-                    new LambdaQueryWrapper<SkillPackage>()
-                            .select(SkillPackage::getId, SkillPackage::getName, SkillPackage::getDescription)
-                            .eq(SkillPackage::getEnabled, true)
-                            .in(SkillPackage::getId, skillPackageIds));
+            return skillPackageService.listEnabledBriefByIds(skillPackageIds);
         }
         return Collections.emptyList();
     }

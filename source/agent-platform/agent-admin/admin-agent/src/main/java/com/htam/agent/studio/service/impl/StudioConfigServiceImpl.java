@@ -1,19 +1,16 @@
 package com.htam.agent.studio.service.impl;
 
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.htam.agent.common.consts.TableConst;
 import com.htam.agent.common.entity.AgentDefinition;
 import com.htam.agent.common.entity.StudioConfig;
-import com.htam.agent.studio.mapper.StudioConfigMapper;
+import com.htam.agent.repo.agent.AgentDefinitionRepository;
+import com.htam.agent.repo.agent.StudioConfigRepository;
 import com.htam.agent.studio.service.AgentStudioService;
 import com.htam.agent.studio.service.StudioConfigService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 描述：StudioConfigServiceImpl
@@ -22,35 +19,46 @@ import java.util.stream.Collectors;
  **/
 @Service
 @RequiredArgsConstructor
-public class StudioConfigServiceImpl extends ServiceImpl<StudioConfigMapper, StudioConfig> implements StudioConfigService {
-    private final JdbcTemplate jdbcTemplate;
+public class StudioConfigServiceImpl implements StudioConfigService {
+    private final AgentDefinitionRepository agentDefinitionRepository;
     private final AgentStudioService agentStudioService;
+    private final StudioConfigRepository studioConfigRepository;
+
+    @Override
+    public List<StudioConfig> list() {
+        return studioConfigRepository.list();
+    }
+
+    @Override
+    public StudioConfig getById(Long id) {
+        return studioConfigRepository.getById(id);
+    }
+
+    @Override
+    public Boolean save(StudioConfig entity) {
+        return studioConfigRepository.save(entity);
+    }
+
+    @Override
+    public Boolean updateById(StudioConfig entity) {
+        return studioConfigRepository.updateById(entity);
+    }
+
+    @Override
+    public Boolean removeByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return true;
+        }
+        return studioConfigRepository.deleteByIds(ids);
+    }
 
     @Override
     public List<Object> usedWithAgent(List<Long> ids) {
         List<Object> names = new ArrayList<>();
-        getAgentDefinitions(agentStudioService.getAgentIds(ids)).forEach(agentDefinition -> {
+        agentDefinitionRepository.listByIds(agentStudioService.getAgentIds(ids)).forEach(agentDefinition -> {
             names.add(agentDefinition.getName());
         });
 
         return names;
-    }
-
-    private List<AgentDefinition> getAgentDefinitions(List<Long> agentIds) {
-        if (agentIds == null || agentIds.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        String subSql = agentIds.stream().map(String::valueOf).collect(Collectors.joining(","));
-
-        String sql = String.format("SELECT * FROM %s WHERE id IN (%s)", TableConst.AGENT, subSql);
-        return jdbcTemplate.query(sql, (rs, rowNum) -> {
-            AgentDefinition agent = new AgentDefinition();
-            // 手动映射字段
-            agent.setId(rs.getLong("id"));
-            agent.setName(rs.getString("name"));
-            agent.setDescription(rs.getString("description"));
-            return agent;
-        });
     }
 }

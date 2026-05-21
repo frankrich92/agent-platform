@@ -1,8 +1,8 @@
 package com.htam.agent.common.wrapper;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.htam.agent.common.enums.RagMode;
 import io.agentscope.core.rag.Knowledge;
-import io.agentscope.core.rag.RAGMode;
 import lombok.*;
 
 /**
@@ -16,7 +16,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class KnowledgeWrapper {
-    private RAGMode ragMode;
+    private RagMode ragMode;
     private Knowledge knowledge;
     private JsonNode retrievalConfig;
 }

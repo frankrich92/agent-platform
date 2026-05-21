@@ -4,7 +4,6 @@ import com.htam.agent.common.config.auth.RoleNeed;
 import com.htam.agent.common.dto.HookConfigDTO;
 import com.htam.agent.common.entity.HookConfig;
 import com.htam.agent.common.enums.Role;
-import com.htam.agent.common.mp.support.MP;
 import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.common.r.R;
 import com.htam.agent.common.util.BeanUtils;
@@ -33,7 +32,7 @@ public class HookConfigController {
      */
     @GetMapping("/page")
     public R<IPage<HookConfigVO>> page(PageParams pageParams, HookConfigDTO query) {
-        IPage<HookConfig> page = hookConfigService.page(MP.getPage(pageParams), MP.getQueryWrapper(query));
+        IPage<HookConfig> page = hookConfigService.page(pageParams, query);
         return R.data(BeanUtils.copyPage(page, HookConfigVO.class));
     }
 

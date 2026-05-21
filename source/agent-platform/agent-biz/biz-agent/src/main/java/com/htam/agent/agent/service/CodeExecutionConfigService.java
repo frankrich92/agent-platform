@@ -1,6 +1,5 @@
 package com.htam.agent.agent.service;
 
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.htam.agent.common.entity.CodeExecutionConfig;
 
 import java.util.List;
@@ -10,7 +9,17 @@ import java.util.List;
  *
  * @author huxuehao
  **/
-public interface CodeExecutionConfigService extends IService<CodeExecutionConfig> {
+public interface CodeExecutionConfigService {
+    List<CodeExecutionConfig> list();
+
+    CodeExecutionConfig getById(Long id);
+
+    boolean save(CodeExecutionConfig entity);
+
+    boolean updateById(CodeExecutionConfig entity);
+
+    boolean removeByIds(List<Long> ids);
+
     /**
      * 查询被哪些Agent使用
      *

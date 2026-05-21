@@ -22,8 +22,10 @@ import io.agentscope.core.memory.autocontext.AutoContextConfig;
 import io.agentscope.core.memory.autocontext.AutoContextHook;
 import io.agentscope.core.memory.autocontext.AutoContextMemory;
 import io.agentscope.core.model.Model;
+import io.agentscope.core.model.StructuredOutputReminder;
 import io.agentscope.core.state.StatePersistence;
 import io.agentscope.core.plan.PlanNotebook;
+import io.agentscope.core.rag.RAGMode;
 import io.agentscope.core.rag.model.RetrieveConfig;
 import io.agentscope.core.skill.SkillBox;
 import io.agentscope.core.studio.StudioManager;
@@ -100,7 +102,7 @@ public class ReActAgentHelper {
         KnowledgeWrapper knowledgeWrapper = knowledgeFactory.getKnowledge(definition);
         if (knowledgeWrapper != null) {
             builder.knowledge(knowledgeWrapper.getKnowledge());
-            builder.ragMode(knowledgeWrapper.getRagMode());
+            builder.ragMode(RAGMode.valueOf(knowledgeWrapper.getRagMode().name()));
 
             JsonNode retrievalConfigNode = knowledgeWrapper.getRetrievalConfig();
             int limit = JsonUtils.getIntValue(retrievalConfigNode, "topK", 5);
@@ -166,7 +168,7 @@ public class ReActAgentHelper {
 
         // 结构化输出
         if (definition.getStructuredOutputEnabled()) {
-            builder.structuredOutputReminder(definition.getStructuredOutputReminder());
+            builder.structuredOutputReminder(StructuredOutputReminder.valueOf(definition.getStructuredOutputReminder().name()));
         }
 
         // 保存Agent定义到上下文

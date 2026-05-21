@@ -4,7 +4,6 @@ import com.htam.agent.common.config.auth.RoleNeed;
 import com.htam.agent.common.dto.SensitiveWordConfigDTO;
 import com.htam.agent.common.entity.SensitiveWordConfig;
 import com.htam.agent.common.enums.Role;
-import com.htam.agent.common.mp.support.MP;
 import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.common.r.R;
 import com.htam.agent.common.util.BeanUtils;
@@ -33,7 +32,7 @@ public class SensitiveWordConfigController {
      */
     @GetMapping("/page")
     public R<IPage<SensitiveWordConfigVO>> page(PageParams pageParams, SensitiveWordConfigDTO query) {
-        IPage<SensitiveWordConfig> page = sensitiveWordConfigService.page(MP.getPage(pageParams), MP.getQueryWrapper(query));
+        IPage<SensitiveWordConfig> page = sensitiveWordConfigService.page(pageParams, query);
         return R.data(BeanUtils.copyPage(page, SensitiveWordConfigVO.class));
     }
 
