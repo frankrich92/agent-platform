@@ -1,0 +1,192 @@
+package com.htam.agent.core.agent;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.htam.agent.agent.service.AgentDefinitionService;
+import com.htam.agent.common.entity.AgentDefinition;
+import com.htam.agent.common.enums.AgentType;
+import com.htam.agent.common.util.FuncUtils;
+import com.htam.agent.common.util.JsonUtils;
+import com.htam.agent.common.wrapper.KnowledgeWrapper;
+import com.htam.agent.core.agui.AgentContext;
+import com.htam.agent.core.hook.HooksFactory;
+import com.htam.agent.core.knowledge.KnowledgeFactory;
+import com.htam.agent.core.model.ChatModelFactory;
+import com.htam.agent.core.prompt.AgentSysPromptFactory;
+import com.htam.agent.core.skill.SkillBoxFactory;
+import com.htam.agent.core.studio.StudioService;
+import com.htam.agent.core.tool.ToolkitFactory;
+import io.agentscope.core.ReActAgent;
+import io.agentscope.core.hook.Hook;
+import io.agentscope.core.memory.InMemoryMemory;
+import io.agentscope.core.memory.autocontext.AutoContextConfig;
+import io.agentscope.core.memory.autocontext.AutoContextHook;
+import io.agentscope.core.memory.autocontext.AutoContextMemory;
+import io.agentscope.core.model.Model;
+import io.agentscope.core.model.StructuredOutputReminder;
+import io.agentscope.core.state.StatePersistence;
+import io.agentscope.core.plan.PlanNotebook;
+import io.agentscope.core.rag.RAGMode;
+import io.agentscope.core.rag.model.RetrieveConfig;
+import io.agentscope.core.skill.SkillBox;
+import io.agentscope.core.studio.StudioManager;
+import io.agentscope.core.studio.StudioMessageHook;
+import io.agentscope.core.tool.ToolExecutionContext;
+import io.agentscope.core.tool.Toolkit;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * 描述：ReAct智能体Helper
+ *
+ * @author huxuehao
+ **/
+@Component
+@RequiredArgsConstructor
+public class ReActAgentHelper {
+    private final AgentDefinitionService agentDefinitionService;
+    private final HooksFactory hooksFactory;
+    private final ChatModelFactory chatModelFactory;
+    private final AgentSysPromptFactory agentSysPromptFactory;
+    private final SkillBoxFactory skillBoxFactory;
+    private final ToolkitFactory toolkitFactory;
+    private final KnowledgeFactory knowledgeFactory;
+    private final StudioService studioService;
+
+    /**
+     * 获取 ReActAgent
+     * @param agentId agentId
+     */
+    public ReActAgent getReActAgent(Long agentId) {
+        AgentDefinition definition = agentDefinitionService.getById(agentId);
+        if (definition == null) {
+            throw new RuntimeException("Agent not found, agentId: " + agentId);
+        }
+
+        if (!definition.getEnabled()) {
+            throw new RuntimeException("Agent is disabled, agentId: " + agentId);
+        }
+
+        if (definition.getAgentType() != AgentType.CUSTOM) {
+            throw new RuntimeException("Agent type is not custom, agentId: " + agentId);
+        }
+
+        return getReActAgent(definition);
+    }
+
+    /**
+     * 获取 ReActAgent
+     * @param definition agent 定义
+     */
+    public ReActAgent getReActAgent(AgentDefinition definition) {
+        Model model = chatModelFactory.getModel(definition);
+        ReActAgent.Builder builder = ReActAgent.builder()
+                .name(definition.getAgentCode())
+                .description(FuncUtils.isEmpty(definition.getDescription()) ? definition.getName() : definition.getDescription())
+                .maxIters(definition.getMaxIterations())
+                .model(model)
+                .sysPrompt(agentSysPromptFactory.getAgentSysPrompt(definition));
+
+        SkillBox skillBox = skillBoxFactory.getSkillBox(definition);
+        if (skillBox != null) {
+            builder.skillBox(skillBox);
+        }
+
+        Toolkit toolkit = toolkitFactory.getToolkit(definition);
+        if (toolkit != null) {
+            builder.toolkit(toolkit);
+        }
+
+        KnowledgeWrapper knowledgeWrapper = knowledgeFactory.getKnowledge(definition);
+        if (knowledgeWrapper != null) {
+            builder.knowledge(knowledgeWrapper.getKnowledge());
+            builder.ragMode(RAGMode.valueOf(knowledgeWrapper.getRagMode().name()));
+
+            JsonNode retrievalConfigNode = knowledgeWrapper.getRetrievalConfig();
+            int limit = JsonUtils.getIntValue(retrievalConfigNode, "topK", 5);
+            double scoreThreshold = JsonUtils.getDoubleValue(retrievalConfigNode, "scoreThreshold", 0.5);
+            builder.retrieveConfig(
+                    RetrieveConfig.builder()
+                            .limit(limit)
+                            .scoreThreshold(scoreThreshold)
+                            .build());
+        }
+
+        Boolean isPlanActive = AgentContext.getIfExists().map(AgentContext::isPlanActive).orElse(false);
+        if (definition.getEnablePlanning() && isPlanActive) {
+            PlanNotebook planNotebook = PlanNotebook.builder()
+                    .maxSubtasks(definition.getMaxSubtasks())
+                    .needUserConfirm(definition.getRequirePlanConfirmation())
+                    .build();
+            builder.planNotebook(planNotebook);
+        }
+
+        // 使用可变列表，避免 getHooks 返回 List.of() 时 add 抛 UnsupportedOperationException
+        List<Hook> hooks = hooksFactory.getHooks(definition);
+        hooks = hooks != null ? new ArrayList<>(hooks) : new ArrayList<>();
+
+        // 配置记忆
+        Boolean isMemoryActive = AgentContext.getIfExists().map(AgentContext::isMemoryActive).orElse(false);
+        if (definition.getEnableMemory() && isMemoryActive) {
+            if (definition.getEnableMemoryCompression()) {
+                JsonNode config = definition.getMemoryCompressionConfig();
+                AutoContextConfig autoContextConfig = AutoContextConfig.builder()
+                        .maxToken(JsonUtils.getLongValue(config, "maxToken", 131072L))
+                        .msgThreshold(JsonUtils.getIntValue(config, "msgThreshold", 100))
+                        .lastKeep(JsonUtils.getIntValue(config, "lastKeep", 50))
+                        .tokenRatio(JsonUtils.getDoubleValue(config, "tokenRatio", 0.75F))
+                        .minCompressionTokenThreshold(JsonUtils.getIntValue(config, "minCompressionTokenThreshold", 5000))
+                        .currentRoundCompressionRatio(JsonUtils.getDoubleValue(config, "currentRoundCompressionRatio", 0.3))
+                        .minConsecutiveToolMessages(JsonUtils.getIntValue(config, "minConsecutiveToolMessages", 6))
+                        .offloadSinglePreview(JsonUtils.getIntValue(config, "offloadSinglePreview", 200))
+                        .largePayloadThreshold(JsonUtils.getLongValue(config, "largePayloadThreshold", 5120L))
+                        .build();
+                builder.memory(new AutoContextMemory(autoContextConfig, model));
+                hooks.add(new AutoContextHook());
+            } else {
+                builder.memory(new InMemoryMemory());
+            }
+            // 启用会话持久化时，确保 Memory 可被 saveTo/loadFrom；若启用规划则同时持久化 PlanNotebook
+            builder.statePersistence(
+                    StatePersistence.builder()
+                            .memoryManaged(true)
+                            .planNotebookManaged(definition.getEnablePlanning() && isPlanActive)
+                            .build());
+        }
+
+        // 配置Studio
+        if (studioService.init(definition)) {
+            hooks.add(new StudioMessageHook(StudioManager.getClient()));
+        }
+
+        // 添加Hook
+        if (!hooks.isEmpty()) {
+            builder.hooks(hooks);
+        }
+
+        // 结构化输出
+        if (definition.getStructuredOutputEnabled()) {
+            builder.structuredOutputReminder(StructuredOutputReminder.valueOf(definition.getStructuredOutputReminder().name()));
+        }
+
+        // 保存Agent定义到上下文
+        AgentContext.get().setAgentDefinition(definition);
+
+        // 注册工具执行上下文
+        ToolExecutionContext context = ToolExecutionContext.builder()
+                .register(AgentContext.get())
+                .build();
+        builder.toolExecutionContext(context);
+
+        // 构建reActAgent
+        ReActAgent reActAgent = builder.build();
+
+        if (skillBox != null) {
+            skillBoxFactory.configureCodeExecution(skillBox, definition.getId());
+        }
+
+        return reActAgent;
+    }
+}

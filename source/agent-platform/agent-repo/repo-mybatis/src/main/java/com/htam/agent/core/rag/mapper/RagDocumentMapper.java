@@ -1,0 +1,14 @@
+package com.htam.agent.core.rag.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.htam.agent.common.entity.RagDocument;
+import org.apache.ibatis.annotations.Mapper;
+
+/**
+ * RAG文档Mapper
+ *
+ * @author huxuehao
+ */
+@Mapper
+public interface RagDocumentMapper extends BaseMapper<RagDocument> {
+}

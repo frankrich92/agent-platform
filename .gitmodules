@@ -1,0 +1,3 @@
+[submodule ".apboa"]
+	path = .apboa
+	url = https://gitee.com/studioustiger/apboa.git

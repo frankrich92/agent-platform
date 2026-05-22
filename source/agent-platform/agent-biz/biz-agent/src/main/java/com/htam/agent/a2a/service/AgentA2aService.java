@@ -1,0 +1,16 @@
+package com.htam.agent.a2a.service;
+
+import com.htam.agent.common.entity.AgentA2A;
+
+import java.util.List;
+
+/**
+ * 描述：AgentA2aService
+ *
+ * @author huxuehao
+ **/
+public interface AgentA2aService {
+    AgentA2A getA2aConfigByAgentId(Long agentId);
+    boolean saveA2aConfig(AgentA2A agentA2A);
+    boolean deleteA2aConfig(List<Long> agentIds);
+}
