@@ -54,7 +54,7 @@ public final class SkillImportPathResolver {
     /**
      * 解析上传压缩包解压后的 skills 根目录（语义别名，便于 Controller 调用）。
      *
-     * @param extractDir 压缩包解压目录（{@code .apboa/temp/{uuid}/}）
+     * @param extractDir 压缩包解压目录（{@code {runtimeRoot}/temp/{uuid}/}）
      * @return 技能包根目录
      */
     public static Path resolveUploadedSkillsDir(Path extractDir) {

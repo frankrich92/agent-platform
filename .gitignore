@@ -4,6 +4,8 @@ build/
 dist/
 ui/dist-zip/
 logs/
+__pycache__/
+*.py[cod]
 
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
@@ -49,6 +51,8 @@ Thumbs.db
 .codex/
 .codex_tmp/
 .cursor/
+.agent-platform*/
+.playwright-mcp/
 .omc/
 .omx/
 .qoder/

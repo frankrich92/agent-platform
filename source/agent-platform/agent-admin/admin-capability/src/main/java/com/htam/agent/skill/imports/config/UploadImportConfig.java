@@ -27,7 +27,7 @@ public class UploadImportConfig {
     private String templatePath;
 
     /**
-     * 压缩包解压根目录（{@code .apboa/temp/{uuid}/}），用于导入完成后清理
+     * 压缩包解压根目录（{@code {runtimeRoot}/temp/{uuid}/}），用于导入完成后清理
      */
     private String extractDirPath;
 }

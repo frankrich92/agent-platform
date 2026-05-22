@@ -44,7 +44,7 @@ public class SysConst {
     public static final String CHAT_KEY_TO_AGENT_CODE_PREFIX = "apboa:chatkey:";
 
     // 工作空间相关
-    public static final String ROOT_DIR_NAME = ".apboa";
+    public static final String ROOT_DIR_NAME = resolveRuntimeRoot();
     public static final String WORKSPACE_DIR_NAME = "workspaces";
     public static final String WORKSPACE_PATH = ROOT_DIR_NAME + "/" + WORKSPACE_DIR_NAME;
     public static final String SKILLS_DIR_NAME = "skills";
@@ -52,4 +52,16 @@ public class SysConst {
 
     // 工作空间钩子错误键
     public static final String WORKSPACE_HOOK_ERROR_KEY = "workspace_hook_error";
+
+    private static String resolveRuntimeRoot() {
+        String propertyValue = System.getProperty("agent.runtime.root");
+        if (propertyValue != null && !propertyValue.isBlank()) {
+            return propertyValue;
+        }
+        String envValue = System.getenv("AGENT_RUNTIME_ROOT");
+        if (envValue != null && !envValue.isBlank()) {
+            return envValue;
+        }
+        return ".agent-platform";
+    }
 }

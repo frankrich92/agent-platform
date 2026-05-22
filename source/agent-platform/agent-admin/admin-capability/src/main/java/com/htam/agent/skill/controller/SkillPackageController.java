@@ -167,7 +167,7 @@ public class SkillPackageController {
             @RequestParam("category") String category,
             @RequestParam("cover") boolean cover) throws IOException {
 
-        // 确保 .apboa/temp 目录存在
+        // 确保运行时 temp 目录存在
         Path tempBase = Paths.get(SysConst.ROOT_DIR_NAME, "temp");
         Files.createDirectories(tempBase);
 

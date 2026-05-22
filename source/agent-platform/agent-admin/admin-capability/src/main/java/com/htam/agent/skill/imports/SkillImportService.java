@@ -46,6 +46,7 @@ public class SkillImportService {
         try {
             GitSkillRepository repo = new GitSkillRepository(config.getRepoUrl(), tempDir);
             try {
+                repo.sync();
                 Path skillsDir = SkillImportPathResolver.resolveSkillsDir(tempDir);
                 return doImport(skillsDir, repo, config.isCover(), config.getCategory());
             } finally {
@@ -150,7 +151,7 @@ public class SkillImportService {
     }
 
     /**
-     * 创建临时目录（.apboa/temp/{uuid}/）
+     * 创建运行时临时目录（{runtimeRoot}/temp/{uuid}/）
      *
      * @return 临时目录路径
      */
