@@ -5,7 +5,8 @@
  */
 
 .app-layout {
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 
   .layout-header {
     position: fixed;
@@ -20,7 +21,9 @@
 
   .layout-content {
     margin-top: 55px;
-    min-height: calc(100vh - 55px - 105px);
+    height: calc(100vh - 55px - 105px);
+    min-height: 0;
+    overflow: auto;
   }
 
   .layout-footer {

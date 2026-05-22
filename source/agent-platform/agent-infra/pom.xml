@@ -4,20 +4,20 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.htam.agent</groupId>
-    <artifactId>agent-platform-modules</artifactId>
+    <artifactId>agent-platform</artifactId>
     <version>1.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
-  <artifactId>platform-capability</artifactId>
-  <packaging>jar</packaging>
-  <dependencies>
-    <dependency>
-      <groupId>com.htam.agent</groupId>
-      <artifactId>platform-common</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.htam.agent</groupId>
-      <artifactId>agent-domain</artifactId>
-    </dependency>
-  </dependencies>
+  <artifactId>agent-infra</artifactId>
+  <packaging>pom</packaging>
+  <modules>
+    <module>infra-common</module>
+    <module>infra-security</module>
+    <module>infra-stream</module>
+    <module>infra-capability</module>
+    <module>infra-provider</module>
+    <module>infra-files</module>
+    <module>infra-observability</module>
+    <module>infra-orchestration</module>
+  </modules>
 </project>

@@ -11,7 +11,7 @@
   <modules>
     <module>agent-domain</module>
     <module>agent-api</module>
-    <module>agent-platform</module>
+    <module>agent-infra</module>
     <module>agent-repo</module>
     <module>agent-runtimes</module>
     <module>agent-biz</module>
@@ -190,42 +190,42 @@
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>platform-common</artifactId>
+        <artifactId>infra-common</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>platform-security</artifactId>
+        <artifactId>infra-security</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>platform-stream</artifactId>
+        <artifactId>infra-stream</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>platform-capability</artifactId>
+        <artifactId>infra-capability</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>platform-provider</artifactId>
+        <artifactId>infra-provider</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>platform-files</artifactId>
+        <artifactId>infra-files</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>platform-observability</artifactId>
+        <artifactId>infra-observability</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>platform-orchestration</artifactId>
+        <artifactId>infra-orchestration</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

@@ -158,6 +158,8 @@ $small-mobile-breakpoint: 375px;
   width: 28px;
   height: 28px;
   flex-shrink: 0;
+  display: block;
+  object-fit: contain;
 }
 
 .chat-sidebar-name {

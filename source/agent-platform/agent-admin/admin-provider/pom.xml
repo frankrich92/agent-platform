@@ -17,7 +17,7 @@
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>platform-provider</artifactId>
+      <artifactId>infra-provider</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>

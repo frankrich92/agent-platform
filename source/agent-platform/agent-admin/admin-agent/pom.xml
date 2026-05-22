@@ -13,7 +13,7 @@
   <dependencies>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>platform-common</artifactId>
+      <artifactId>infra-common</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>

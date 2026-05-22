@@ -29,7 +29,7 @@
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>platform-files</artifactId>
+      <artifactId>infra-files</artifactId>
     </dependency>
   </dependencies>
 </project>

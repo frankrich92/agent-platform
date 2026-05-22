@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 
-from common import E2EError, Module
+from common import BlockedByRepoPolicy, E2EError, Module
 
 
 class AuthIamModule(Module):
@@ -16,17 +16,27 @@ class AuthIamModule(Module):
     def frontend_smoke(self) -> None:
         if not self.config.ui_url:
             return
-        raw = self.client.smoke_get(self.config.ui_url)
+        try:
+            raw = self.client.smoke_get(self.config.ui_url)
+        except E2EError as exc:
+            if str(exc).startswith("cannot connect to "):
+                raise BlockedByRepoPolicy(f"frontend is not reachable at {self.config.ui_url}") from exc
+            raise
         if b"<html" not in raw.lower() and b"<!doctype" not in raw.lower():
             raise E2EError("frontend response is not an HTML document")
 
     def login_refresh(self) -> None:
-        response = self.client.json(
-            "POST",
-            "/auth/login",
-            {"username": self.config.username, "password": md5(self.config.password)},
-            headers={"token": "false"},
-        )
+        try:
+            response = self.client.json(
+                "POST",
+                "/auth/login",
+                {"username": self.config.username, "password": md5(self.config.password)},
+                headers={"token": "false"},
+            )
+        except E2EError as exc:
+            if str(exc).startswith("cannot connect to "):
+                raise BlockedByRepoPolicy(f"backend is not reachable at {self.config.base_url}") from exc
+            raise
         data = self.require_data(response, "login")
         self.client.set_token(data["accessToken"])
         self.state.refresh_token = data["refreshToken"]
