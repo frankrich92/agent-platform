@@ -258,7 +258,7 @@ public class AguiWebFluxHandler {
         /**
          * Set the session storage.
          *
-         * @param session The session storage (InMemorySession or MysqlSession)
+         * @param session The session storage (InMemorySession or persistent database session)
          * @return This builder
          */
         public Builder session(Session session) {

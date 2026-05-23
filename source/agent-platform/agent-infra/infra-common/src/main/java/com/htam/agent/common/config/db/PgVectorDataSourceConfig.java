@@ -26,7 +26,7 @@ public class PgVectorDataSourceConfig {
 
     @Bean(name = "pgVectorDataSource")
     public DataSource pgVectorDataSource(
-            @Value("${rag.pgvector.url:jdbc:postgresql://localhost:5432/apboa_vector}") String url,
+            @Value("${rag.pgvector.url:jdbc:postgresql://localhost:5432/agent_platform_vector}") String url,
             @Value("${rag.pgvector.username:postgres}") String username,
             @Value("${rag.pgvector.password:postgres}") String password,
             @Value("${rag.pgvector.driver-class-name:org.postgresql.Driver}") String driverClassName) {

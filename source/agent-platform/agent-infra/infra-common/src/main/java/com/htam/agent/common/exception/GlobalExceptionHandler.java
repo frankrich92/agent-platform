@@ -250,7 +250,6 @@ public class GlobalExceptionHandler {
         String lowerMsg = originalMsg.toLowerCase();
 
         if (lowerMsg.contains("duplicate entry")) {
-            // MySQL格式: Duplicate entry 'xxx' for key 'uk_name'
             return extractDuplicateInfo(originalMsg);
         } else if (lowerMsg.contains("unique constraint") || lowerMsg.contains("duplicate key")) {
             return extractDuplicateInfo(originalMsg);
@@ -270,9 +269,17 @@ public class GlobalExceptionHandler {
      */
     private String extractDuplicateInfo(String msg) {
         try {
-            // 尝试匹配MySQL的重复条目信息
-            Pattern pattern = Pattern.compile("Duplicate entry '(.+?)' for key '(.+?)'");
+            Pattern pattern = Pattern.compile("duplicate key value violates unique constraint \"(.+?)\"[\\s\\S]*?Key \\((.+?)\\)=\\((.+?)\\) already exists");
             Matcher matcher = pattern.matcher(msg);
+            if (matcher.find()) {
+                String indexName = matcher.group(1);
+                String fieldName = mapIndexToField(indexName);
+                String duplicateValue = matcher.group(3);
+                return String.format("%s [%s] 已存在，请使用其他值", fieldName, duplicateValue);
+            }
+
+            pattern = Pattern.compile("Duplicate entry '(.+?)' for key '(.+?)'");
+            matcher = pattern.matcher(msg);
             if (matcher.find()) {
                 String duplicateValue = matcher.group(1);
                 String indexName = matcher.group(2);

@@ -8,7 +8,7 @@
         FROM chat_message m
         INNER JOIN chat_session s ON m.session_id = s.id
         WHERE s.agent_id = #{agentId}
-          AND m.created_at >= #{startDate}
+          AND m.created_at >= CAST(#{startDate} AS timestamp)
           AND m.role IN ('user', 'assistant')
         GROUP BY DATE(m.created_at)
         ORDER BY DATE(m.created_at)
@@ -16,13 +16,13 @@
 
     <!-- 按日统计平均对话轮次（每会话平均消息数） -->
     <select id="avgRoundsByDay" resultType="java.util.Map">
-        SELECT t.date, IFNULL(AVG(t.msg_count), 0) AS value
+        SELECT t.date, COALESCE(AVG(t.msg_count), 0) AS value
         FROM (
             SELECT DATE(m.created_at) AS date, m.session_id, COUNT(*) AS msg_count
             FROM chat_message m
             INNER JOIN chat_session s ON m.session_id = s.id
             WHERE s.agent_id = #{agentId}
-              AND m.created_at >= #{startDate}
+              AND m.created_at >= CAST(#{startDate} AS timestamp)
               AND m.role IN ('user', 'assistant')
             GROUP BY DATE(m.created_at), m.session_id
         ) t

@@ -14,7 +14,7 @@ public class InterceptorFactory {
      * 创建分页拦截器
      **/
     public static InnerInterceptor createPaginationInnerInterceptor() {
-        return createPaginationInnerInterceptor(DbType.MYSQL);
+        return createPaginationInnerInterceptor(DbType.POSTGRE_SQL);
     }
 
     /**

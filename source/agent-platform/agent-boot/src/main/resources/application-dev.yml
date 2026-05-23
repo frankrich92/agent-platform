@@ -35,10 +35,10 @@ spring:
           max-wait: -1ms
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3306/apboa?useSSL=false&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&transformedBitIsBoolean=true&serverTimezone=GMT%2B8&nullCatalogMeansCurrent=true&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
-    username: root
-    password: root
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://127.0.0.1:52432/agent_platform
+    username: htam_agent
+    password: htam_agent
     druid:
       initial-size: 5
       min-idle: 5
@@ -62,9 +62,9 @@ jwt:
 rag:
   store: pgvector # pgvector | milvus | qdrant，向量存储类型
   pgvector:
-    url: jdbc:postgresql://127.0.0.1:52432/apboa_vector
-    username: apboa
-    password: apboa
+    url: jdbc:postgresql://127.0.0.1:52432/agent_platform_vector
+    username: htam_agent
+    password: htam_agent
     driver-class-name: org.postgresql.Driver
   milvus:
     host: 127.0.0.1

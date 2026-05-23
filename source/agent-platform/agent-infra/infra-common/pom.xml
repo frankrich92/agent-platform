@@ -35,12 +35,6 @@
     </dependency>
     <dependency>
       <groupId>io.agentscope</groupId>
-      <artifactId>agentscope-extensions-session-mysql</artifactId>
-      <version>${agentscope.version}</version>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>io.agentscope</groupId>
       <artifactId>agentscope-extensions-a2a-client</artifactId>
       <version>${agentscope.version}</version>
     </dependency>
@@ -109,11 +103,6 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-webflux</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.mysql</groupId>
-      <artifactId>mysql-connector-j</artifactId>
-      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>com.alibaba</groupId>

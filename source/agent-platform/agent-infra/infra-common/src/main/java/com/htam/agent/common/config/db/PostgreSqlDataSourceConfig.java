@@ -14,15 +14,15 @@ import org.springframework.context.annotation.Primary;
 import javax.sql.DataSource;
 
 /**
- * MySQL主数据源配置，确保多数据源场景下MySQL为主数据源
+ * PostgreSQL 主数据源配置，确保多数据源场景下业务库为主数据源
  *
  * @author huxuehao
  */
 @Configuration
 @AutoConfigureBefore({DataSourceAutoConfiguration.class, DruidDataSourceAutoConfigure.class})
-public class MySqlDataSourceConfig {
+public class PostgreSqlDataSourceConfig {
 
-    private static final Logger log = LoggerFactory.getLogger(MySqlDataSourceConfig.class);
+    private static final Logger log = LoggerFactory.getLogger(PostgreSqlDataSourceConfig.class);
 
     @Bean
     @Primary
@@ -57,7 +57,7 @@ public class MySqlDataSourceConfig {
         dataSource.setTestWhileIdle(testWhileIdle);
         dataSource.setTimeBetweenEvictionRunsMillis(timeBetweenEvictionRunsMillis);
         dataSource.setMinEvictableIdleTimeMillis(minEvictableIdleTimeMillis);
-        log.info("MySQL主数据源初始化完成, url={}", url);
+        log.info("PostgreSQL主数据源初始化完成, url={}", url);
         return dataSource;
     }
 }

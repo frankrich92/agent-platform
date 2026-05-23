@@ -30,7 +30,10 @@ public class AccountMybatisRepository implements AccountRepository {
 
     @Override
     public Account getById(String id) {
-        return accountMapper.selectById(id);
+        if (id == null || id.isBlank()) {
+            return null;
+        }
+        return accountMapper.selectById(Long.valueOf(id));
     }
 
     @Override

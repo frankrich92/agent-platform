@@ -32,10 +32,21 @@ const emit = defineEmits<{
  */
 const formRef = ref()
 
+interface CodeExecutionConfigFormData {
+  configName: string
+  workDir: string
+  uploadDir: string
+  autoUpload: boolean
+  enableShell: boolean
+  enableRead: boolean
+  enableWrite: boolean
+  command: string[]
+}
+
 /**
  * 表单数据
  */
-const formData = ref({
+const formData = ref<CodeExecutionConfigFormData>({
   configName: '',
   workDir: runtimeDefaults.workspacesDir,
   uploadDir: runtimeDefaults.skillsDir,

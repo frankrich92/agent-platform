@@ -68,7 +68,7 @@ public class JobInfoMybatisRepository implements JobInfoRepository {
     public List<JobInfo> listAgentJobsByBizId(Long bizId) {
         return jobInfoMapper.selectList(Wrappers.<JobInfo>lambdaQuery()
                 .eq(JobInfo::getType, "AGENT")
-                .eq(JobInfo::getBizId, bizId));
+                .eq(JobInfo::getBizId, String.valueOf(bizId)));
     }
 
     @Override
@@ -76,8 +76,11 @@ public class JobInfoMybatisRepository implements JobInfoRepository {
         if (bizIds == null || bizIds.isEmpty()) {
             return List.of();
         }
+        List<String> bizIdValues = bizIds.stream()
+                .map(String::valueOf)
+                .toList();
         return jobInfoMapper.selectList(Wrappers.<JobInfo>lambdaQuery()
                 .eq(JobInfo::getType, "AGENT")
-                .in(JobInfo::getBizId, bizIds));
+                .in(JobInfo::getBizId, bizIdValues));
     }
 }

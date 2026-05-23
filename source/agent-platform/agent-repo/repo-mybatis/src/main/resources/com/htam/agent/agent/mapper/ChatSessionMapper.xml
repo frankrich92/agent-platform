@@ -7,7 +7,7 @@
         SELECT DATE(created_at) AS date, COUNT(*) AS value
         FROM chat_session
         WHERE agent_id = #{agentId}
-          AND created_at >= #{startDate}
+          AND created_at >= CAST(#{startDate} AS timestamp)
         GROUP BY DATE(created_at)
         ORDER BY DATE(created_at)
     </select>
@@ -17,7 +17,7 @@
         SELECT DATE(created_at) AS date, COUNT(DISTINCT user_id) AS value
         FROM chat_session
         WHERE agent_id = #{agentId}
-          AND created_at >= #{startDate}
+          AND created_at >= CAST(#{startDate} AS timestamp)
         GROUP BY DATE(created_at)
         ORDER BY DATE(created_at)
     </select>

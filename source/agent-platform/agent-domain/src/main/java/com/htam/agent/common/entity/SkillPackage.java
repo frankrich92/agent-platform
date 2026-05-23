@@ -41,18 +41,18 @@ public class SkillPackage extends BaseEntity {
     /**
      * 资源列表
      */
-    @TableField(value = "`references`",typeHandler = JsonNodeTypeHandler.class)
+    @TableField(value = "\"references\"",typeHandler = JsonNodeTypeHandler.class)
     private JsonNode references;
 
     /**
      * 示例列表
      */
-    @TableField(value = "`examples`",typeHandler = JsonNodeTypeHandler.class)
+    @TableField(typeHandler = JsonNodeTypeHandler.class)
     private JsonNode examples;
 
     /**
      * 脚本列表
      */
-    @TableField(value = "`scripts`",typeHandler = JsonNodeTypeHandler.class)
+    @TableField(typeHandler = JsonNodeTypeHandler.class)
     private JsonNode scripts;
 }

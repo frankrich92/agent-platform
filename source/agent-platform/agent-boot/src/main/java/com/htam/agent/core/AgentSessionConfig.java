@@ -4,7 +4,6 @@ import com.htam.agent.common.consts.TableConst;
 import io.agentscope.core.agui.adapter.AguiAdapterConfig;
 import io.agentscope.core.agui.registry.AguiAgentRegistry;
 import io.agentscope.core.session.Session;
-import io.agentscope.core.session.mysql.MysqlSession;
 import io.agentscope.spring.boot.agui.common.AguiProperties;
 import io.agentscope.spring.boot.agui.common.ThreadSessionManager;
 import io.agentscope.spring.boot.agui.mvc.AguiMvcController;
@@ -20,27 +19,25 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import javax.sql.DataSource;
 
 /**
- * 配置 MysqlSession 替代 InMemorySession，实现状态持久化
+ * 配置 PostgreSQL Session 替代 InMemorySession，实现状态持久化
  *
  * @author huxuehao
  */
 @Slf4j
 @Configuration
-@ConditionalOnClass({DataSource.class, MysqlSession.class})
+@ConditionalOnClass(DataSource.class)
 public class AgentSessionConfig {
 
-    private static final String DATABASE_NAME = "apboa";
-
     /**
-     * 创建 MysqlSession Bean
+     * 创建 PostgreSQL Session Bean
      *
      * @param dataSource 数据源
-     * @return MysqlSession 实例
+     * @return PostgreSQL Session 实例
      */
     @Bean
     @Primary
     public Session agentSession(DataSource dataSource) {
-        return new MysqlSession(dataSource, DATABASE_NAME, TableConst.AGENT_SCOPE_SESSIONS, true);
+        return new PostgresSession(dataSource, TableConst.AGENT_SCOPE_SESSIONS);
     }
 
     /**

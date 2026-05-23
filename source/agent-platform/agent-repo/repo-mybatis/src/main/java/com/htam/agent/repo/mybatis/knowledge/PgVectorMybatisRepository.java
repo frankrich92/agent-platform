@@ -23,6 +23,7 @@ public class PgVectorMybatisRepository implements PgVectorRepository {
     private static final int[] SUPPORTED_DIMENSIONS = {64, 128, 256, 512, 768, 1024, 2048, 2560};
 
     private final JdbcTemplate pgJdbcTemplate;
+    private boolean schemaInitialized;
 
     public PgVectorMybatisRepository(
             @Autowired(required = false) @Qualifier("pgVectorDataSource") DataSource pgVectorDataSource) {
@@ -38,11 +39,12 @@ public class PgVectorMybatisRepository implements PgVectorRepository {
 
     @Override
     public boolean isAvailable() {
-        return pgJdbcTemplate != null;
+        return pgJdbcTemplate != null && schemaInitialized;
     }
 
     @Override
     public void storeEmbedding(Long id, Long chunkId, Long documentId, Long knowledgeBaseConfigId, float[] embedding) {
+        ensureAvailable();
         String tableName = getTableName(embedding.length);
         String vectorStr = arrayToVectorString(embedding);
         String sql = "INSERT INTO " + tableName + " (id, chunk_id, document_id, knowledge_base_config_id, embedding) "
@@ -52,6 +54,7 @@ public class PgVectorMybatisRepository implements PgVectorRepository {
 
     @Override
     public List<VectorSearchRecord> search(float[] queryEmbedding, Long knowledgeBaseConfigId, int limit) {
+        ensureAvailable();
         String tableName = getTableName(queryEmbedding.length);
         String vectorStr = arrayToVectorString(queryEmbedding);
         String sql = "SELECT chunk_id, document_id, 1 - (embedding <=> ?::vector) AS score "
@@ -73,6 +76,7 @@ public class PgVectorMybatisRepository implements PgVectorRepository {
 
     @Override
     public void deleteByDocumentId(Long documentId) {
+        ensureAvailable();
         for (int dim : SUPPORTED_DIMENSIONS) {
             pgJdbcTemplate.update("DELETE FROM " + getTableName(dim) + " WHERE document_id = ?", documentId);
         }
@@ -80,6 +84,7 @@ public class PgVectorMybatisRepository implements PgVectorRepository {
 
     @Override
     public void deleteByKnowledgeBaseConfigId(Long knowledgeBaseConfigId) {
+        ensureAvailable();
         for (int dim : SUPPORTED_DIMENSIONS) {
             pgJdbcTemplate.update(
                     "DELETE FROM " + getTableName(dim) + " WHERE knowledge_base_config_id = ?",
@@ -89,6 +94,7 @@ public class PgVectorMybatisRepository implements PgVectorRepository {
 
     @Override
     public void deleteByChunkId(Long chunkId) {
+        ensureAvailable();
         for (int dim : SUPPORTED_DIMENSIONS) {
             pgJdbcTemplate.update("DELETE FROM " + getTableName(dim) + " WHERE chunk_id = ?", chunkId);
         }
@@ -96,7 +102,10 @@ public class PgVectorMybatisRepository implements PgVectorRepository {
 
     private void initSchema() {
         try {
-            pgJdbcTemplate.execute("CREATE EXTENSION IF NOT EXISTS vector");
+            if (!ensureVectorExtension()) {
+                log.warn("PgVector扩展不可用，本地RAG向量检索功能不可用");
+                return;
+            }
             for (int dim : SUPPORTED_DIMENSIONS) {
                 String embeddingType = dim > 2000 ? "halfvec" : "vector";
                 String tableName = getTableName(dim);
@@ -117,9 +126,34 @@ public class PgVectorMybatisRepository implements PgVectorRepository {
                 pgJdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_rag_vectors_embedding_" + dim
                         + " ON " + tableName + " USING hnsw (embedding " + embeddingType + "_cosine_ops)");
             }
+            schemaInitialized = true;
             log.info("PgVector表结构初始化完成，共{}张表", SUPPORTED_DIMENSIONS.length);
         } catch (Exception e) {
             log.error("PgVector表结构初始化失败", e);
+        }
+    }
+
+    private boolean ensureVectorExtension() {
+        try {
+            pgJdbcTemplate.execute("CREATE EXTENSION IF NOT EXISTS vector");
+            return true;
+        } catch (Exception e) {
+            Boolean exists = pgJdbcTemplate.queryForObject(
+                    "SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'vector')",
+                    Boolean.class);
+            if (Boolean.TRUE.equals(exists)) {
+                log.warn("当前数据库用户无权创建vector扩展，但扩展已存在，继续初始化PgVector表结构");
+                return true;
+            }
+            log.warn("当前数据库用户无权创建vector扩展，请使用超级用户在向量库执行CREATE EXTENSION vector: {}", e.getMessage());
+            log.debug("创建vector扩展失败", e);
+            return false;
+        }
+    }
+
+    private void ensureAvailable() {
+        if (!isAvailable()) {
+            throw new IllegalStateException("PgVector不可用，请检查向量库连接和vector扩展");
         }
     }
 
