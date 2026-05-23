@@ -13,7 +13,7 @@ import { storeToRefs } from 'pinia'
 import * as toolApi from '@/api/tool'
 import type {ToolVO} from '@/types'
 import ToolCard from '@/components/tool/ToolCard.vue'
-import CreateCard from '@/components/tool/CreateCard.vue'
+import CreateCard from '@/components/tool/ToolCreateCard.vue'
 import ToolForm from '@/components/tool/ToolForm.vue'
 import {AgentModalApi} from "@/components/common/AgentModalApi.ts";
 import AgentInfiniteLoading from '@/components/common/AgentInfiniteLoading.vue'

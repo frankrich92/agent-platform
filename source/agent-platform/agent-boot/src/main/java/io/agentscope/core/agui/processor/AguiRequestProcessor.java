@@ -32,6 +32,7 @@ public class AguiRequestProcessor {
     private final AguiAdapterConfig config;
     private final Session session;
     private final JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate conversationJdbcTemplate;
 
     private AguiRequestProcessor(Builder builder) {
         this.agentResolver =
@@ -39,6 +40,9 @@ public class AguiRequestProcessor {
         this.config = builder.config != null ? builder.config : AguiAdapterConfig.defaultConfig();
         this.session = builder.session != null ? builder.session : new InMemorySession();
         this.jdbcTemplate = builder.jdbcTemplate;
+        this.conversationJdbcTemplate = builder.conversationJdbcTemplate != null
+                ? builder.conversationJdbcTemplate
+                : builder.jdbcTemplate;
     }
 
     /**
@@ -91,7 +95,7 @@ public class AguiRequestProcessor {
         if (agent instanceof ReActAgent reActAgent) {
             if (memoryActive) {
                 try {
-                    AgentDefinition agentDefinition = getAgentDefinition(threadId, jdbcTemplate);
+                    AgentDefinition agentDefinition = getAgentDefinition(threadId, conversationJdbcTemplate, jdbcTemplate);
                     if (agentDefinition != null && agentDefinition.getEnableMemory()) {
                         // 从session中加载历史会话
                         reActAgent.loadFrom(session, threadId);
@@ -131,40 +135,46 @@ public class AguiRequestProcessor {
     /**
      * 通过 sessionId 获取 AgentDefinition
      * @param sessionId threadId
-     * @param jdbcTemplate jdbcTemplate
      */
-    private AgentDefinition getAgentDefinition(String sessionId, JdbcTemplate jdbcTemplate) {
+    private AgentDefinition getAgentDefinition(
+            String sessionId, JdbcTemplate conversationJdbcTemplate, JdbcTemplate jdbcTemplate) {
         if (sessionId == null || sessionId.isEmpty()) {
             return null;
         }
+        Long chatSessionId;
+        try {
+            chatSessionId = Long.valueOf(sessionId);
+        } catch (NumberFormatException e) {
+            return null;
+        }
 
-        String chat_session_sql = String.format("SELECT * FROM %s WHERE id = %s", TableConst.CHAT_SESSION, sessionId);
-        List<ChatSession> chatSessions = jdbcTemplate.query(chat_session_sql, (rs, rowNum) -> {
+        String chatSessionSql = String.format("SELECT * FROM %s WHERE id = ?", TableConst.CHAT_SESSION);
+        List<ChatSession> chatSessions = conversationJdbcTemplate.query(chatSessionSql, (rs, rowNum) -> {
             ChatSession chatSession = new ChatSession();
             // 手动映射字段
             chatSession.setId(rs.getLong("id"));
             chatSession.setAgentId(rs.getLong("agent_id"));
             return chatSession;
-        });
+        }, chatSessionId);
 
         if (chatSessions.isEmpty()) {
             return null;
         }
 
-        String agent_definition_sql = String.format("SELECT * FROM %s WHERE id = %s", TableConst.AGENT, chatSessions.getFirst().getAgentId());
-        List<AgentDefinition> AgentDefinitions = jdbcTemplate.query(agent_definition_sql, (rs, rowNum) -> {
+        String agentDefinitionSql = String.format("SELECT * FROM %s WHERE id = ?", TableConst.AGENT);
+        List<AgentDefinition> agentDefinitions = jdbcTemplate.query(agentDefinitionSql, (rs, rowNum) -> {
             AgentDefinition agentDefinition = new AgentDefinition();
             // 手动映射字段
             agentDefinition.setId(rs.getLong("id"));
             agentDefinition.setEnableMemory(rs.getBoolean("enable_memory"));
             return agentDefinition;
-        });
+        }, chatSessions.getFirst().getAgentId());
 
-        if (AgentDefinitions.isEmpty()) {
+        if (agentDefinitions.isEmpty()) {
             return null;
         }
 
-        return AgentDefinitions.getFirst();
+        return agentDefinitions.getFirst();
     }
 
     /**
@@ -272,6 +282,7 @@ public class AguiRequestProcessor {
         private AguiAdapterConfig config;
         private Session session;
         private JdbcTemplate jdbcTemplate;
+        private JdbcTemplate conversationJdbcTemplate;
 
         /**
          * Set the agent resolver.
@@ -314,6 +325,11 @@ public class AguiRequestProcessor {
          */
         public Builder jdbcTemplate(JdbcTemplate jdbcTemplate) {
             this.jdbcTemplate = jdbcTemplate;
+            return this;
+        }
+
+        public Builder conversationJdbcTemplate(JdbcTemplate conversationJdbcTemplate) {
+            this.conversationJdbcTemplate = conversationJdbcTemplate;
             return this;
         }
 

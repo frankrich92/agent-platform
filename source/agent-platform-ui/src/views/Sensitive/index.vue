@@ -12,7 +12,7 @@ import { storeToRefs } from 'pinia'
 import * as sensitiveApi from '@/api/sensitive'
 import type { SensitiveWordConfigVO } from '@/types'
 import SensitiveCard from '@/components/sensitive/SensitiveCard.vue'
-import CreateCard from '@/components/sensitive/CreateCard.vue'
+import CreateCard from '@/components/sensitive/SensitiveCreateCard.vue'
 import SensitiveForm from '@/components/sensitive/SensitiveForm.vue'
 import { AgentModalApi } from "@/components/common/AgentModalApi.ts";
 import AgentInfiniteLoading from '@/components/common/AgentInfiniteLoading.vue'

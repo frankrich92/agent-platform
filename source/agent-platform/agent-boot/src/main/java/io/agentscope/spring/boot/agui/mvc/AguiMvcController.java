@@ -40,6 +40,7 @@ public class AguiMvcController {
     private AguiMvcController(Builder builder) {
         Session session = builder.session;
         JdbcTemplate jdbcTemplate = builder.jdbcTemplate;
+        JdbcTemplate conversationJdbcTemplate = builder.conversationJdbcTemplate;
         this.processor =
                 AguiRequestProcessor.builder()
                         .agentResolver(
@@ -54,6 +55,7 @@ public class AguiMvcController {
                                         : AguiAdapterConfig.defaultConfig())
                         .session(session)
                         .jdbcTemplate(jdbcTemplate)
+                        .conversationJdbcTemplate(conversationJdbcTemplate)
                         .build();
         this.encoder = new AguiEventEncoder();
         this.agentIdHeader =
@@ -252,6 +254,7 @@ public class AguiMvcController {
         private long sseTimeout = 600000L;
         private Session session;
         private JdbcTemplate jdbcTemplate;
+        private JdbcTemplate conversationJdbcTemplate;
 
         /**
          * Set the agent registry.
@@ -338,6 +341,11 @@ public class AguiMvcController {
          */
         public Builder jdbcTemplate(JdbcTemplate jdbcTemplate) {
             this.jdbcTemplate = jdbcTemplate;
+            return this;
+        }
+
+        public Builder conversationJdbcTemplate(JdbcTemplate conversationJdbcTemplate) {
+            this.conversationJdbcTemplate = conversationJdbcTemplate;
             return this;
         }
 

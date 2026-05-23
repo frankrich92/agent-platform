@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { LoadingOutlined } from '@ant-design/icons-vue'
-import SessionItem from './SessionItem.vue'
+import SessionItem from './ChatHistorySessionItem.vue'
 
 defineProps<{
   sessions: any[]

@@ -13,7 +13,7 @@ import { storeToRefs } from 'pinia'
 import * as knowledgeApi from '@/api/knowledge'
 import type { KnowledgeBaseConfigVO, KbType } from '@/types'
 import KnowledgeCard from '@/components/knowledge/KnowledgeCard.vue'
-import CreateCard from '@/components/knowledge/CreateCard.vue'
+import CreateCard from '@/components/knowledge/KnowledgeCreateCard.vue'
 import KnowledgeForm from '@/components/knowledge/KnowledgeForm.vue'
 import RagDocManagerPage from '@/components/rag/RagDocManagerPage.vue'
 import {AgentModalApi} from "@/components/common/AgentModalApi.ts";

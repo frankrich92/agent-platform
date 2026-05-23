@@ -1,11 +1,10 @@
 package com.htam.agent.job.scheduler;
 
 import com.htam.agent.common.wrapper.AgentJobWrapper;
-import com.htam.agent.core.agent.IAgentFactory;
 import com.htam.agent.job.consts.JobConst;
 import com.htam.agent.job.core.job.QuartzJob;
-import io.agentscope.core.agent.Agent;
-import io.agentscope.core.message.Msg;
+import com.htam.agent.runtime.AgentRunRequest;
+import com.htam.agent.runtime.AgentRuntimeRunner;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.JobExecutionContext;
 
@@ -29,13 +28,8 @@ public class AgentScheduler extends QuartzJob {
         }
 
         try {
-            IAgentFactory agentFactory = getBean(IAgentFactory.class);
-            Agent agent = agentFactory.getAgent(Long.valueOf(agentId.trim()));
-            agent.call(
-                    Msg.builder()
-                            .textContent(wrapper.getInput())
-                            .build())
-                    .block();
+            AgentRuntimeRunner runtimeRunner = getBean(AgentRuntimeRunner.class);
+            runtimeRunner.run(AgentRunRequest.of(Long.valueOf(agentId.trim()), wrapper.getInput()));
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return false;

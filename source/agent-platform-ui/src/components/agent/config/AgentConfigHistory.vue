@@ -8,7 +8,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { PushpinOutlined } from '@ant-design/icons-vue'
 import * as chatSessionApi from '@/api/chatSession'
-import MessageList from '@/components/chatHistory/MessageList.vue'
+import MessageList from '@/components/chatHistory/ChatHistoryMessageList.vue'
 import type {ChatSessionVO, ChatMessageVO, DisplayMessage} from '@/types'
 import dayjs from 'dayjs'
 

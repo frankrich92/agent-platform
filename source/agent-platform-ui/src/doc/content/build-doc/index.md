@@ -39,6 +39,9 @@
 -- 使用管理员账号创建主库与向量库（如尚未创建）
 CREATE DATABASE agent_platform;
 CREATE DATABASE agent_platform_vector;
+
+-- 连接到 agent_platform_vector 后启用 pgvector 扩展
+CREATE EXTENSION IF NOT EXISTS vector;
 ```
 
 执行项目 `docs/once_db_init/` 下的初始化脚本：
@@ -48,7 +51,7 @@ psql -h 127.0.0.1 -p 5432 -U htam_agent -d agent_platform -f docs/once_db_init/d
 ```
 
 :::warning 提醒
-应用默认通过 Flyway 初始化主库表结构；`db_init.sql` 仅用于需要手工初始化数据库的场景。向量库需要管理员先执行 `CREATE EXTENSION IF NOT EXISTS vector;`。
+应用默认通过 Flyway 初始化主库表结构；`db_init.sql` 仅用于需要手工初始化数据库的场景。向量库需要管理员先执行 `CREATE EXTENSION IF NOT EXISTS vector;`。会话数据源当前默认指向主库，后续迁出时调整 `spring.datasource.dynamic.datasource.conversation` 配置即可。
 :::
 
 

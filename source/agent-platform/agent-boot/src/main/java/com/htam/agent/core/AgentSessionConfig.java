@@ -10,6 +10,8 @@ import io.agentscope.spring.boot.agui.mvc.AguiMvcController;
 import io.agentscope.spring.boot.agui.webflux.AguiWebFluxHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -36,8 +38,12 @@ public class AgentSessionConfig {
      */
     @Bean
     @Primary
-    public Session agentSession(DataSource dataSource) {
-        return new PostgresSession(dataSource, TableConst.AGENT_SCOPE_SESSIONS);
+    public Session agentSession(
+            DataSource dataSource,
+            @Qualifier("conversationDataSource") ObjectProvider<DataSource> conversationDataSource) {
+        return new PostgresSession(
+                conversationDataSource.getIfAvailable(() -> dataSource),
+                TableConst.AGENT_SCOPE_SESSIONS);
     }
 
     /**
@@ -49,6 +55,7 @@ public class AgentSessionConfig {
     @ConditionalOnClass(name = "io.agentscope.spring.boot.agui.mvc.AguiMvcController")
     public AguiMvcController aguiMvcController(
             @Autowired JdbcTemplate jdbcTemplate,
+            @Qualifier("conversationJdbcTemplate") ObjectProvider<JdbcTemplate> conversationJdbcTemplate,
             @Autowired(required = false) AguiAgentRegistry registry,
             @Autowired(required = false) ThreadSessionManager sessionManager,
             AguiProperties props,
@@ -68,6 +75,7 @@ public class AgentSessionConfig {
                 .serverSideMemory(props.isServerSideMemory())
                 .session(session)
                 .jdbcTemplate(jdbcTemplate)
+                .conversationJdbcTemplate(conversationJdbcTemplate.getIfAvailable(() -> jdbcTemplate))
                 .sseTimeout(600000L)
                 .config(buildAguiAdapterConfig(props))
                 .build();
@@ -82,6 +90,7 @@ public class AgentSessionConfig {
     @ConditionalOnClass(name = "io.agentscope.spring.boot.agui.webflux.AguiWebFluxHandler")
     public AguiWebFluxHandler aguiWebFluxHandler(
             @Autowired JdbcTemplate jdbcTemplate,
+            @Qualifier("conversationJdbcTemplate") ObjectProvider<JdbcTemplate> conversationJdbcTemplate,
             @Autowired(required = false) AguiAgentRegistry registry,
             @Autowired(required = false) ThreadSessionManager sessionManager,
             AguiProperties props,
@@ -101,6 +110,7 @@ public class AgentSessionConfig {
                 .serverSideMemory(props.isServerSideMemory())
                 .session(session)
                 .jdbcTemplate(jdbcTemplate)
+                .conversationJdbcTemplate(conversationJdbcTemplate.getIfAvailable(() -> jdbcTemplate))
                 .config(buildAguiAdapterConfig(props))
                 .build();
     }

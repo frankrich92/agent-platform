@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import MessageItem from './MessageItem.vue'
+import MessageItem from './ChatHistoryMessageItem.vue'
 import type { DisplayMessage } from '@/types'
 
 defineProps<{

@@ -1,8 +1,10 @@
 package com.htam.agent.repo.mybatis.agent;
 
+import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.htam.agent.agent.mapper.ChatSessionMapper;
+import com.htam.agent.common.consts.DataSourceConst;
 import com.htam.agent.common.entity.ChatSession;
 import com.htam.agent.common.mp.support.MP;
 import com.htam.agent.common.mp.support.PageParams;
@@ -14,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 @Repository
+@DS(DataSourceConst.CONVERSATION)
 @RequiredArgsConstructor
 public class ChatSessionMybatisRepository implements ChatSessionRepository {
     private final ChatSessionMapper chatSessionMapper;

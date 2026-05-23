@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import SessionList from './SessionList.vue'
+import SessionList from './ChatHistorySessionList.vue'
 
 defineProps<{
   agentName?: string

@@ -12,7 +12,7 @@ import { storeToRefs } from 'pinia'
 import * as promptApi from '@/api/prompt'
 import type { SystemPromptTemplateVO } from '@/types'
 import PromptCard from '@/components/prompt/PromptCard.vue'
-import CreateCard from '@/components/prompt/CreateCard.vue'
+import CreateCard from '@/components/prompt/PromptCreateCard.vue'
 import PromptForm from '@/components/prompt/PromptForm.vue'
 import {AgentModalApi} from "@/components/common/AgentModalApi.ts";
 import AgentInfiniteLoading from '@/components/common/AgentInfiniteLoading.vue'

@@ -28,6 +28,7 @@
     <spring-boot.version>3.4.9</spring-boot.version>
     <agentscope.version>1.0.12</agentscope.version>
     <mybatis-plus.version>3.5.7</mybatis-plus.version>
+    <dynamic-datasource.version>4.3.1</dynamic-datasource.version>
     <druid.version>1.2.19</druid.version>
     <lombok.version>1.18.30</lombok.version>
     <groovy.version>4.0.14</groovy.version>
@@ -48,6 +49,7 @@
     <milvus.version>2.6.8</milvus.version>
     <jgit.version>7.3.0.202506031305-r</jgit.version>
     <nacos-client.version>3.1.1</nacos-client.version>
+    <flyway.version>11.20.3</flyway.version>
   </properties>
 
   <dependencyManagement>
@@ -63,6 +65,11 @@
         <groupId>com.baomidou</groupId>
         <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
         <version>${mybatis-plus.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.baomidou</groupId>
+        <artifactId>dynamic-datasource-spring-boot3-starter</artifactId>
+        <version>${dynamic-datasource.version}</version>
       </dependency>
       <dependency>
         <groupId>com.alibaba</groupId>

@@ -1,5 +1,6 @@
 package com.htam.agent.agent.service.impl;
 
+import com.baomidou.dynamic.datasource.annotation.DSTransactional;
 import com.htam.agent.agent.service.AgentDefinitionService;
 import com.htam.agent.agent.service.ChatMessageService;
 import com.htam.agent.agent.service.ChatSessionService;
@@ -19,13 +20,11 @@ import com.htam.agent.common.vo.ChatMessagePageVO;
 import com.htam.agent.common.vo.ChatSessionVO;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.htam.agent.repo.agent.AgentScopeSessionRepository;
 import com.htam.agent.repo.agent.ChatSessionRepository;
 import com.htam.agent.repo.support.RepoPage;
-import io.agentscope.spring.boot.agui.common.ThreadSessionManager;
+import com.htam.agent.runtime.AgentRuntimeSessionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,12 +42,11 @@ public class ChatSessionServiceImpl implements ChatSessionService {
 
     private final ChatSessionRepository chatSessionRepository;
     private final ChatMessageService chatMessageService;
-    private final ThreadSessionManager sessionManager;
-    private final AgentScopeSessionRepository agentScopeSessionRepository;
+    private final AgentRuntimeSessionService runtimeSessionService;
     private final AgentDefinitionService agentDefinitionService;
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @DSTransactional(rollbackFor = Exception.class)
     public ChatSessionVO createSession(ChatSessionCreateDTO dto) {
         Long userId = UserUtils.getId();
         if (userId == null || userId == 0L) {
@@ -93,7 +91,7 @@ public class ChatSessionServiceImpl implements ChatSessionService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @DSTransactional(rollbackFor = Exception.class)
     public ChatMessageVO appendMessage(Long sessionId, ChatMessageAppendDTO dto) {
         ChatSession session = getAndCheckSession(sessionId);
         ChatMessage parent = getMessageBy(session.getCurrentMessageId(), sessionId);
@@ -101,7 +99,7 @@ public class ChatSessionServiceImpl implements ChatSessionService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @DSTransactional(rollbackFor = Exception.class)
     public ChatMessageVO regenerateMessage(Long sessionId, ChatMessageAppendDTO dto) {
         ChatSession session = getAndCheckSession(sessionId);
         ChatMessage parent = getMessageBy(session.getCurrentMessageId(), sessionId);
@@ -109,7 +107,7 @@ public class ChatSessionServiceImpl implements ChatSessionService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @DSTransactional(rollbackFor = Exception.class)
     public void switchCurrentMessage(Long sessionId, Integer messageId) {
         ChatSession session = getAndCheckSession(sessionId);
         ChatMessage message = chatMessageService.getById(messageId);
@@ -287,7 +285,7 @@ public class ChatSessionServiceImpl implements ChatSessionService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @DSTransactional(rollbackFor = Exception.class)
     public void pinSession(Long id) {
         ChatSession session = getAndCheckSession(id);
         session.setIsPinned(true);
@@ -296,7 +294,7 @@ public class ChatSessionServiceImpl implements ChatSessionService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @DSTransactional(rollbackFor = Exception.class)
     public void unpinSession(Long id) {
         ChatSession session = getAndCheckSession(id);
         session.setIsPinned(false);
@@ -305,7 +303,7 @@ public class ChatSessionServiceImpl implements ChatSessionService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @DSTransactional(rollbackFor = Exception.class)
     public void updateTitle(Long id, String title) {
         ChatSession session = getAndCheckSession(id);
         session.setTitle(title != null ? title : "新对话");
@@ -313,18 +311,13 @@ public class ChatSessionServiceImpl implements ChatSessionService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @DSTransactional(rollbackFor = Exception.class)
     public void deleteSession(Long id) {
         ChatSession session = getAndCheckSession(id);
         chatMessageService.deleteBySessionId(session.getId());
         chatSessionRepository.deleteById(id);
 
-        agentScopeSessionRepository.deleteById(String.valueOf(session.getId()));
-
-        // 删除 agentscope session
-        if (sessionManager != null) {
-            sessionManager.removeSession(String.valueOf(session.getId()));
-        }
+        runtimeSessionService.deleteSession(String.valueOf(session.getId()));
 
         // 删除工作空间目录（文件 + sessionId文件夹本身）
         String workspacePath = SysConst.WORKSPACE_PATH + "/" + session.getId();

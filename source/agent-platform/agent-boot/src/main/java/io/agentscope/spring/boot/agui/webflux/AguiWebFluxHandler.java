@@ -39,6 +39,7 @@ public class AguiWebFluxHandler {
     private AguiWebFluxHandler(Builder builder) {
         Session session = builder.session;
         JdbcTemplate jdbcTemplate = builder.jdbcTemplate;
+        JdbcTemplate conversationJdbcTemplate = builder.conversationJdbcTemplate;
         this.processor =
                 AguiRequestProcessor.builder()
                         .agentResolver(
@@ -53,6 +54,7 @@ public class AguiWebFluxHandler {
                                         : AguiAdapterConfig.defaultConfig())
                         .session(session)
                         .jdbcTemplate(jdbcTemplate)
+                        .conversationJdbcTemplate(conversationJdbcTemplate)
                         .build();
         this.encoder = new AguiEventEncoder();
         this.agentIdHeader =
@@ -210,6 +212,7 @@ public class AguiWebFluxHandler {
         private String agentIdHeader;
         private Session session;
         private JdbcTemplate jdbcTemplate;
+        private JdbcTemplate conversationJdbcTemplate;
 
         /**
          * Set the agent registry.
@@ -274,6 +277,11 @@ public class AguiWebFluxHandler {
          */
         public Builder jdbcTemplate(JdbcTemplate jdbcTemplate) {
             this.jdbcTemplate = jdbcTemplate;
+            return this;
+        }
+
+        public Builder conversationJdbcTemplate(JdbcTemplate conversationJdbcTemplate) {
+            this.conversationJdbcTemplate = conversationJdbcTemplate;
             return this;
         }
 
