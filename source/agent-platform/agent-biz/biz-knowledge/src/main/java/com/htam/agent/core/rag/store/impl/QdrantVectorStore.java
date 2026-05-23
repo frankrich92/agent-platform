@@ -46,7 +46,7 @@ public class QdrantVectorStore implements VectorStore {
     private final String collectionPrefix;
 
     public QdrantVectorStore(@Autowired(required = false) QdrantClient qdrantClient,
-                             @Value("${rag.qdrant.collection-prefix:apboa_rag}") String collectionPrefix) {
+                             @Value("${rag.qdrant.collection-prefix:agent_rag}") String collectionPrefix) {
         this.qdrantClient = qdrantClient;
         this.collectionPrefix = collectionPrefix;
         if (qdrantClient != null) {

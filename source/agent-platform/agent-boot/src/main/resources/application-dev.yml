@@ -77,7 +77,7 @@ rag:
     host: localhost
     port: 6334
     api-key:
-    collection-prefix: apboa_rag
+    collection-prefix: agent_rag
 
 mybatis-plus:
   mapper-locations: classpath*:com/htam/agent/**/mapper/**/*.xml

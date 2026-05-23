@@ -29,7 +29,7 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 public class McpRuntimeDegradeServiceImpl implements McpRuntimeDegradeService {
     private static final Logger log = LoggerFactory.getLogger(McpRuntimeDegradeServiceImpl.class);
-    private static final String KEY_PREFIX = "apboa:mcp:runtime:degrade:";
+    private static final String KEY_PREFIX = "agent:mcp:runtime:degrade:";
     private static final long KEY_TTL_SECONDS = 3600L;
     private static final String FAILURE_EVENT = "FAILURE";
 

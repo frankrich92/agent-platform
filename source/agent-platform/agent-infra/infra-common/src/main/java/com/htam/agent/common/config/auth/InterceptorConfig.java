@@ -41,7 +41,7 @@ public class InterceptorConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        /* 静态资源处理器，将/apboa/**请求指引到classpath:/META-INF/resources/apboa/下 */
+        /* 静态资源处理器，将 /web/** 请求指引到 classpath:/META-INF/resources/web/ 下 */
         registry.addResourceHandler("/web/**").addResourceLocations("classpath:/META-INF/resources/web/");
         registry.addResourceHandler("/images/**").addResourceLocations("classpath:/META-INF/resources/web/images/");
     }

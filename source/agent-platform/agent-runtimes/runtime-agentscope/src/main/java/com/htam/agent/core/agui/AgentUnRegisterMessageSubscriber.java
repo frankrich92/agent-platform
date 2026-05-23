@@ -8,7 +8,7 @@ import org.springframework.data.redis.listener.Topic;
 import org.springframework.stereotype.Component;
 
 /**
- * 描述：edis 消息订阅者 - 仅处理 apboa:agent:cluster:unRegister 频道的跨节点消息
+ * 描述：Redis 消息订阅者 - 仅处理 agent:cluster:unRegister 频道的跨节点消息
  *
  * @author huxuehao
  **/

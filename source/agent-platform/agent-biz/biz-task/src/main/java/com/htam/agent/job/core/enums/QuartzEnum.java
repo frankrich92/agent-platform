@@ -6,7 +6,7 @@ package com.htam.agent.job.core.enums;
  * @author huxuehao
  **/
 public enum QuartzEnum {
-    IDENTITY_KEY("apboa_quartz_identity_key", "quart任务唯一标识"),
+    IDENTITY_KEY("agent_quartz_identity_key", "quart任务唯一标识"),
     RUN_MSG("runMsg", "任务执行信息，用户记录到日志表中");
 
     private final String value;

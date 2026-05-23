@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 /**
- * 描述：Redis 消息订阅者 - 仅处理 apboa:ws:cluster:* 频道的跨节点消息
+ * 描述：Redis 消息订阅者 - 仅处理 agent:ws:cluster:* 频道的跨节点消息
  *
  * @author huxuehao
  **/
@@ -30,7 +30,7 @@ public class ClusterMessageSubscriber implements ChannelSubscriber {
     @Override
     public void onMessage(String channel, String message) {
         try {
-            // 仅处理 apboa:ws:cluster:* 频道，拒绝非 WebSocket 集群消息
+            // 仅处理 agent:ws:cluster:* 频道，拒绝非 WebSocket 集群消息
             String subChannel = RedisChannelTopic.WS_CHANNEL_PATTERN.substring(0, RedisChannelTopic.WS_CHANNEL_PATTERN.length() - 1);
             if (!channel.startsWith(subChannel)) {
                 log.warn("忽略非 WebSocket 集群频道的消息：channel={}", channel);

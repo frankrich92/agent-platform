@@ -12,17 +12,17 @@ public class JobRedisKey {
      * 节点心跳通道
      * 用于节点状态同步
      */
-    public static final String JOB_CLUSTER_HEARTBEAT = "apboa:job:cluster:heartbeat";
+    public static final String JOB_CLUSTER_HEARTBEAT = "agent:job:cluster:heartbeat";
 
     /**
      * 任务执行锁前缀
      */
-    public static final String JOB_LOCK_PREFIX = "apboa:job:lock:";
+    public static final String JOB_LOCK_PREFIX = "agent:job:lock:";
 
     /**
      * 任务执行历史前缀
      */
-    public static final String JOB_EXEC_HISTORY_PREFIX = "apboa:job:exec:history:";
+    public static final String JOB_EXEC_HISTORY_PREFIX = "agent:job:exec:history:";
 
     /**
      * 获取任务执行锁的key

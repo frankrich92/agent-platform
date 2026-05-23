@@ -260,12 +260,12 @@ docker build \
 
 ```bash
 # 创建网络
-docker network create apboa_network
+docker network create agent_network
 
 # 启动后端（确保 MySQL / Redis 已就绪）
 docker run -d \
   --name agent-platform-backend \
-  --network apboa_network \
+  --network agent_network \
   -e SPRING_PROFILES_ACTIVE=docker \
   -e MYSQL_HOST=your-mysql-host \
   -e MYSQL_PASSWORD=your_password \
@@ -277,7 +277,7 @@ docker run -d \
 # 启动前端
 docker run -d \
   --name agent-platform-frontend \
-  --network apboa_network \
+  --network agent_network \
   -p 80:80 \
   agent-platform-frontend:latest
 ```
@@ -301,12 +301,12 @@ graph TD
         Browser["浏览器"]
     end
 
-    subgraph DockerNetwork["Docker Network: apboa_network"]
+    subgraph DockerNetwork["Docker Network: agent_network"]
         Nginx["agent-platform-frontend\n(Nginx)\n端口 80"]
         Backend["agent-platform-backend\n(Spring Boot)\n端口 3060"]
-        MySQL["apboa-mysql\n(MySQL)"]
-        Redis["apboa-redis\n(Redis)"]
-        Pgvector["apboa-pgvector\n(pgvector PG16)"]
+        MySQL["agent-mysql\n(MySQL)"]
+        Redis["agent-redis\n(Redis)"]
+        Pgvector["agent-pgvector\n(pgvector PG16)"]
     end
 
     subgraph Host["宿主机"]
@@ -457,14 +457,14 @@ graph TD
         Admin["管理员"]
     end
 
-    subgraph DockerNetwork["Docker Network: apboa_network"]
+    subgraph DockerNetwork["Docker Network: agent_network"]
         Nginx["agent-platform-frontend\n(Nginx 动态路由)\nresolver 127.0.0.11"]
 
         Backend["agent-platform-backend 主控后端\nSpring Boot + DooD\n管理 API + 容器管理"]
 
-        MySQL["apboa-mysql\n(MySQL)"]
-        Redis["apboa-redis\n(Redis pub/sub)"]
-        Pgvector["apboa-pgvector\n(pgvector)"]
+        MySQL["agent-mysql\n(MySQL)"]
+        Redis["agent-redis\n(Redis pub/sub)"]
+        Pgvector["agent-pgvector\n(pgvector)"]
 
         subgraph AgentContainers["Agent Runner 容器（按智能体动态创建/销毁）"]
             AgentA["agent-a 容器\n(Python + Node + JRE)\n端口 3060\n仅暴露 AGUI 端点"]
@@ -601,7 +601,7 @@ docker compose logs -f agent-platform-frontend
         │
         ▼
   后端发布 Redis 消息
-  Channel: apboa:agent:cluster:register
+  Channel: agent:cluster:reRegister
         │
         ▼
   AgentContainerLifecycleListener 监听到消息
@@ -615,7 +615,7 @@ docker compose logs -f agent-platform-frontend
         ├── 2. 调用 Docker API 创建容器
         │      - 挂载 Workspace 目录（读写）
         │      - 挂载 Skills 目录（只读）
-        │      - 加入 apboa_network 网络
+        │      - 加入 agent_network 网络
         │      - 应用 CPU / 内存限制
         │      - 设置容器名 = agent-{agentCode}
         │
@@ -633,7 +633,7 @@ docker compose logs -f agent-platform-frontend
         │
         ▼
   后端发布 Redis 消息
-  Channel: apboa:agent:cluster:unregister
+  Channel: agent:cluster:unRegister
         │
         ▼
   AgentContainerLifecycleListener 监听到消息
@@ -693,7 +693,7 @@ location ~ ^/agent/agui/(?<agent_code>[a-z0-9_-]+)(?<remaining>/.*)?$ {
 
 #### 8.8.1 网络隔离
 
-- 所有容器位于独立 Docker 网络 `apboa_network`，与宿主机网络隔离
+- 所有容器位于独立 Docker 网络 `agent_network`，与宿主机网络隔离
 - Agent Runner 容器**仅暴露 `/agent/agui/` 端点**，任何对管理 API 的请求返回 403
 - 安全机制：`AgentModeSecurityConfig` Filter（`@Profile("agent")`）在请求进入 Controller 之前拦截
 
