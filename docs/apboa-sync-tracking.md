@@ -31,7 +31,8 @@ ef0fa9c docs(readme): 更新交流群信息及图片
 | 多语言脚本安全检查：Python、Node.js、Shell、HTML 检查与 Workspace 校验集成 | `source/agent-platform/agent-infra/infra-security`、`source/agent-platform/agent-runtimes/runtime-agentscope` | 已同步 |
 | 代码执行默认命令调整：移除 `npm`，加入 `sh` | `source/agent-platform-ui/src/components/codeExecution/CodeExecutionConfigForm.vue` | 已同步 |
 | 本地部署配置：Nacos、Redis、MySQL、PgVector 改为本地配置 | `source/agent-platform/agent-boot/src/main/resources/application-dev.yml` | 已同步 |
-| 数据库初始化脚本与注释乱码修复 | `docs/once_db_init/db_init.sql` | 已同步 |
+| 数据库初始化脚本与注释乱码修复 | `docs/once_db_init/db_init.sql` | 已同步，并按新工程包名替换为 `com.htam.agent` |
+| 应用启动数据库迁移 | `source/agent-platform/agent-boot/src/main/resources/db/migration/V1__init_schema.sql` | 已接入 Flyway |
 
 ## 未同步或暂不迁移内容
 

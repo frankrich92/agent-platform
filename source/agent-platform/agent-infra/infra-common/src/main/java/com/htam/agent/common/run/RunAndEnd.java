@@ -16,7 +16,7 @@ public class RunAndEnd implements ApplicationRunner {
         System.out.println("*****************************************************************************************");
         System.out.println("* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *");
         System.out.println("* * * * * * * * * * * * * * Application Successfully Started * * * * *  * * * * * * * * *");
-        System.out.println("* * * * * * * * * * * * * * * * * * Welcome to Apboa * * * * * * * * * * * * * * * * * *");
+        System.out.println("* * * * * * * * * * * * * * * * * Welcome to Agent Platform * * * * * * * * * * * * * * *");
         System.out.println("* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *");
         System.out.println("*****************************************************************************************");
     }

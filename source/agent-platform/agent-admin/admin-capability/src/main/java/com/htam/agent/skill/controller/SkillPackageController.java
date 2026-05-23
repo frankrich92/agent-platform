@@ -1,25 +1,19 @@
 package com.htam.agent.skill.controller;
 
-import cn.hutool.core.io.FileUtil;
-import com.htam.agent.common.exception.BusinessException;
 import com.htam.agent.common.config.auth.RoleNeed;
-import com.htam.agent.common.consts.SysConst;
 import com.htam.agent.common.dto.SkillPackageDTO;
 import com.htam.agent.common.entity.SkillPackage;
 import com.htam.agent.common.enums.Role;
 import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.common.r.R;
 import com.htam.agent.common.util.BeanUtils;
-import com.htam.agent.common.util.ZipExtractUtils;
 import com.htam.agent.common.vo.SkillImportResult;
 import com.htam.agent.common.vo.SkillPackageVO;
 import com.htam.agent.skill.SkillScriptLoadHelper;
-import com.htam.agent.skill.imports.SkillImportPathResolver;
 import com.htam.agent.skill.imports.SkillImportService;
 import com.htam.agent.skill.imports.SkillInstaller;
 import com.htam.agent.skill.imports.config.GitImportConfig;
 import com.htam.agent.skill.imports.config.LocalImportConfig;
-import com.htam.agent.skill.imports.config.UploadImportConfig;
 import com.htam.agent.skill.service.SkillPackageService;
 import com.htam.agent.skill.service.SkillToolService;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -28,11 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * 技能包Controller
@@ -167,39 +157,6 @@ public class SkillPackageController {
             @RequestParam("category") String category,
             @RequestParam("cover") boolean cover) throws IOException {
 
-        // 确保运行时 temp 目录存在
-        Path tempBase = Paths.get(SysConst.ROOT_DIR_NAME, "temp");
-        Files.createDirectories(tempBase);
-
-        // 生成唯一 UUID 作为本次解压目录名
-        String uuid = UUID.randomUUID().toString();
-        Path extractDir = tempBase.resolve(uuid);
-        Files.createDirectories(extractDir);
-
-        Path tempZip = tempBase.resolve(uuid + ".zip");
-        try {
-            ZipExtractUtils.extractZipSafely(file.getInputStream(), extractDir, tempZip);
-        } catch (IOException e) {
-            FileUtil.del(extractDir.toFile());
-            throw new BusinessException("压缩包解压失败，请确认文件为有效 zip 格式: " + e.getMessage());
-        }
-
-        // 解析 skills 根目录（兼容压缩包多套一层目录的结构）
-        Path skillsDir;
-        try {
-            skillsDir = SkillImportPathResolver.resolveUploadedSkillsDir(extractDir);
-        } catch (RuntimeException e) {
-            FileUtil.del(extractDir.toFile());
-            throw e;
-        }
-
-        UploadImportConfig config = UploadImportConfig.builder()
-                .category(category)
-                .cover(cover)
-                .templatePath(skillsDir.toString())
-                .extractDirPath(extractDir.toString())
-                .build();
-
-        return R.data(skillImportService.importFromUpload(config));
+        return R.data(skillImportService.importFromUpload(file, category, cover));
     }
 }

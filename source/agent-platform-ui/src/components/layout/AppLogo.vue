@@ -9,7 +9,7 @@ interface Props {
 }
 
 withDefaults(defineProps<Props>(), {
-  projectName: 'APBOA',
+  projectName: 'AGENT',
 })
 </script>
 

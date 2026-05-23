@@ -9,6 +9,7 @@ python3 source/e2e_test/run_all.py
 python3 source/e2e_test/run_all.py --stop-on-fail
 python3 source/e2e_test/run_all.py --skip-external
 python3 source/e2e_test/run_all.py --show-response
+python3 source/e2e_test/run_all.py --allow-blocked
 ```
 
 Module split:
@@ -23,6 +24,10 @@ Module split:
 - `modules/platform_ops.py`: secret keys, storage protocol, params, jobs, cleanup.
 
 `e2e_real_chain.py` is only a compatibility wrapper for `run_all.py`.
+
+`run_all.py` uses a lightweight DAG runner. Each step declares its prerequisite
+fixtures and the fixtures it provides, so dependent steps are reported as
+`BLOCKED` when their setup did not run successfully.
 
 Useful environment variables:
 
@@ -55,6 +60,11 @@ The client bypasses system proxy settings by default. This matters when
 `HTTP_PROXY` is set globally: local backend calls such as
 `http://127.0.0.1:3060/api/auth/login` should hit the Spring Boot process
 directly, not a proxy.
+
+Blocked steps are treated as a non-zero run by default, so missing frontend or
+backend services cannot be mistaken for a passing E2E run. Use
+`--allow-blocked` or `E2E_ALLOW_BLOCKED=1` only for local environment probing
+where a zero exit code is desired despite blocked steps.
 
 The migrated backend runtime root is configurable through the Java system
 property `agent.runtime.root` or the environment variable `AGENT_RUNTIME_ROOT`.

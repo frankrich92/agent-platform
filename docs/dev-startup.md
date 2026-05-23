@@ -37,6 +37,8 @@ mvn spring-boot:run -Dspring-boot.run.profiles=dev
 
 后端默认读取 `agent-boot/src/main/resources/application-dev.yml`，当前依赖本地 MySQL、Redis、PgVector、Nacos 等配置。依赖未启动时，Spring Boot 可能启动失败。
 
+启动时会通过 Flyway 执行 `agent-boot/src/main/resources/db/migration/` 下的数据库迁移。开发配置的 MySQL URL 已启用 `createDatabaseIfNotExist=true`；已有非空数据库会自动 baseline，空库会执行 `V1__init_schema.sql` 初始化表结构和基础数据。
+
 ## 3. 前端启动
 
 前端端口：`3001`
@@ -90,3 +92,11 @@ python source/e2e_test/run_all.py --skip-external
 ```sh
 python source/e2e_test/run_all.py --skip-external --show-response
 ```
+
+## 6. 迁移残留检查
+
+```sh
+python source/scripts/check_migration_residue.py
+```
+
+该检查会阻止新工程重新引入旧包名、旧 `.apboa` 运行目录、旧 `platform-*` artifact，并确认 `.apboa` 工作区保持只读干净。

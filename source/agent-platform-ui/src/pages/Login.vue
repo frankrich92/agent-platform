@@ -79,7 +79,7 @@ const goToForgotPassword = () => {
 
 <template>
   <AuthContainer>
-    <div class="auth-title">欢迎使用 Apboa 智能体平台</div>
+    <div class="auth-title">欢迎使用 Agent 智能体平台</div>
     <AForm
       ref="formRef"
       :model="formState"

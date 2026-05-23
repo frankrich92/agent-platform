@@ -37,6 +37,7 @@ class Config:
     stop_on_fail: bool = False
     show_response: bool = False
     use_proxy: bool = False
+    allow_blocked: bool = False
 
 
 @dataclass
@@ -50,9 +51,62 @@ class RunState:
     cleanups: list[Callable[[], None]] = field(default_factory=list)
 
 
+@dataclass
+class Step:
+    name: str
+    run: Callable[[], None]
+    requires: list[str] = field(default_factory=list)
+    provides: list[str] = field(default_factory=list)
+
+
+class Fixtures:
+    def __init__(self, state: RunState) -> None:
+        self.state = state
+        self.flags: set[str] = set()
+
+    def has(self, name: str) -> bool:
+        if name == "auth":
+            return self.state.token is not None
+        return name in self.state.created or name in self.flags
+
+    def missing(self, names: list[str]) -> list[str]:
+        return [name for name in names if not self.has(name)]
+
+    def mark_provided(self, names: list[str]) -> None:
+        for name in names:
+            if name == "auth" and self.state.token is not None:
+                self.flags.add(name)
+            elif name in self.state.created:
+                self.flags.add(name)
+            else:
+                self.flags.add(name)
+
+
+class DagRunner:
+    def __init__(self, reporter: "Reporter", fixtures: Fixtures) -> None:
+        self.reporter = reporter
+        self.fixtures = fixtures
+
+    def run(self, steps: list[Step]) -> None:
+        for step in steps:
+            missing = self.fixtures.missing(step.requires)
+            if missing:
+                self.reporter.step(
+                    step.name,
+                    lambda missing=missing: (_ for _ in ()).throw(
+                        BlockedByRepoPolicy(f"missing prerequisite fixture(s): {', '.join(missing)}")
+                    ),
+                )
+                continue
+            status = self.reporter.step(step.name, step.run)
+            if status == "passed":
+                self.fixtures.mark_provided(step.provides)
+
+
 class Reporter:
-    def __init__(self, stop_on_fail: bool) -> None:
+    def __init__(self, stop_on_fail: bool, allow_blocked: bool = False) -> None:
         self.stop_on_fail = stop_on_fail
+        self.allow_blocked = allow_blocked
         self.passed: list[str] = []
         self.failed: list[tuple[str, str]] = []
         self.blocked: list[tuple[str, str]] = []
@@ -94,7 +148,11 @@ class Reporter:
             print("Blocked/skipped:")
             for name, message in self.blocked:
                 print(f"  - {name}: {message}")
-        return 1 if self.failed else 0
+        if self.failed:
+            return 1
+        if self.blocked and not self.allow_blocked:
+            return 1
+        return 0
 
 
 class ApiClient:
@@ -322,6 +380,12 @@ def parse_args() -> Config:
     parser.add_argument("--skip-external", action="store_true", help="Skip real external MCP and RAG dependency checks.")
     parser.add_argument("--stop-on-fail", action="store_true")
     parser.add_argument(
+        "--allow-blocked",
+        action="store_true",
+        default=os.getenv("E2E_ALLOW_BLOCKED") == "1",
+        help="Return exit code 0 when steps are blocked by missing local services or optional external config.",
+    )
+    parser.add_argument(
         "--show-response",
         action="store_true",
         help="Print redacted API response content. Disabled by default.",
@@ -354,6 +418,7 @@ def parse_args() -> Config:
         stop_on_fail=args.stop_on_fail,
         show_response=show_response,
         use_proxy=args.use_proxy,
+        allow_blocked=args.allow_blocked,
     )
     if args.print_env:
         print(json.dumps(config.__dict__, indent=2, ensure_ascii=False))

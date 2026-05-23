@@ -9,6 +9,7 @@ import { message } from 'ant-design-vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import type { CodeExecutionConfig, CodeExecutionConfigVO } from '@/types'
 import * as codeExecutionConfigApi from '@/api/codeExecutionConfig'
+import { runtimeDefaults } from '@/constants/runtimeDefaults'
 
 /**
  * Props定义
@@ -36,8 +37,8 @@ const formRef = ref()
  */
 const formData = ref({
   configName: '',
-  workDir: '.apboa/workspace',
-  uploadDir: '.apboa/skills',
+  workDir: runtimeDefaults.workspacesDir,
+  uploadDir: runtimeDefaults.skillsDir,
   autoUpload: false,
   enableShell: true,
   enableRead: false,
@@ -75,8 +76,8 @@ const rules = {
 function resetForm() {
   formData.value = {
     configName: '',
-    workDir: '.apboa/workspace',
-    uploadDir: '.apboa/skills',
+    workDir: runtimeDefaults.workspacesDir,
+    uploadDir: runtimeDefaults.skillsDir,
     autoUpload: false,
     enableShell: true,
     enableRead: false,
@@ -96,7 +97,7 @@ watch(() => props.visible, (val) => {
       formData.value = {
         configName: props.data.configName,
         workDir: props.data.workDir || '',
-        uploadDir: props.data.uploadDir || '.apboa/skills',
+        uploadDir: props.data.uploadDir || runtimeDefaults.skillsDir,
         autoUpload: props.data.autoUpload || false,
         enableShell: props.data.enableShell || false,
         enableRead: props.data.enableRead || false,
@@ -142,7 +143,7 @@ async function handleSubmit() {
     const entity: CodeExecutionConfig = {
       configName: formData.value.configName,
       workDir: formData.value.workDir || undefined,
-      uploadDir: formData.value.uploadDir || '.apboa/skills',
+      uploadDir: formData.value.uploadDir || runtimeDefaults.skillsDir,
       autoUpload: formData.value.autoUpload,
       enableShell: formData.value.enableShell,
       enableRead: formData.value.enableRead,

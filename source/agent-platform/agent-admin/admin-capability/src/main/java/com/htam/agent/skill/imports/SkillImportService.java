@@ -1,28 +1,26 @@
 package com.htam.agent.skill.imports;
 
-import com.htam.agent.common.consts.SysConst;
 import com.htam.agent.common.entity.SkillPackage;
-import com.htam.agent.common.util.FolderUtils;
 import com.htam.agent.common.vo.SkillImportResult;
 import com.htam.agent.skill.SkillScriptLoadHelper;
 import com.htam.agent.skill.imports.config.GitImportConfig;
 import com.htam.agent.skill.imports.config.LocalImportConfig;
-import com.htam.agent.skill.imports.config.UploadImportConfig;
+import com.htam.agent.skill.imports.source.GitSkillImportSource;
+import com.htam.agent.skill.imports.source.LocalSkillImportSource;
+import com.htam.agent.skill.imports.source.SkillImportSource;
+import com.htam.agent.skill.imports.source.UploadSkillImportSource;
 import com.htam.agent.skill.service.SkillPackageService;
 import io.agentscope.core.skill.AgentSkill;
 import io.agentscope.core.skill.repository.AgentSkillRepository;
-import io.agentscope.core.skill.repository.FileSystemSkillRepository;
-import io.agentscope.core.skill.repository.GitSkillRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * 描述：技能包导入服务，编排本地/压缩包/Git三种导入方式
@@ -42,19 +40,10 @@ public class SkillImportService {
      * @param config 配置
      */
     public SkillImportResult importFromGit(GitImportConfig config) {
-        Path tempDir = createTempDir();
-        try {
-            GitSkillRepository repo = new GitSkillRepository(config.getRepoUrl(), tempDir);
-            try {
-                repo.sync();
-                Path skillsDir = SkillImportPathResolver.resolveSkillsDir(tempDir);
-                return doImport(skillsDir, repo, config.isCover(), config.getCategory());
-            } finally {
-                closeQuietly(repo);
-            }
-        } finally {
-            FolderUtils.deleteRecursively(tempDir.toAbsolutePath().toString());
-            log.info("清理 Git 临时目录: {}", tempDir.toAbsolutePath());
+        try (SkillImportSource source = new GitSkillImportSource(config)) {
+            return doImport(source, config.isCover(), config.getCategory());
+        } catch (IOException e) {
+            throw new IllegalStateException("Git 技能包导入失败: " + e.getMessage(), e);
         }
     }
 
@@ -65,30 +54,21 @@ public class SkillImportService {
      * @param config 配置
      */
     public SkillImportResult importFromLocal(LocalImportConfig config) {
-        Path skillsDir = Path.of(config.getPath());
-        try (AgentSkillRepository repo = new FileSystemSkillRepository(skillsDir)) {
-            return doImport(skillsDir, repo, config.isCover(), config.getCategory());
+        try (SkillImportSource source = new LocalSkillImportSource(config)) {
+            return doImport(source, config.isCover(), config.getCategory());
         }
     }
 
     /**
      * 从上传压缩包导入
-     * 调用该方法前，需要将上传的压缩包解压到临时目录，完成后会自动删除临时目录
      *
-     * @param config 配置
+     * @param file     技能包压缩包
+     * @param category 技能分类
+     * @param cover    是否覆盖
      */
-    public SkillImportResult importFromUpload(UploadImportConfig config) {
-        Path skillsPath = Path.of(config.getTemplatePath());
-        Path tempRoot = config.getExtractDirPath() != null
-                ? Path.of(config.getExtractDirPath())
-                : skillsPath.getParent();
-        try (AgentSkillRepository repo = new FileSystemSkillRepository(skillsPath)) {
-            return doImport(skillsPath, repo, config.isCover(), config.getCategory());
-        } finally {
-            if (tempRoot != null) {
-                FolderUtils.deleteRecursively(tempRoot.toAbsolutePath().toString());
-                log.info("清理上传临时目录: {}", tempRoot.toAbsolutePath());
-            }
+    public SkillImportResult importFromUpload(MultipartFile file, String category, boolean cover) throws IOException {
+        try (SkillImportSource source = new UploadSkillImportSource(file)) {
+            return doImport(source, cover, category);
         }
     }
 
@@ -100,7 +80,9 @@ public class SkillImportService {
      * @param isCover   是否覆盖
      * @param category  分类
      */
-    private SkillImportResult doImport(Path skillsDir, AgentSkillRepository repo, boolean isCover, String category) {
+    private SkillImportResult doImport(SkillImportSource source, boolean isCover, String category) {
+        Path skillsDir = source.skillsDir();
+        AgentSkillRepository repo = source.repository();
         try {
             SkillImportNormalizer.normalizeSkillFiles(skillsDir);
         } catch (IOException e) {
@@ -148,34 +130,5 @@ public class SkillImportService {
         }
 
         return new SkillImportResult(importedCount, skippedCount, allSkillNames.size());
-    }
-
-    /**
-     * 创建运行时临时目录（{runtimeRoot}/temp/{uuid}/）
-     *
-     * @return 临时目录路径
-     */
-    private Path createTempDir() {
-        Path tempBase = Paths.get(SysConst.ROOT_DIR_NAME, "temp");
-        FolderUtils.mkdirsByAbsolutePath(tempBase.toAbsolutePath().toString());
-        Path tempDir = tempBase.resolve(UUID.randomUUID().toString());
-        FolderUtils.mkdirsByAbsolutePath(tempDir.toAbsolutePath().toString());
-        return tempDir;
-    }
-
-    /**
-     * 安静关闭 GitSkillRepository
-     *
-     * @param repo GitSkillRepository 实例
-     */
-    private void closeQuietly(GitSkillRepository repo) {
-        if (repo != null) {
-            try {
-                repo.close();
-            } catch (Exception e) {
-                // Windows 下文件占用是正常现象，只打印警告
-                log.warn("关闭 Git 仓库临时目录时出现文件占用（Windows 环境可忽略）：{}", e.getMessage());
-            }
-        }
     }
 }

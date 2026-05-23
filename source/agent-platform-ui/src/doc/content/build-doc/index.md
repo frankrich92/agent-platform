@@ -1,6 +1,6 @@
 # 打包构建与部署
 
-本文档介绍 Apboa 智能体平台的五种部署方案，从开发环境到生产环境的完整指南。
+本文档介绍 Agent 智能体平台的五种部署方案，从开发环境到生产环境的完整指南。
 
 
 ## 一、环境要求
@@ -610,7 +610,7 @@ docker compose logs -f apboa-frontend
   AgentContainerManager.createContainer(agentCode)
         │
         ├── 1. 在宿主机创建 Workspace 目录
-        │      /app/.apboa/workspaces/{agentCode}/
+        │      /app/.agent-platform/workspaces/{agentCode}/
         │
         ├── 2. 调用 Docker API 创建容器
         │      - 挂载 Workspace 目录（读写）

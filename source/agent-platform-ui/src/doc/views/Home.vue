@@ -58,9 +58,9 @@ const docNavItems = [
     <!-- 欢迎区域 -->
     <section class="doc-home-hero">
       <img src="@/assets/images/logo/logo.png" alt="logo" class="doc-home-logo" />
-      <h1 class="doc-home-hero-title">Apboa 智能体平台</h1>
+      <h1 class="doc-home-hero-title">Agent 智能体平台</h1>
       <p class="doc-home-hero-desc">
-        Apboa 是一款功能强大的智能体管理平台，帮助企业快速构建、部署和管理 AI 智能体应用。
+        Agent 智能体平台帮助企业快速构建、部署和管理 AI 智能体应用。
         本手册将帮助您了解平台的各项功能和使用方法。
       </p>
     </section>
