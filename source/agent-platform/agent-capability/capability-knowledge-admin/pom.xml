@@ -4,24 +4,20 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.htam.agent</groupId>
-    <artifactId>agent-adapter</artifactId>
+    <artifactId>agent-capability</artifactId>
     <version>1.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
-  <artifactId>adapter-agui</artifactId>
+  <artifactId>capability-knowledge-admin</artifactId>
   <packaging>jar</packaging>
   <dependencies>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>agent-api</artifactId>
+      <artifactId>capability-knowledge</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>run-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-web</artifactId>
+      <artifactId>agent-api</artifactId>
     </dependency>
   </dependencies>
 </project>

@@ -11,11 +11,15 @@
   <modules>
     <module>agent-domain</module>
     <module>agent-api</module>
-    <module>agent-infra</module>
+    <module>agent-common</module>
     <module>agent-repo</module>
-    <module>agent-runtimes</module>
-    <module>agent-biz</module>
-    <module>agent-admin</module>
+    <module>agent-profile</module>
+    <module>agent-run</module>
+    <module>agent-runtime</module>
+    <module>agent-workflow</module>
+    <module>agent-capability</module>
+    <module>agent-worker</module>
+    <module>agent-governance</module>
     <module>agent-adapter</module>
     <module>agent-boot</module>
   </modules>
@@ -196,42 +200,42 @@
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>infra-common</artifactId>
+        <artifactId>common-core</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>infra-security</artifactId>
+        <artifactId>governance-policy</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>infra-stream</artifactId>
+        <artifactId>run-event</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>infra-capability</artifactId>
+        <artifactId>capability-core</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>infra-provider</artifactId>
+        <artifactId>capability-provider</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>infra-files</artifactId>
+        <artifactId>worker-file</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>infra-observability</artifactId>
+        <artifactId>governance-observability</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>infra-orchestration</artifactId>
+        <artifactId>workflow-core</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -261,7 +265,7 @@
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>runtime-sandbox</artifactId>
+        <artifactId>worker-sandbox</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -271,82 +275,82 @@
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>biz-agent</artifactId>
+        <artifactId>profile-agent</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>biz-session</artifactId>
+        <artifactId>run-session</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>biz-chat</artifactId>
+        <artifactId>run-core</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>biz-memory</artifactId>
+        <artifactId>runtime-memory</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>biz-execution</artifactId>
+        <artifactId>run-step</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>biz-knowledge</artifactId>
+        <artifactId>capability-knowledge</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>biz-task</artifactId>
+        <artifactId>run-task</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>biz-workflow</artifactId>
+        <artifactId>workflow-engine</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>admin-iam</artifactId>
+        <artifactId>governance-iam</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>admin-agent</artifactId>
+        <artifactId>profile-admin</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>admin-capability</artifactId>
+        <artifactId>capability-admin</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>admin-provider</artifactId>
+        <artifactId>capability-provider-admin</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>admin-knowledge</artifactId>
+        <artifactId>capability-knowledge-admin</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>admin-task</artifactId>
+        <artifactId>run-task-admin</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>admin-system</artifactId>
+        <artifactId>governance-system</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>admin-audit</artifactId>
+        <artifactId>governance-audit</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

@@ -4,13 +4,17 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.htam.agent</groupId>
-    <artifactId>agent-adapter</artifactId>
+    <artifactId>agent-run</artifactId>
     <version>1.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
-  <artifactId>adapter-rest</artifactId>
+  <artifactId>run-task</artifactId>
   <packaging>jar</packaging>
   <dependencies>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>agent-domain</artifactId>
+    </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
       <artifactId>agent-api</artifactId>
@@ -21,19 +25,31 @@
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>run-session</artifactId>
+      <artifactId>repo-spi</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>run-core</artifactId>
+      <artifactId>repo-mybatis</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>governance-iam</artifactId>
+      <artifactId>common-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>run-event</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>runtime-spi</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-web</artifactId>
+      <artifactId>spring-boot-starter-aop</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-quartz</artifactId>
     </dependency>
   </dependencies>
 </project>

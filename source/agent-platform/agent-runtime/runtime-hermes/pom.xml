@@ -4,24 +4,16 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.htam.agent</groupId>
-    <artifactId>agent-adapter</artifactId>
+    <artifactId>agent-runtime</artifactId>
     <version>1.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
-  <artifactId>adapter-agui</artifactId>
+  <artifactId>runtime-hermes</artifactId>
   <packaging>jar</packaging>
   <dependencies>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>agent-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.htam.agent</groupId>
-      <artifactId>run-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-web</artifactId>
+      <artifactId>runtime-spi</artifactId>
     </dependency>
   </dependencies>
 </project>
