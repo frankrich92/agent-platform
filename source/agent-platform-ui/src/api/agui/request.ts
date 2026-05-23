@@ -7,7 +7,7 @@ import { getToken } from '@/utils/auth'
 import setting from '@/config/setting'
 
 /** 默认 run 端点路径 */
-const DEFAULT_RUN_PATH = '/api/apboa/agui/run'
+const DEFAULT_RUN_PATH = '/api/agent/agui/run'
 
 /**
  * 获取智能体 run 的完整 URL

@@ -3,7 +3,7 @@ server:
 
 agentscope:
   agui:
-    path-prefix: /apboa/agui
+    path-prefix: /agent/agui
     cors-enabled: true
     enable-reasoning: true
     server-side-memory: true

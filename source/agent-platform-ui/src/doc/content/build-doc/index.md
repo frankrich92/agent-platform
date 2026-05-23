@@ -241,7 +241,7 @@ graph TD
 # 在项目根目录执行
 docker build \
   -f docker/backend/Dockerfile \
-  -t apboa-backend:latest \
+  -t agent-platform-backend:latest \
   .
 ```
 
@@ -252,7 +252,7 @@ docker build \
   -f docker/frontend/Dockerfile \
   --build-arg VITE_APP_BASE_API=/web \
   --build-arg VITE_APP_CONTEXT_PATH=/web \
-  -t apboa-frontend:latest \
+  -t agent-platform-frontend:latest \
   .
 ```
 
@@ -264,7 +264,7 @@ docker network create apboa_network
 
 # 启动后端（确保 MySQL / Redis 已就绪）
 docker run -d \
-  --name apboa-backend \
+  --name agent-platform-backend \
   --network apboa_network \
   -e SPRING_PROFILES_ACTIVE=docker \
   -e MYSQL_HOST=your-mysql-host \
@@ -272,14 +272,14 @@ docker run -d \
   -e REDIS_HOST=your-redis-host \
   -e REDIS_PASSWORD=your_password \
   -p 3060:3060 \
-  apboa-backend:latest
+  agent-platform-backend:latest
 
 # 启动前端
 docker run -d \
-  --name apboa-frontend \
+  --name agent-platform-frontend \
   --network apboa_network \
   -p 80:80 \
-  apboa-frontend:latest
+  agent-platform-frontend:latest
 ```
 
 ### 6.4 Dockerfile 文件说明
@@ -302,8 +302,8 @@ graph TD
     end
 
     subgraph DockerNetwork["Docker Network: apboa_network"]
-        Nginx["apboa-frontend\n(Nginx)\n端口 80"]
-        Backend["apboa-backend\n(Spring Boot)\n端口 3060"]
+        Nginx["agent-platform-frontend\n(Nginx)\n端口 80"]
+        Backend["agent-platform-backend\n(Spring Boot)\n端口 3060"]
         MySQL["apboa-mysql\n(MySQL)"]
         Redis["apboa-redis\n(Redis)"]
         Pgvector["apboa-pgvector\n(pgvector PG16)"]
@@ -366,10 +366,10 @@ docker compose start  # 启动所有（不重新构建）
 
 ```bash
 # 重新构建后端（不使用缓存）
-docker compose build --no-cache apboa-backend
+docker compose build --no-cache agent-platform-backend
 
 # 重新构建并启动
-docker compose up -d --build apboa-backend
+docker compose up -d --build agent-platform-backend
 ```
 
 
@@ -458,9 +458,9 @@ graph TD
     end
 
     subgraph DockerNetwork["Docker Network: apboa_network"]
-        Nginx["apboa-frontend\n(Nginx 动态路由)\nresolver 127.0.0.11"]
+        Nginx["agent-platform-frontend\n(Nginx 动态路由)\nresolver 127.0.0.11"]
 
-        Backend["apboa-backend 主控后端\nSpring Boot + DooD\n管理 API + 容器管理"]
+        Backend["agent-platform-backend 主控后端\nSpring Boot + DooD\n管理 API + 容器管理"]
 
         MySQL["apboa-mysql\n(MySQL)"]
         Redis["apboa-redis\n(Redis pub/sub)"]
@@ -482,8 +482,8 @@ graph TD
     Admin -->|"管理 API\n(智能体启停)"| Backend
     Browser -->|"HTTP :80"| Nginx
     Nginx -->|"/web/ → 静态资源 + 管理 API"| Backend
-    Nginx -->|"动态路由\n/apboa/agui/$agent_code"| AgentA
-    Nginx -->|"动态路由\n/apboa/agui/$agent_code"| AgentB
+    Nginx -->|"动态路由\n/agent/agui/$agent_code"| AgentA
+    Nginx -->|"动态路由\n/agent/agui/$agent_code"| AgentB
     Nginx -->|"动态路由"| AgentC
 
     Backend -->|"DooD 创建/启动/停止/销毁"| AgentContainers
@@ -574,8 +574,8 @@ docker compose stop
 
 # 重新构建特定服务
 # 如修改了后端代码，重新构建主控后端
-docker compose build --no-cache apboa-backend
-docker compose up -d apboa-backend
+docker compose build --no-cache agent-platform-backend
+docker compose up -d agent-platform-backend
 
 # 如修改了 Agent Runner 镜像配置，重新构建基础镜像
 docker compose build --no-cache agent-runner-image
@@ -585,8 +585,8 @@ docker compose up -d agent-runner-image
 docker compose ps
 
 # 查看各服务日志
-docker compose logs -f apboa-backend
-docker compose logs -f apboa-frontend
+docker compose logs -f agent-platform-backend
+docker compose logs -f agent-platform-frontend
 ```
 
 ### 8.6 智能体生命周期
@@ -622,7 +622,7 @@ docker compose logs -f apboa-frontend
         ├── 3. 启动容器
         │
         └── 4. Nginx 动态路由自动生效
-               URL /apboa/agui/{agentCode}/*
+               URL /agent/agui/{agentCode}/*
                → http://agent-{agentCode}:3060
 ```
 
@@ -656,7 +656,7 @@ docker compose logs -f apboa-frontend
 
 ```nginx
 # 动态路由：从 URL 中提取 agent_code，路由到同名容器
-location ~ ^/apboa/agui/(?<agent_code>[a-z0-9_-]+)(?<remaining>/.*)?$ {
+location ~ ^/agent/agui/(?<agent_code>[a-z0-9_-]+)(?<remaining>/.*)?$ {
     resolver 127.0.0.11 ipv6=off;
 
     # 使用 $remaining 确保路径完整传递
@@ -680,7 +680,7 @@ location ~ ^/apboa/agui/(?<agent_code>[a-z0-9_-]+)(?<remaining>/.*)?$ {
 
 **工作原理**：
 
-1. Nginx 正则匹配 URL 中的 `agent_code`（如 `/apboa/agui/my-agent/chat` → `agent_code = my-agent`）
+1. Nginx 正则匹配 URL 中的 `agent_code`（如 `/agent/agui/my-agent/chat` → `agent_code = my-agent`）
 2. 将 `agent_code` 作为主机名，通过 Docker DNS（`127.0.0.11`）解析为容器 IP
 3. 代理请求到对应 Agent Runner 容器
 4. 如果容器不存在，Docker DNS 解析失败，Nginx 返回 502
@@ -694,7 +694,7 @@ location ~ ^/apboa/agui/(?<agent_code>[a-z0-9_-]+)(?<remaining>/.*)?$ {
 #### 8.8.1 网络隔离
 
 - 所有容器位于独立 Docker 网络 `apboa_network`，与宿主机网络隔离
-- Agent Runner 容器**仅暴露 `/apboa/agui/` 端点**，任何对管理 API 的请求返回 403
+- Agent Runner 容器**仅暴露 `/agent/agui/` 端点**，任何对管理 API 的请求返回 403
 - 安全机制：`AgentModeSecurityConfig` Filter（`@Profile("agent")`）在请求进入 Controller 之前拦截
 
 #### 8.8.2 文件系统隔离
@@ -707,7 +707,7 @@ location ~ ^/apboa/agui/(?<agent_code>[a-z0-9_-]+)(?<remaining>/.*)?$ {
 
 | 服务 | 数据库迁移 | 说明 |
 |------|-----------|------|
-| 主控后端（apboa-backend） | ✅ 执行 | Flyway / Liquibase 管理表结构变更 |
+| 主控后端（agent-platform-backend） | ✅ 执行 | Flyway / Liquibase 管理表结构变更 |
 | Agent Runner 容器 | ❌ 禁用 | 配置 `spring.flyway.enabled=false` |
 
 这确保只有主控后端有权限修改数据库结构，Agent 容器仅能读写业务数据。

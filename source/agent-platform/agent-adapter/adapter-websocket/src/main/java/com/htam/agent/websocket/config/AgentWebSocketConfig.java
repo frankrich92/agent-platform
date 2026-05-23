@@ -23,7 +23,7 @@ public class AgentWebSocketConfig implements WebSocketConfigurer {
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         // 添加握手拦截器进行认证
-        registry.addHandler(agentWebSocketHandler, "/ws/apboa")
+        registry.addHandler(agentWebSocketHandler, "/ws/agent")
                 .addInterceptors(authInterceptor)
                 .setAllowedOrigins("*");
     }

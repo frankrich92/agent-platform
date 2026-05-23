@@ -129,7 +129,7 @@ async function handleView(item: StorageProtocol) {
 
 function getDefaultProtocolConfig(protocol: string): string {
   const defaults: Record<string, object> = {
-    S3: { bucketName: 'apboa', pathStyleAccess: true },
+    S3: { bucketName: 'agent-platform', pathStyleAccess: true },
     FTP: { port: 21, encoding: 'UTF-8' },
     LOCAL: { localDir: '/home' }
   }

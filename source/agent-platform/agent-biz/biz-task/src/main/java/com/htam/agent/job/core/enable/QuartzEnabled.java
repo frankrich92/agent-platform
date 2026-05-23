@@ -9,6 +9,6 @@ import org.springframework.stereotype.Component;
  * @author huxuehao
  **/
 @Component
-@ConditionalOnProperty(name="apboa.quartz.enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(name="agent.quartz.enabled", havingValue = "true", matchIfMissing = true)
 public class QuartzEnabled {
 }

@@ -83,7 +83,7 @@ watch(
  */
 const accessUrl = computed(() => {
   const loc = window.location
-  return `${loc.protocol}//${loc.host}/api/apboa/agui/${props.agentCode}`
+  return `${loc.protocol}//${loc.host}/api/agent/agui/${props.agentCode}`
 })
 
 /**

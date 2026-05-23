@@ -25,7 +25,7 @@ public class TokenUtils {
     private static final String AUTH_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
     private static final String TOKEN = "accessToken";
-    private static final String COOKIE_AUTH = "apboa-access-token";
+    private static final String COOKIE_AUTH = "agent-access-token";
 
     /**
      * 创建token
