@@ -152,7 +152,7 @@ graph TD
     end
 
     subgraph Host["宿主机"]
-        Backend["Apboa Backend\n(console.jar)\n端口 3060"]
+        Backend["Agent Platform Backend\n(console.jar)\n端口 3060"]
         Frontend["前端静态资源\n(ui/dist)"]
     end
 
@@ -215,7 +215,7 @@ graph TD
     end
 
     subgraph Host["宿主机"]
-        Monolith["Apboa 一体化 JAR\n(console.jar 含 ui 静态资源)\n端口 3060\n后端 API + 前端资源"]
+        Monolith["Agent Platform 一体化 JAR\n(console.jar 含 ui 静态资源)\n端口 3060\n后端 API + 前端资源"]
     end
 
     subgraph Infrastructure["基础设施（手动安装）"]

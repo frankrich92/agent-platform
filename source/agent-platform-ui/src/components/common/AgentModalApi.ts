@@ -1,11 +1,11 @@
 import { createApp, defineComponent, ref, h, type VNode } from 'vue'
 import Antd from 'ant-design-vue'
-import ApboaModal from './ApboaModal.vue'
+import AgentModal from './AgentModal.vue'
 
 /**
- * 描述：ApboaModalApi.open() 的配置选项，兼容 ApboaModal 所有 props
+ * 描述：AgentModalApi.open() 的配置选项，兼容 AgentModal 所有 props
  */
-export interface ApboaModalApiOptions {
+export interface AgentModalApiOptions {
   /** 标题 */
   title?: string
   /** 标题图标组件 */
@@ -41,18 +41,18 @@ export interface ApboaModalApiOptions {
 }
 
 /**
- * 描述：ApboaModalApi.open() 返回的实例，可用于手动关闭弹窗
+ * 描述：AgentModalApi.open() 返回的实例，可用于手动关闭弹窗
  */
-export interface ApboaModalApiInstance {
+export interface AgentModalApiInstance {
   /** 手动关闭弹窗 */
   close(): void
 }
 
 /**
- * 描述：API 式调用 ApboaModal 的工具类，使用方式类似 antdv 的 Modal.info()
+ * 描述：API 式调用 AgentModal 的工具类，使用方式类似 antdv 的 Modal.info()
  *
  * @example
- * const modal = ApboaModalApi.open({
+ * const modal = AgentModalApi.open({
  *   title: '详情',
  *   footer: null,
  *   content: h('div', '这是内容'),
@@ -60,14 +60,14 @@ export interface ApboaModalApiInstance {
  * // 手动关闭
  * modal.close()
  */
-export const ApboaModalApi = {
+export const AgentModalApi = {
   /**
-   * 打开一个 ApboaModal 弹窗
+   * 打开一个 AgentModal 弹窗
    *
    * @param options 弹窗配置项
    * @return 弹窗实例，包含 close() 方法
    */
-  open(options: ApboaModalApiOptions): ApboaModalApiInstance {
+  open(options: AgentModalApiOptions): AgentModalApiInstance {
     const container = document.createElement('div')
     document.body.appendChild(container)
 
@@ -91,16 +91,16 @@ export const ApboaModalApi = {
     const openRef = ref(true)
 
     /**
-     * 内部包装组件，将 options 映射到 ApboaModal 的 props 和 slots
+     * 内部包装组件，将 options 映射到 AgentModal 的 props 和 slots
      */
     const WrapperComponent = defineComponent({
-      name: 'ApboaModalApiWrapper',
+      name: 'AgentModalApiWrapper',
       setup() {
         return () => {
           const { content, onOk, onCancel, ...modalProps } = options
 
           return h(
-            ApboaModal,
+            AgentModal,
             {
               ...modalProps,
               open: openRef.value,

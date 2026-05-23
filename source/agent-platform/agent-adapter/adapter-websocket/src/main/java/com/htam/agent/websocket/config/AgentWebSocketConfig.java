@@ -16,14 +16,14 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 @Configuration
 @EnableWebSocket
 @RequiredArgsConstructor
-public class ApboaWebSocketConfig implements WebSocketConfigurer {
-    private final ApboaWebSocketHandler apboaWebSocketHandler;
+public class AgentWebSocketConfig implements WebSocketConfigurer {
+    private final AgentWebSocketHandler agentWebSocketHandler;
     private final WebSocketAuthInterceptor authInterceptor;
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         // 添加握手拦截器进行认证
-        registry.addHandler(apboaWebSocketHandler, "/ws/apboa")
+        registry.addHandler(agentWebSocketHandler, "/ws/apboa")
                 .addInterceptors(authInterceptor)
                 .setAllowedOrigins("*");
     }

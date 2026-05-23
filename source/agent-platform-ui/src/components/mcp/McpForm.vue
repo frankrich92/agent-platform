@@ -247,7 +247,7 @@ function handleCancel() {
 </script>
 
 <template>
-  <ApboaModal
+  <AgentModal
     :open="visible"
     :title-icon="CloudServerOutlined"
     :title="isEdit ? '编辑 MCP 服务器' : '新增 MCP 服务器'"
@@ -395,7 +395,7 @@ function handleCancel() {
         {{ isEdit ? '更新' : '创建' }}
       </AButton>
     </template>
-  </ApboaModal>
+  </AgentModal>
 </template>
 
 <style scoped lang="scss">

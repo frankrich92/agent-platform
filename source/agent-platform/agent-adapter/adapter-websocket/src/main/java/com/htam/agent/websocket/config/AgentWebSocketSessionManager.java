@@ -1,6 +1,6 @@
 package com.htam.agent.websocket.config;
 
-import com.htam.agent.websocket.context.ApboaWebSocketSession;
+import com.htam.agent.websocket.context.AgentWebSocketSession;
 import com.htam.agent.common.enums.WsMessageType;
 import com.htam.agent.websocket.handler.ServiceMessageHandlerAdapter;
 import com.htam.agent.websocket.handler.server.ServerMessageHandler;
@@ -20,24 +20,24 @@ import java.util.concurrent.TimeUnit;
  *
  * @author huxuehao
  **/
-public class ApboaWebSocketSessionManager {
+public class AgentWebSocketSessionManager {
 
     private static final int CHECK_INTERVAL = 20;
 
     private static final int KEEPALIVE_TIMEOUT = 60 * 1000;
 
-    private static final Logger logger = LoggerFactory.getLogger(ApboaWebSocketSessionManager.class);
+    private static final Logger logger = LoggerFactory.getLogger(AgentWebSocketSessionManager.class);
 
     private static final ScheduledExecutorService SCHEDULER =
             new ScheduledThreadPoolExecutor(1, r -> {
-                Thread t = new Thread(r, "apboa-websocket-clean-task");
+                Thread t = new Thread(r, "agent-websocket-clean-task");
                 t.setDaemon(true); // 设置为守护线程，不阻塞JVM关闭
                 return t;
             });
 
     static {
         SCHEDULER.scheduleAtFixedRate(
-                ApboaWebSocketSessionManager::checkSession,
+                AgentWebSocketSessionManager::checkSession,
                 CHECK_INTERVAL,
                 CHECK_INTERVAL,
                 TimeUnit.SECONDS
@@ -62,8 +62,8 @@ public class ApboaWebSocketSessionManager {
      *
      * @param clientId 客户端
      */
-    public static ApboaWebSocketSession getSessionByClientId(String clientId) {
-        return ApboaWebSocketSession.getSessionByClientId(clientId);
+    public static AgentWebSocketSession getSessionByClientId(String clientId) {
+        return AgentWebSocketSession.getSessionByClientId(clientId);
     }
 
     /**
@@ -71,16 +71,16 @@ public class ApboaWebSocketSessionManager {
      *
      * @param userId 用户 ID
      */
-    public static List<ApboaWebSocketSession> getSessionByAccountId(String userId) {
-        return ApboaWebSocketSession.getSessionByAccountId(userId);
+    public static List<AgentWebSocketSession> getSessionByAccountId(String userId) {
+        return AgentWebSocketSession.getSessionByAccountId(userId);
     }
 
     /**
      * 移除并关闭指定的session
      *
-     * @param session WebSocketSession包装类ApboaWebSocketSession
+     * @param session WebSocketSession包装类AgentWebSocketSession
      */
-    public static void remove(ApboaWebSocketSession session) {
+    public static void remove(AgentWebSocketSession session) {
         if (session!= null) {
             session.close();
         }
@@ -112,7 +112,7 @@ public class ApboaWebSocketSessionManager {
      * @param content          消息内容
      */
     public static void sendToOther(List<String> excludeClientIds, WsServerMessage content) {
-        ApboaWebSocketSession.getSessionCache().entrySet()
+        AgentWebSocketSession.getSessionCache().entrySet()
                 .stream()
                 .filter(entry -> !excludeClientIds.contains(entry.getKey()))
                 .forEach(entry -> sendBySession(entry.getValue(), content));
@@ -125,7 +125,7 @@ public class ApboaWebSocketSessionManager {
      * @param content        消息内容
      */
     public static void sendToTarget(String targetClientId, WsServerMessage content) {
-        ApboaWebSocketSession session = ApboaWebSocketSession.getSessionByClientId(targetClientId);
+        AgentWebSocketSession session = AgentWebSocketSession.getSessionByClientId(targetClientId);
         sendBySession(session, content);
     }
 
@@ -135,7 +135,7 @@ public class ApboaWebSocketSessionManager {
      * @param session 目标session
      * @param content 消息内容
      */
-    public static void sendBySession(ApboaWebSocketSession session, WsServerMessage content) {
+    public static void sendBySession(AgentWebSocketSession session, WsServerMessage content) {
         try {
             if (session != null) {
                 synchronized (session.getClientId()) {
@@ -144,7 +144,7 @@ public class ApboaWebSocketSessionManager {
             }
         } catch (Exception e) {
             session.close();
-            logger.warn("ApboaWebSocketSessionManager发送WebSocket消息失败: {}", e.getMessage());
+            logger.warn("AgentWebSocketSessionManager发送WebSocket消息失败: {}", e.getMessage());
         }
     }
 
@@ -154,7 +154,7 @@ public class ApboaWebSocketSessionManager {
     private static void checkSession() {
         try {
             long activateTime = System.currentTimeMillis() - KEEPALIVE_TIMEOUT;
-            ApboaWebSocketSession.getSessionCache().entrySet().stream()
+            AgentWebSocketSession.getSessionCache().entrySet().stream()
                     // 给所有的session发送检测存活的消息消息
                     .peek(it -> {
                         // 获取服务器消息处理器
@@ -168,7 +168,7 @@ public class ApboaWebSocketSessionManager {
                     .toList()
                     // 移除不健康的session
                     .forEach(entry -> {
-                        ApboaWebSocketSession session = entry.getValue();
+                        AgentWebSocketSession session = entry.getValue();
                         session.close();
                     });
         } catch (Exception ignored) {

@@ -10,14 +10,14 @@
 
     <!-- 文件输出（按天滚动） -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/apboa.log</file>
+        <file>logs/agent-platform.log</file>
         <encoder>
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
             <charset>UTF-8</charset>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- 滚动文件名称 -->
-            <fileNamePattern>logs/apboa.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <fileNamePattern>logs/agent-platform.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <!-- 保留 30 天 -->
             <maxHistory>30</maxHistory>
             <!-- 单个文件最大 100MB -->

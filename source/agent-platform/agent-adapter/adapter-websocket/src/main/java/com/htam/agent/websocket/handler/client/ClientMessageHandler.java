@@ -1,6 +1,6 @@
 package com.htam.agent.websocket.handler.client;
 
-import com.htam.agent.websocket.context.ApboaWebSocketSession;
+import com.htam.agent.websocket.context.AgentWebSocketSession;
 import com.htam.agent.common.enums.WsMessageType;
 import com.htam.agent.websocket.handler.ClientMessageHandlerAdapter;
 import com.htam.agent.websocket.model.WsClientMessage;
@@ -20,10 +20,10 @@ public interface ClientMessageHandler extends SmartInitializingSingleton {
     /**
      * 处理消息的执行方法
      *
-     * @param session ApboaWebSocketSession
+     * @param session AgentWebSocketSession
      * @param msg     消息
      */
-    void handle(ApboaWebSocketSession session, WsClientMessage msg);
+    void handle(AgentWebSocketSession session, WsClientMessage msg);
 
     /**
      * 注册实现类的Handler

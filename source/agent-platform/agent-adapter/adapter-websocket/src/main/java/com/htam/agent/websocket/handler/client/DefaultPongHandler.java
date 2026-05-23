@@ -1,6 +1,6 @@
 package com.htam.agent.websocket.handler.client;
 
-import com.htam.agent.websocket.context.ApboaWebSocketSession;
+import com.htam.agent.websocket.context.AgentWebSocketSession;
 import com.htam.agent.common.enums.WsMessageType;
 import com.htam.agent.websocket.model.WsClientMessage;
 import org.springframework.stereotype.Service;
@@ -19,7 +19,7 @@ public class DefaultPongHandler implements ClientMessageHandler {
     }
 
     @Override
-    public void handle(ApboaWebSocketSession session, WsClientMessage msg) {
+    public void handle(AgentWebSocketSession session, WsClientMessage msg) {
         if (msg == null) {
             return;
         }

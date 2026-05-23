@@ -1,7 +1,7 @@
 package com.htam.agent.websocket.handler.server;
 
-import com.htam.agent.websocket.config.ApboaWebSocketSessionManager;
-import com.htam.agent.websocket.context.ApboaWebSocketSession;
+import com.htam.agent.websocket.config.AgentWebSocketSessionManager;
+import com.htam.agent.websocket.context.AgentWebSocketSession;
 import com.htam.agent.common.enums.WsMessageType;
 import com.htam.agent.websocket.model.WsServerMessage;
 import org.springframework.stereotype.Service;
@@ -20,12 +20,12 @@ public class DefaultPingHandler implements ServerMessageHandler {
     }
 
     @Override
-    public void handle(ApboaWebSocketSession session, WsServerMessage msg) {
+    public void handle(AgentWebSocketSession session, WsServerMessage msg) {
         if (msg == null) {
             return;
         }
         // 发送心跳给客户端
-        ApboaWebSocketSessionManager.sendBySession(session, msg);
+        AgentWebSocketSessionManager.sendBySession(session, msg);
     }
 
     @Override

@@ -16,8 +16,8 @@ import ModelProviderCard from '@/components/model/ModelProviderCard.vue'
 import CreateProviderCard from '@/components/model/CreateProviderCard.vue'
 import ModelProviderForm from '@/components/model/ModelProviderForm.vue'
 import ModelConfigModal from '@/components/model/ModelConfigModal.vue'
-import {ApboaModalApi} from "@/components/common/ApboaModalApi.ts";
-import ApboaInfiniteLoading from '@/components/common/ApboaInfiniteLoading.vue'
+import {AgentModalApi} from "@/components/common/AgentModalApi.ts";
+import AgentInfiniteLoading from '@/components/common/AgentInfiniteLoading.vue'
 
 const store = useModelStore()
 const { list, selectedProviderType, keyword, loading, hasMore } = storeToRefs(store)
@@ -68,7 +68,7 @@ async function handleView(id: string) {
   const response = await modelApi.providerDetail(id)
   const data = response.data.data
 
-  ApboaModalApi.open({
+  AgentModalApi.open({
     title: '供应商详情',
     titleIcon: ApiOutlined,
     footer: null,
@@ -298,7 +298,7 @@ watch([selectedProviderType, keyword], () => {
         />
       </div>
 
-      <ApboaInfiniteLoading
+      <AgentInfiniteLoading
         :loading-key="infiniteLoadingKey"
         @infinite="handleInfiniteLoading"
       />

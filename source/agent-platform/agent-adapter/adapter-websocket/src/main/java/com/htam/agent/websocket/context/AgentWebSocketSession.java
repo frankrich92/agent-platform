@@ -18,8 +18,8 @@ import java.util.concurrent.ConcurrentHashMap;
  **/
 @Getter
 @Setter
-public class ApboaWebSocketSession {
-    private static final Map<String, ApboaWebSocketSession> CACHED = new ConcurrentHashMap<>();
+public class AgentWebSocketSession {
+    private static final Map<String, AgentWebSocketSession> CACHED = new ConcurrentHashMap<>();
     private WebSocketSession webSocketSession;
     private String clientId;
     private UserDetail user;
@@ -27,11 +27,11 @@ public class ApboaWebSocketSession {
     private long activateTime = System.currentTimeMillis();
     private long timeout;
 
-    public ApboaWebSocketSession(WebSocketSession webSocketSession) {
+    public AgentWebSocketSession(WebSocketSession webSocketSession) {
         this.webSocketSession = webSocketSession;
     }
 
-    public static Map<String, ApboaWebSocketSession> getSessionCache() {
+    public static Map<String, AgentWebSocketSession> getSessionCache() {
         return CACHED;
     }
 
@@ -43,29 +43,29 @@ public class ApboaWebSocketSession {
     }
 
     /**
-     * 根据WebSocketSession获取ApboaWebSocketSession
+     * 根据WebSocketSession获取AgentWebSocketSession
      * @param session WebSocketSession
      */
-    public static ApboaWebSocketSession from(WebSocketSession session) {
-        ApboaWebSocketSession ApboaWebSocketSession = CACHED.get(session.getId());
-        if (ApboaWebSocketSession == null) {
-            ApboaWebSocketSession = new ApboaWebSocketSession(session);
-            CACHED.put(session.getId(), ApboaWebSocketSession);
+    public static AgentWebSocketSession from(WebSocketSession session) {
+        AgentWebSocketSession agentWebSocketSession = CACHED.get(session.getId());
+        if (agentWebSocketSession == null) {
+            agentWebSocketSession = new AgentWebSocketSession(session);
+            CACHED.put(session.getId(), agentWebSocketSession);
         }
-        return ApboaWebSocketSession;
+        return agentWebSocketSession;
     }
 
     /**
      * 根据用户ID获取WebSocketSession集合
      * @param clientId clientId
      */
-    public static ApboaWebSocketSession getSessionByClientId(String clientId) {
+    public static AgentWebSocketSession getSessionByClientId(String clientId) {
         if (clientId == null) {
             return null;
         }
 
-        for (Map.Entry<String, ApboaWebSocketSession> entry : CACHED.entrySet()) {
-            ApboaWebSocketSession value = entry.getValue();
+        for (Map.Entry<String, AgentWebSocketSession> entry : CACHED.entrySet()) {
+            AgentWebSocketSession value = entry.getValue();
             if (clientId.equals(value.getClientId())) {
                 return value;
             }
@@ -78,13 +78,13 @@ public class ApboaWebSocketSession {
      * 根据账号 ID 获取 WebSocketSession 集合
      * @param accountId 账号 ID
      */
-    public static List<ApboaWebSocketSession> getSessionByAccountId(String accountId) {
-        ArrayList<ApboaWebSocketSession> targetSessions = new ArrayList<>();
+    public static List<AgentWebSocketSession> getSessionByAccountId(String accountId) {
+        ArrayList<AgentWebSocketSession> targetSessions = new ArrayList<>();
         if (accountId == null) {
             return targetSessions;
         }
 
-        for (Map.Entry<String, ApboaWebSocketSession> entry : CACHED.entrySet()) {
+        for (Map.Entry<String, AgentWebSocketSession> entry : CACHED.entrySet()) {
             UserDetail user = entry.getValue().getUser();
             if (user != null && accountId.equals(String.valueOf(user.getId()))) {
                 targetSessions.add(entry.getValue());

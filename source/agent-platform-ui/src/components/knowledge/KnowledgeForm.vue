@@ -588,7 +588,7 @@ function removeMetadataCondition(index: number) {
 </script>
 
 <template>
-  <ApboaModal
+  <AgentModal
     :open="visible"
     :title-icon="DatabaseOutlined"
     :title="modalTitle"
@@ -1009,7 +1009,7 @@ function removeMetadataCondition(index: number) {
       <AButton @click="handleCancel">取消</AButton>
       <AButton type="primary" @click="handleSubmit">确定</AButton>
     </template>
-  </ApboaModal>
+  </AgentModal>
 </template>
 
 <style scoped lang="scss">

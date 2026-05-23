@@ -145,7 +145,7 @@ defineExpose({
 </script>
 
 <template>
-  <ApboaModal
+  <AgentModal
     v-model:open="visible"
     :title="title"
     @ok="close"
@@ -178,9 +178,9 @@ defineExpose({
 
       <AEmpty v-else description="暂无数据" class="mt-md" />
     </div>
-  </ApboaModal>
+  </AgentModal>
 
-  <ApboaModal
+  <AgentModal
     v-model:open="itemFormVisible"
     :title="currentItemIndex === -1 ? '添加项' : '编辑项'"
     @ok="handleItemSave"
@@ -204,7 +204,7 @@ defineExpose({
         />
       </AFormItem>
     </AForm>
-  </ApboaModal>
+  </AgentModal>
 </template>
 
 <style scoped lang="scss">

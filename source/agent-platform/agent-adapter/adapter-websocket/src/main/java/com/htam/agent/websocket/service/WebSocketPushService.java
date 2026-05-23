@@ -4,8 +4,8 @@ import com.htam.agent.common.consts.SysConst;
 import com.htam.agent.common.util.JsonUtils;
 import com.htam.agent.websocket.cluster.ClusterMessage;
 import com.htam.agent.websocket.cluster.RedisSessionManager;
-import com.htam.agent.websocket.config.ApboaWebSocketSessionManager;
-import com.htam.agent.websocket.context.ApboaWebSocketSession;
+import com.htam.agent.websocket.config.AgentWebSocketSessionManager;
+import com.htam.agent.websocket.context.AgentWebSocketSession;
 import com.htam.agent.websocket.model.WsServerMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -34,9 +34,9 @@ public class WebSocketPushService {
      * @param message  消息内容
      */
     public void pushToClient(String clientId, WsServerMessage message) {
-        ApboaWebSocketSession session = ApboaWebSocketSession.getSessionByClientId(clientId);
+        AgentWebSocketSession session = AgentWebSocketSession.getSessionByClientId(clientId);
         if (session != null && session.writeable()) {
-            ApboaWebSocketSessionManager.sendBySession(session, message);
+            AgentWebSocketSessionManager.sendBySession(session, message);
             log.info("推送消息到本地客户端：clientId={}, messageType={}", clientId, message.getType());
         } else {
             log.warn("目标客户端不在本节点：clientId={}", clientId);
@@ -50,10 +50,10 @@ public class WebSocketPushService {
      * @param message 消息内容
      */
     public void pushToUser(String userId, WsServerMessage message) {
-        List<ApboaWebSocketSession> sessions = ApboaWebSocketSession.getSessionByAccountId(userId);
-        for (ApboaWebSocketSession session : sessions) {
+        List<AgentWebSocketSession> sessions = AgentWebSocketSession.getSessionByAccountId(userId);
+        for (AgentWebSocketSession session : sessions) {
             if (session != null && session.writeable()) {
-                ApboaWebSocketSessionManager.sendBySession(session, message);
+                AgentWebSocketSessionManager.sendBySession(session, message);
             }
         }
         log.info("推送消息给用户：userId={}, sessionCount={}", userId, sessions.size());
@@ -65,7 +65,7 @@ public class WebSocketPushService {
      * @param message 消息内容
      */
     public void broadcast(WsServerMessage message) {
-        ApboaWebSocketSessionManager.sendToAll(message);
+        AgentWebSocketSessionManager.sendToAll(message);
         log.info("广播消息：messageType={}", message.getType());
     }
 

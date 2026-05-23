@@ -3,8 +3,8 @@ package com.htam.agent.websocket.cluster;
 import com.htam.agent.cluster.core.ChannelSubscriber;
 import com.htam.agent.common.consts.RedisChannelTopic;
 import com.htam.agent.common.util.JsonUtils;
-import com.htam.agent.websocket.config.ApboaWebSocketSessionManager;
-import com.htam.agent.websocket.context.ApboaWebSocketSession;
+import com.htam.agent.websocket.config.AgentWebSocketSessionManager;
+import com.htam.agent.websocket.context.AgentWebSocketSession;
 import com.htam.agent.websocket.model.WsServerMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.listener.PatternTopic;
@@ -49,9 +49,9 @@ public class ClusterMessageSubscriber implements ChannelSubscriber {
 
             // 按 clientId 精准推送
             if (clusterMessage.getTargetClientId() != null) {
-                ApboaWebSocketSession session = ApboaWebSocketSession.getSessionByClientId(clusterMessage.getTargetClientId());
+                AgentWebSocketSession session = AgentWebSocketSession.getSessionByClientId(clusterMessage.getTargetClientId());
                 if (session != null && session.writeable()) {
-                    ApboaWebSocketSessionManager.sendBySession(session, wsMessage);
+                    AgentWebSocketSessionManager.sendBySession(session, wsMessage);
                     log.info("集群消息转发成功：targetClientId={}", clusterMessage.getTargetClientId());
                 } else {
                     log.debug("目标客户端不在本节点：targetClientId={}", clusterMessage.getTargetClientId());
@@ -59,10 +59,10 @@ public class ClusterMessageSubscriber implements ChannelSubscriber {
             }
             // 按 userId 推送
             else if (clusterMessage.getUserId() != null) {
-                List<ApboaWebSocketSession> sessions = ApboaWebSocketSession.getSessionByAccountId(clusterMessage.getUserId());
-                for (ApboaWebSocketSession session : sessions) {
+                List<AgentWebSocketSession> sessions = AgentWebSocketSession.getSessionByAccountId(clusterMessage.getUserId());
+                for (AgentWebSocketSession session : sessions) {
                     if (session != null && session.writeable()) {
-                        ApboaWebSocketSessionManager.sendBySession(session, wsMessage);
+                        AgentWebSocketSessionManager.sendBySession(session, wsMessage);
                     }
                 }
                 log.info("集群消息转发成功：userId={}, sessionCount={}", clusterMessage.getUserId(), sessions.size());
@@ -70,9 +70,9 @@ public class ClusterMessageSubscriber implements ChannelSubscriber {
             // 全广播
             else {
                 if (clusterMessage.getExcludeClientId() != null) {
-                    ApboaWebSocketSessionManager.sendToOther(clusterMessage.getExcludeClientId(), wsMessage);
+                    AgentWebSocketSessionManager.sendToOther(clusterMessage.getExcludeClientId(), wsMessage);
                 } else {
-                    ApboaWebSocketSessionManager.sendToAll(wsMessage);
+                    AgentWebSocketSessionManager.sendToAll(wsMessage);
                 }
                 log.info("集群广播消息转发成功：messageType={}", clusterMessage.getMessageType());
             }

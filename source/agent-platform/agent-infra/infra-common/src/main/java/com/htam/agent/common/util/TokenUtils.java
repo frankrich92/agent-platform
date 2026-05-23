@@ -1,6 +1,6 @@
 package com.htam.agent.common.util;
 
-import com.htam.agent.common.config.ApboaSpringContextHolder;
+import com.htam.agent.common.config.AgentSpringContextHolder;
 import com.htam.agent.common.consts.SysConst;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
@@ -34,7 +34,7 @@ public class TokenUtils {
      * @param ttlMillis 过期时间
      */
     public static String createToken(String id, Object subject, long ttlMillis) {
-        String secret = ApboaSpringContextHolder.getProperty(SysConst.JWT_SECRET_KEY);
+        String secret = AgentSpringContextHolder.getProperty(SysConst.JWT_SECRET_KEY);
         return createToken(id, JsonUtils.toJsonStr(subject), ttlMillis, secret);
     }
 
@@ -76,7 +76,7 @@ public class TokenUtils {
      * @param token token
      */
     public static Claims parseToken(String token) {
-        String secret = ApboaSpringContextHolder.getProperty(SysConst.JWT_SECRET_KEY);
+        String secret = AgentSpringContextHolder.getProperty(SysConst.JWT_SECRET_KEY);
         return parseToken(token, secret);
     }
 

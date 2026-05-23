@@ -138,7 +138,7 @@ const agentCode = computed(() => props.agentData?.agentCode || '')
 </script>
 
 <template>
-  <ApboaModal
+  <AgentModal
     :open="visible"
     :title-icon="RobotOutlined"
     :title="agentData?.name ? `${agentData.name} - 设计` : '智能体设计'"
@@ -215,7 +215,7 @@ const agentCode = computed(() => props.agentData?.agentCode || '')
         />
       </div>
     </div>
-  </ApboaModal>
+  </AgentModal>
 </template>
 
 <style scoped lang="scss">

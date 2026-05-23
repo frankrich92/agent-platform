@@ -213,7 +213,7 @@ const addItem = (e: any) => {
 </script>
 
 <template>
-  <ApboaModal
+  <AgentModal
     :open="visible"
     :title-icon="SafetyCertificateOutlined"
     :title="isEdit ? '编辑敏感词配置' : '新增敏感词配置'"
@@ -286,7 +286,7 @@ const addItem = (e: any) => {
         </ACol>
       </ARow>
     </AForm>
-  </ApboaModal>
+  </AgentModal>
 </template>
 
 <style scoped lang="scss"></style>

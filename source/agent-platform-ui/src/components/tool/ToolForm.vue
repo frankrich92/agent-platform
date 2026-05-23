@@ -424,7 +424,7 @@ const addItem = (e: Event) => {
 </script>
 
 <template>
-  <ApboaModal
+  <AgentModal
     :open="visible"
     :title-icon="ToolOutlined"
     :title="isEdit ? '编辑工具' : '新增工具'"
@@ -568,7 +568,7 @@ const addItem = (e: Event) => {
         </AFormItem>
       </template>
     </AForm>
-  </ApboaModal>
+  </AgentModal>
 </template>
 
 <style scoped lang="scss">

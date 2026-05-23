@@ -13,7 +13,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
  * @author huxuehao
  **/
 @Configuration
-public class ApboaRedisConfig {
+public class AgentRedisConfig {
 
     /**
      * 配置 RedisTemplate

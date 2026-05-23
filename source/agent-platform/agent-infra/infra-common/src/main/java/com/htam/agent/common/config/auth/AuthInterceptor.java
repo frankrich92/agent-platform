@@ -149,7 +149,7 @@ public class AuthInterceptor implements HandlerInterceptor {
             return false;
         }
 
-        // 验证是否是APBOA-CHAT-KEY-TOKEN
+        // 验证是否是AGENT-CHAT-KEY-TOKEN
         if (!validateChatKeyAccess(claims, handlerMethod, response)) {
             return false;
         }

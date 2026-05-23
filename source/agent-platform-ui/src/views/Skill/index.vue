@@ -18,8 +18,8 @@ import SkillForm from '@/components/skill/SkillForm.vue'
 import ImportLocalForm from '@/components/skill/ImportLocalForm.vue'
 import ImportGitForm from '@/components/skill/ImportGitForm.vue'
 import ImportUploadForm from '@/components/skill/ImportUploadForm.vue'
-import {ApboaModalApi} from "@/components/common/ApboaModalApi.ts";
-import ApboaInfiniteLoading from '@/components/common/ApboaInfiniteLoading.vue'
+import {AgentModalApi} from "@/components/common/AgentModalApi.ts";
+import AgentInfiniteLoading from '@/components/common/AgentInfiniteLoading.vue'
 
 /**
  * 资源项接口
@@ -140,7 +140,7 @@ async function handleView(id: string) {
   const response = await skillApi.detail(id)
   const data = response.data.data
 
-  ApboaModalApi.open({
+  AgentModalApi.open({
     title: '技能包详情',
     titleIcon: AppstoreOutlined,
     footer: null,
@@ -420,7 +420,7 @@ onMounted(() => {
         />
       </div>
 
-      <ApboaInfiniteLoading
+      <AgentInfiniteLoading
         :loading-key="infiniteLoadingKey"
         @infinite="handleInfiniteLoading"
       />

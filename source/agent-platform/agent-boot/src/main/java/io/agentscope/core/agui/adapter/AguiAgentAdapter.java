@@ -142,7 +142,7 @@ public class AguiAgentAdapter {
                 if (block instanceof TextBlock textBlock) {
                     String text = textBlock.getText();
                     if (text != null && !text.isEmpty()) {
-                        // Apboa 如果当前已有活跃的文本消息，复用其 messageId，避免产生多个 TEXT_MESSAGE_START
+                        // Agent Platform 如果当前已有活跃的文本消息，复用其 messageId，避免产生多个 TEXT_MESSAGE_START
                         String messageId;
                         if (state.hasActiveTextMessage()) {
                             messageId = state.getCurrentTextMessageId();
@@ -182,7 +182,7 @@ public class AguiAgentAdapter {
                     if (config.isEnableReasoning()) {
                         String thinking = thinkingBlock.getThinking();
                         if (thinking != null && !thinking.isEmpty()) {
-                            // Apboa 如果当前已有活跃的文本消息，复用其 messageId，避免产生多个 TEXT_MESSAGE_START
+                            // Agent Platform 如果当前已有活跃的文本消息，复用其 messageId，避免产生多个 TEXT_MESSAGE_START
                             String messageId;
                             if (state.hasActiveTextMessage()) {
                                 messageId = state.getCurrentTextMessageId();

@@ -3,7 +3,7 @@ package com.htam.agent.websocket.config;
 import com.htam.agent.common.UserDetail;
 import com.htam.agent.common.consts.SysConst;
 import com.htam.agent.common.util.JsonUtils;
-import com.htam.agent.websocket.context.ApboaWebSocketSession;
+import com.htam.agent.websocket.context.AgentWebSocketSession;
 import com.htam.agent.websocket.handler.ClientMessageHandlerAdapter;
 import com.htam.agent.websocket.handler.client.ClientMessageHandler;
 import com.htam.agent.websocket.model.WsClientMessage;
@@ -21,22 +21,22 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
  **/
 @Slf4j
 @Component
-public class ApboaWebSocketHandler extends TextWebSocketHandler {
+public class AgentWebSocketHandler extends TextWebSocketHandler {
 
     /**
      * 连接建立后
      */
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
-        // 将 WebSocketSession 包装成 ApboaWebSocketSession 并进行缓存
-        ApboaWebSocketSession apboaSession = ApboaWebSocketSession.from(session);
+        // 将 WebSocketSession 包装成 AgentWebSocketSession 并进行缓存
+        AgentWebSocketSession agentSession = AgentWebSocketSession.from(session);
 
         // 从 attributes 中获取认证信息并设置
         UserDetail qianmoUser = (UserDetail)session.getAttributes().get(SysConst.USER_DETAIL);
 
         if (qianmoUser != null) {
             // 设置用户信息
-            apboaSession.setUser(qianmoUser);
+            agentSession.setUser(qianmoUser);
 
             log.info("WebSocket 连接建立成功：userId={}, username={}",
                     qianmoUser.getId(),
@@ -51,14 +51,14 @@ public class ApboaWebSocketHandler extends TextWebSocketHandler {
      */
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
-        ApboaWebSocketSession apboaSession = ApboaWebSocketSession.from(session);
+        AgentWebSocketSession agentSession = AgentWebSocketSession.from(session);
 
         // 从本地缓存移除
-        ApboaWebSocketSessionManager.remove(apboaSession);
+        AgentWebSocketSessionManager.remove(agentSession);
 
         log.info("WebSocket 连接关闭：userId={}, clientId={}, status={}",
-            apboaSession.getUser() != null ? apboaSession.getUser().getId() : "null",
-            apboaSession.getClientId(), status);
+            agentSession.getUser() != null ? agentSession.getUser().getId() : "null",
+            agentSession.getClientId(), status);
     }
 
     /**
@@ -68,14 +68,14 @@ public class ApboaWebSocketHandler extends TextWebSocketHandler {
     protected void handleTextMessage(WebSocketSession session, TextMessage message) {
         try {
             // 刷新会话 TTL
-            ApboaWebSocketSession apboaSession = ApboaWebSocketSession.from(session);
+            AgentWebSocketSession agentSession = AgentWebSocketSession.from(session);
 
             // 将消息负载转成对象
             WsClientMessage messageWrap = JsonUtils.parse(message.getPayload(), WsClientMessage.class);
             // 获取消息处理器
             ClientMessageHandler handler = ClientMessageHandlerAdapter.getHandler(messageWrap.getType());
             if (handler != null) {
-                handler.handle(apboaSession, messageWrap);
+                handler.handle(agentSession, messageWrap);
             }
 
         } catch (Exception e) {

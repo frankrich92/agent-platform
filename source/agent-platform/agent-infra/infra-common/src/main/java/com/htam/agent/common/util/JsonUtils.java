@@ -3,7 +3,7 @@ package com.htam.agent.common.util;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.htam.agent.common.config.ApboaSpringContextHolder;
+import com.htam.agent.common.config.AgentSpringContextHolder;
 
 import java.time.Duration;
 
@@ -19,7 +19,7 @@ public class JsonUtils {
         if (objectMapper == null) {
             synchronized (JsonUtils.class) {
                 if (objectMapper == null) {
-                    objectMapper = ApboaSpringContextHolder.getObjectMapper();
+                    objectMapper = AgentSpringContextHolder.getObjectMapper();
                 }
             }
         }

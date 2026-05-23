@@ -347,7 +347,7 @@ function handleCancel() {
 </script>
 
 <template>
-  <ApboaModal
+  <AgentModal
     :open="visible"
     :title-icon="RobotOutlined"
     :title="isEdit ? '编辑智能体' : '新增智能体'"
@@ -414,7 +414,7 @@ function handleCancel() {
         </AButton>
       </ASpace>
     </div>
-  </ApboaModal>
+  </AgentModal>
 </template>
 
 <style scoped lang="scss">

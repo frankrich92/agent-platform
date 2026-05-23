@@ -394,7 +394,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <ApboaModal
+  <AgentModal
     :open="visible"
     :title-icon="AppstoreOutlined"
     :title="title"
@@ -611,7 +611,7 @@ onMounted(() => {
       prefix="scripts"
       :show-language-selector="false"
     />
-  </ApboaModal>
+  </AgentModal>
 </template>
 
 <style scoped lang="scss">

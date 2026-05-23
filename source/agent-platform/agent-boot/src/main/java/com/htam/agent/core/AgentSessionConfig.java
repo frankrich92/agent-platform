@@ -27,7 +27,7 @@ import javax.sql.DataSource;
 @Slf4j
 @Configuration
 @ConditionalOnClass({DataSource.class, MysqlSession.class})
-public class ApboaAgentSessionConfig {
+public class AgentSessionConfig {
 
     private static final String DATABASE_NAME = "apboa";
 

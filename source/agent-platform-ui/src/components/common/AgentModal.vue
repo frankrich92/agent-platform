@@ -141,33 +141,33 @@ watch(
     :footer="null"
     :width="'100vw'"
     :destroy-on-close="destroyOnClose"
-    wrap-class-name="apboa-modal-wrap"
+    wrap-class-name="agent-modal-wrap"
     @update:open="emit('update:open', $event)"
     @after-close="emit('afterClose')"
   >
     <!-- 全屏三栏容器 -->
-    <div class="apboa-fullscreen">
+    <div class="agent-fullscreen">
       <!-- 左侧留白（高斯模糊） -->
-      <div class="apboa-side apboa-side-left" />
+      <div class="agent-side agent-side-left" />
 
       <!-- 中间内容区域 -->
-      <div class="apboa-center" :style="{ width: centerWidth }">
+      <div class="agent-center" :style="{ width: centerWidth }">
         <!-- header -->
-        <div class="apboa-center-header">
-          <div class="apboa-center-header-title">
+        <div class="agent-center-header">
+          <div class="agent-center-header-title">
             <slot name="title">
               <component v-if="titleIcon" :is="titleIcon" style="margin-right: 5px" />
               <span>{{ title }}</span>
             </slot>
           </div>
-          <div class="apboa-center-header-actions">
+          <div class="agent-center-header-actions">
             <!-- 额外操作区（slot） -->
             <slot name="extra" />
             <!-- 扩展/收缩按钮 -->
             <AButton
               v-if="canExpand"
               type="text"
-              class="apboa-icon-btn"
+              class="agent-icon-btn"
               :title="isExpanded ? '收缩' : '扩展'"
               @click="toggleExpand"
             >
@@ -177,7 +177,7 @@ watch(
               </template>
             </AButton>
             <!-- 关闭按钮 -->
-            <AButton type="text" class="apboa-icon-btn" title="关闭" @click="handleClose">
+            <AButton type="text" class="agent-icon-btn" title="关闭" @click="handleClose">
               <template #icon>
                 <CloseOutlined />
               </template>
@@ -186,14 +186,14 @@ watch(
         </div>
 
         <!-- body：内容溢出时滚动，内容不足时垂直居中 -->
-        <div class="apboa-center-body">
-          <div class="apboa-body-inner">
+        <div class="agent-center-body">
+          <div class="agent-body-inner">
             <slot v-if="!destroyOnClose || open" />
           </div>
         </div>
 
         <!-- footer -->
-        <div v-if="props.footer !== null" class="apboa-center-footer">
+        <div v-if="props.footer !== null" class="agent-center-footer">
           <slot v-if="hasFooterSlot" name="footer" />
           <template v-else>
             <AButton v-bind="cancelButtonProps" @click="handleClose">
@@ -212,7 +212,7 @@ watch(
       </div>
 
       <!-- 右侧留白（高斯模糊） -->
-      <div class="apboa-side apboa-side-right" />
+      <div class="agent-side agent-side-right" />
     </div>
   </AModal>
 </template>
@@ -220,7 +220,7 @@ watch(
 <!-- 不使用 scoped，需要穿透 AModal 宿主节点 -->
 <style lang="scss">
 /* ===================== AModal 宿主重置 ===================== */
-.apboa-modal-wrap {
+.agent-modal-wrap {
   /* 多重背景实现高级效果 */
   background:
     /* 第一层：渐变主色调 */
@@ -278,7 +278,7 @@ watch(
 }
 
 /* ===================== 全屏三栏布局 ===================== */
-.apboa-fullscreen {
+.agent-fullscreen {
   display: flex;
   width: 100vw;
   height: 100vh;
@@ -286,13 +286,13 @@ watch(
 }
 
 /* 左右留白：高斯模糊 */
-.apboa-side {
+.agent-side {
   flex: 1;
   min-width: 0;
 }
 
 /* 中间内容区域 */
-.apboa-center {
+.agent-center {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -304,7 +304,7 @@ watch(
 }
 
 /* ===================== Header ===================== */
-.apboa-center-header {
+.agent-center-header {
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -313,7 +313,7 @@ watch(
   height: 52px;
 }
 
-.apboa-center-header-title {
+.agent-center-header-title {
   font-size: 15px;
   font-weight: 600;
   color: var(--color-primary);
@@ -324,14 +324,14 @@ watch(
   white-space: nowrap;
 }
 
-.apboa-center-header-actions {
+.agent-center-header-actions {
   display: flex;
   align-items: center;
   gap: 4px;
   flex-shrink: 0;
 }
 
-.apboa-icon-btn.ant-btn-text {
+.agent-icon-btn.ant-btn-text {
   color: var(--ant-color-text-secondary, rgba(0, 0, 0, 0.45));
   width: 32px;
   height: 32px;
@@ -351,7 +351,7 @@ watch(
 }
 
 /* ===================== Body ===================== */
-.apboa-center-body {
+.agent-center-body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -359,7 +359,7 @@ watch(
   //flex-direction: column;
 }
 
-.apboa-body-inner {
+.agent-body-inner {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -368,7 +368,7 @@ watch(
 }
 
 /* ===================== Footer ===================== */
-.apboa-center-footer {
+.agent-center-footer {
   flex-shrink: 0;
   display: flex;
   align-items: center;

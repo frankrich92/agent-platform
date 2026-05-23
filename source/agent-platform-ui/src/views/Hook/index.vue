@@ -16,8 +16,8 @@ import { HookType } from '@/types'
 import HookCard from '@/components/hook/HookCard.vue'
 import HookCreateCard from '@/components/hook/HookCreateCard.vue'
 import HookForm from '@/components/hook/HookForm.vue'
-import {ApboaModalApi} from "@/components/common/ApboaModalApi.ts";
-import ApboaInfiniteLoading from '@/components/common/ApboaInfiniteLoading.vue'
+import {AgentModalApi} from "@/components/common/AgentModalApi.ts";
+import AgentInfiniteLoading from '@/components/common/AgentInfiniteLoading.vue'
 
 const store = useHookStore()
 const {
@@ -133,7 +133,7 @@ async function handleView(id: string) {
   const response = await hookApi.detail(id)
   const data = response.data.data
 
-  ApboaModalApi.open({
+  AgentModalApi.open({
     title: '钩子详情',
     titleIcon: LoginOutlined,
     footer: null,
@@ -299,7 +299,7 @@ watch([selectedHookType, keyword], () => {
         />
       </div>
 
-      <ApboaInfiniteLoading
+      <AgentInfiniteLoading
         :loading-key="infiniteLoadingKey"
         @infinite="handleInfiniteLoading"
       />
