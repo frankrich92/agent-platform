@@ -10,16 +10,22 @@ import com.htam.agent.capability.knowledge.service.AgentKnowledgeBaseService;
 import com.htam.agent.capability.knowledge.service.KnowledgeBaseConfigService;
 import com.htam.agent.capability.mcp.service.AgentMcpServerService;
 import com.htam.agent.capability.mcp.service.McpServerService;
+import com.htam.agent.capability.tool.HookPolicy;
+import com.htam.agent.capability.tool.hook.service.AgentHookService;
+import com.htam.agent.capability.tool.hook.service.HookConfigService;
 import com.htam.agent.common.entity.AgentDefinition;
+import com.htam.agent.common.entity.HookConfig;
 import com.htam.agent.common.entity.KnowledgeBaseConfig;
 import com.htam.agent.common.entity.McpServer;
 import com.htam.agent.common.entity.SkillPackage;
 import com.htam.agent.common.entity.ToolConfig;
+import com.htam.agent.common.enums.HookType;
 import com.htam.agent.common.enums.McpActivationStatus;
 import com.htam.agent.common.enums.McpToolExposureMode;
 import com.htam.agent.common.enums.ToolType;
 import com.htam.agent.common.vo.AgentMcpBindingVO;
 import com.htam.agent.profile.agent.service.AgentDefinitionService;
+import com.htam.agent.profile.agent.service.AgentSubAgentService;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -34,6 +40,9 @@ import org.springframework.stereotype.Service;
 public class ProfileCapabilityPlanService implements CapabilityPlanService {
 
     private final AgentDefinitionService agentDefinitionService;
+    private final AgentSubAgentService agentSubAgentService;
+    private final AgentHookService agentHookService;
+    private final HookConfigService hookConfigService;
     private final AgentMcpServerService agentMcpServerService;
     private final McpServerService mcpServerService;
     private final AgentKnowledgeBaseService agentKnowledgeBaseService;
@@ -52,6 +61,8 @@ public class ProfileCapabilityPlanService implements CapabilityPlanService {
         addSkills(items, agentId);
         addMcpServers(items, agentId);
         addKnowledgeBases(items, agentId);
+        addHooks(items, agentId);
+        addSubAgents(items, agent);
 
         return new CapabilityPlan(
                 "agent-" + agentId + "-profile-plan",
@@ -82,7 +93,11 @@ public class ProfileCapabilityPlanService implements CapabilityPlanService {
                         "specificToolName", agent.getSpecificToolName(),
                         "maxIterations", agent.getMaxIterations(),
                         "enablePlanning", agent.getEnablePlanning(),
-                        "requirePlanConfirmation", agent.getRequirePlanConfirmation())));
+                        "requirePlanConfirmation", agent.getRequirePlanConfirmation(),
+                        "maxSubtasks", agent.getMaxSubtasks(),
+                        "enableMemory", agent.getEnableMemory(),
+                        "enableMemoryCompression", agent.getEnableMemoryCompression(),
+                        "memoryCompressionConfig", agent.getMemoryCompressionConfig())));
     }
 
     private void addTools(List<CapabilityItem> items, Long agentId) {
@@ -204,6 +219,66 @@ public class ProfileCapabilityPlanService implements CapabilityPlanService {
                             "ragMode", knowledge.getRagMode(),
                             "healthStatus", knowledge.getHealthStatus(),
                             "lastSyncTime", knowledge.getLastSyncTime())));
+        }
+    }
+
+    private void addHooks(List<CapabilityItem> items, Long agentId) {
+        HookPolicy lowRiskPolicy = HookPolicy.lowRiskDefault();
+        for (Long hookId : agentHookService.getHookIds(agentId)) {
+            HookConfig hook = hookConfigService.getById(hookId);
+            if (hook == null) {
+                continue;
+            }
+
+            boolean builtin = hook.getHookType() == HookType.BUILTIN;
+            items.add(new CapabilityItem(
+                    CapabilityKind.HOOK,
+                    String.valueOf(hook.getId()),
+                    firstNonBlank(hook.getName(), String.valueOf(hook.getId())),
+                    namespace("hook", hook.getHookType() == null ? null : hook.getHookType().name().toLowerCase()),
+                    Boolean.TRUE.equals(hook.getEnabled()) && builtin,
+                    false,
+                    builtin ? CapabilityRiskLevel.LOW : CapabilityRiskLevel.HIGH,
+                    builtin ? CapabilityRiskPolicy.ALLOW : CapabilityRiskPolicy.DENY,
+                    null,
+                    List.of(),
+                    List.of(),
+                    attributes(
+                            "hookType", hook.getHookType(),
+                            "description", hook.getDescription(),
+                            "classPath", builtin ? hook.getClassPath() : null,
+                            "priority", hook.getPriority(),
+                            "deterministicOnly", lowRiskPolicy.deterministicOnly(),
+                            "allowedLifecyclePhases", lowRiskPolicy.phases().stream().map(Enum::name).toList(),
+                            "maxRiskLevel", lowRiskPolicy.maxRiskLevel())));
+        }
+    }
+
+    private void addSubAgents(List<CapabilityItem> items, AgentDefinition parentAgent) {
+        for (Long subAgentId : agentSubAgentService.getSubAgentIds(parentAgent.getId())) {
+            AgentDefinition subAgent = agentDefinitionService.getById(subAgentId);
+            if (subAgent == null) {
+                continue;
+            }
+            items.add(new CapabilityItem(
+                    CapabilityKind.SUB_AGENT,
+                    String.valueOf(subAgent.getId()),
+                    firstNonBlank(subAgent.getName(), String.valueOf(subAgent.getId())),
+                    namespace("sub-agent", subAgent.getAgentType() == null ? null : subAgent.getAgentType().name().toLowerCase()),
+                    Boolean.TRUE.equals(subAgent.getEnabled()),
+                    false,
+                    CapabilityRiskLevel.MEDIUM,
+                    CapabilityRiskPolicy.ASK,
+                    null,
+                    List.of(),
+                    List.of(),
+                    attributes(
+                            "agentCode", subAgent.getAgentCode(),
+                            "agentType", subAgent.getAgentType(),
+                            "version", subAgent.getVersion(),
+                            "isolatedContext", true,
+                            "summaryRequired", true,
+                            "parentMaxSubtasks", parentAgent.getMaxSubtasks())));
         }
     }
 

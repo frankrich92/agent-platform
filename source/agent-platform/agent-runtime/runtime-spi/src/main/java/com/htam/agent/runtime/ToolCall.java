@@ -28,4 +28,13 @@ public record ToolCall(
         duration = duration == null ? Duration.ZERO : duration;
         auditTags = auditTags == null ? Map.of() : Map.copyOf(auditTags);
     }
+
+    public boolean failed() {
+        return (errorCode != null && !errorCode.isBlank())
+                || (errorMessage != null && !errorMessage.isBlank());
+    }
+
+    public boolean succeeded() {
+        return !failed();
+    }
 }

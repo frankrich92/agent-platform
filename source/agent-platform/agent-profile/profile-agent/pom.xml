@@ -57,6 +57,10 @@
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
+      <artifactId>capability-tool</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
       <artifactId>capability-mcp</artifactId>
     </dependency>
     <dependency>
