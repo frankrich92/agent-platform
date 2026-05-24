@@ -22,7 +22,7 @@ import com.htam.agent.capability.tool.hook.service.AgentHookService;
 import com.htam.agent.capability.knowledge.service.AgentKnowledgeBaseService;
 import com.htam.agent.capability.mcp.service.AgentMcpServerService;
 import com.htam.agent.capability.provider.service.ModelConfigService;
-import com.htam.agent.params.core.ParamsAdapter;
+import com.htam.agent.governance.system.params.core.ParamsAdapter;
 import com.htam.agent.capability.skill.service.AgentSkillPackageService;
 import com.htam.agent.capability.skill.service.SkillPackageService;
 import com.htam.agent.profile.studio.service.AgentStudioService;

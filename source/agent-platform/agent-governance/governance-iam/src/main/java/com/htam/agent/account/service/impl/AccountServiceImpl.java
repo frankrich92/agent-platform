@@ -20,7 +20,7 @@ import com.htam.agent.common.util.*;
 import com.htam.agent.repo.iam.AccountRepository;
 import com.htam.agent.websocket.model.WsServerMessage;
 import com.htam.agent.websocket.service.WebSocketPushService;
-import com.htam.agent.params.core.ParamsAdapter;
+import com.htam.agent.governance.system.params.core.ParamsAdapter;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

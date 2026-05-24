@@ -1,11 +1,11 @@
-package com.htam.agent.params.controller;
+package com.htam.agent.governance.system.params.controller;
 
 import com.htam.agent.common.config.auth.RoleNeed;
 import com.htam.agent.common.entity.Params;
 import com.htam.agent.common.enums.Role;
 import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.common.r.R;
-import com.htam.agent.params.service.ParamsService;
+import com.htam.agent.governance.system.params.service.ParamsService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

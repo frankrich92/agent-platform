@@ -1,4 +1,4 @@
-package com.htam.agent.params.core;
+package com.htam.agent.governance.system.params.core;
 
 import org.springframework.beans.factory.InitializingBean;
 

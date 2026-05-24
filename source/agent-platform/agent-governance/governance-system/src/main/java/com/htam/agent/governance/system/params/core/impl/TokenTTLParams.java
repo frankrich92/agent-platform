@@ -1,9 +1,9 @@
-package com.htam.agent.params.core.impl;
+package com.htam.agent.governance.system.params.core.impl;
 
 import com.htam.agent.common.consts.SysConst;
 import com.htam.agent.common.util.FuncUtils;
-import com.htam.agent.params.core.ParamsAdapter;
-import com.htam.agent.params.core.ParamsCore;
+import com.htam.agent.governance.system.params.core.ParamsAdapter;
+import com.htam.agent.governance.system.params.core.ParamsCore;
 import org.springframework.stereotype.Component;
 
 /**
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
  * @author huxuehao
  **/
 @Component
-public class RefreshTokenTTLParams implements ParamsCore {
+public class TokenTTLParams implements ParamsCore {
     @Override
     public String checkAndFormatValue(String value) {
         if(FuncUtils.isEmpty(value)) {
@@ -22,18 +22,18 @@ public class RefreshTokenTTLParams implements ParamsCore {
         try {
             Long.parseLong(trim);
         } catch (NumberFormatException e) {
-            throw new RuntimeException("系统参数REFRESH_TOKEN_TTL不合法",e);
+            throw new RuntimeException("系统参数ACCESS_TOKEN_TTL不合法",e);
         }
         return trim;
     }
 
     @Override
     public String getDefaultValue() {
-        return String.valueOf(SysConst.REFRESH_TOKEN_TTL);
+        return String.valueOf(SysConst.ACCESS_TOKEN_TTL);
     }
 
     @Override
     public void register(ParamsAdapter adapter) {
-        adapter.register("REFRESH_TOKEN_TTL", new RefreshTokenTTLParams());
+        adapter.register("ACCESS_TOKEN_TTL", new TokenTTLParams());
     }
 }

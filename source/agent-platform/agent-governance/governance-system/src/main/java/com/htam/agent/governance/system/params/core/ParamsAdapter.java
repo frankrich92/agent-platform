@@ -1,4 +1,4 @@
-package com.htam.agent.params.core;
+package com.htam.agent.governance.system.params.core;
 
 import com.htam.agent.common.entity.Params;
 import com.htam.agent.repo.system.ParamsRepository;

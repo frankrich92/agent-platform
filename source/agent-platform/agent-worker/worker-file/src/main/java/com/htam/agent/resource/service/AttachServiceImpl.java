@@ -12,7 +12,7 @@ import com.htam.agent.common.entity.AttachLog;
 import com.htam.agent.common.enums.ModelType;
 import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.common.wrapper.FileBase64Wrapper;
-import com.htam.agent.params.core.ParamsAdapter;
+import com.htam.agent.governance.system.params.core.ParamsAdapter;
 import com.htam.agent.repo.file.AttachChunkRepository;
 import com.htam.agent.repo.file.AttachRepository;
 import com.htam.agent.repo.support.RepoPage;

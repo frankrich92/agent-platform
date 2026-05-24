@@ -1,11 +1,11 @@
-package com.htam.agent.params.service;
+package com.htam.agent.governance.system.params.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.htam.agent.common.entity.Params;
 import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.common.util.FuncUtils;
-import com.htam.agent.params.core.ParamsAdapter;
+import com.htam.agent.governance.system.params.core.ParamsAdapter;
 import com.htam.agent.repo.support.RepoPage;
 import com.htam.agent.repo.system.ParamsRepository;
 import org.springframework.stereotype.Service;

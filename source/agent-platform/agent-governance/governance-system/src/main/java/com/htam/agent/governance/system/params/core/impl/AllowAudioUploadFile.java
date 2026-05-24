@@ -1,9 +1,9 @@
-package com.htam.agent.params.core.impl;
+package com.htam.agent.governance.system.params.core.impl;
 
 import com.htam.agent.common.consts.SysConst;
 import com.htam.agent.common.util.FuncUtils;
-import com.htam.agent.params.core.ParamsAdapter;
-import com.htam.agent.params.core.ParamsCore;
+import com.htam.agent.governance.system.params.core.ParamsAdapter;
+import com.htam.agent.governance.system.params.core.ParamsCore;
 import org.springframework.stereotype.Component;
 
 /**
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
  * @author huxuehao
  **/
 @Component
-public class AllowVideoUploadFile implements ParamsCore {
+public class AllowAudioUploadFile implements ParamsCore {
     @Override
     public String checkAndFormatValue(String value) {
         if(FuncUtils.isEmpty(value)) {
@@ -29,11 +29,11 @@ public class AllowVideoUploadFile implements ParamsCore {
 
     @Override
     public String getDefaultValue() {
-        return SysConst.ALLOW_VIDEO_FILE_TYPE;
+        return SysConst.ALLOW_AUDIO_FILE_TYPE;
     }
 
     @Override
     public void register(ParamsAdapter adapter) {
-        adapter.register("ALLOW_VIDEO_FILE_TYPE", new AllowVideoUploadFile());
+        adapter.register("ALLOW_AUDIO_FILE_TYPE", new AllowAudioUploadFile());
     }
 }
