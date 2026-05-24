@@ -7,7 +7,7 @@ import com.htam.agent.common.mp.support.MP;
 import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.repo.file.AttachRepository;
 import com.htam.agent.repo.support.RepoPage;
-import com.htam.agent.resource.mapper.AttachMapper;
+import com.htam.agent.repo.mybatis.file.mapper.AttachMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

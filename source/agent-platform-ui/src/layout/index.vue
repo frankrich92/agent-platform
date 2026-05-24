@@ -20,7 +20,7 @@ let isRefresh = computed(() => {
 <template>
   <div class="app-layout flex flex-col">
     <header class="layout-header flex items-center">
-      <AppLogo project-name="Apboa" />
+      <AppLogo project-name="Agent" />
       <AppMenu />
       <UserSection />
     </header>

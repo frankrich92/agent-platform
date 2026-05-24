@@ -31,10 +31,10 @@
 
 | Apboa 原路径 | 新工程目标路径 | 新模块 | 迁移说明 |
 | --- | --- | --- | --- |
-| `.apboa/common` | `source/agent-platform/agent-platform/platform-common` | `platform-common` | 公共 DTO、VO、entity、枚举、响应结构、异常、工具类、MyBatis/Jackson/Redis/JWT 等通用能力。 |
-| `.apboa/cluster` | `source/agent-platform/agent-platform/platform-stream` | `platform-stream` | Redis 发布订阅、集群消息发布/订阅基础能力。 |
-| `.apboa/security/script-security` | `source/agent-platform/agent-platform/platform-security` | `platform-security` | 脚本安全检查与执行安全相关代码。 |
-| `.apboa/biz/resource` | `source/agent-platform/agent-platform/platform-files` | `platform-files` | 附件、文件资源、上传下载、资源协议等文件平台能力。 |
+| `.apboa/common` | `source/agent-platform/agent-infra/infra-common` | `infra-common` | 公共 DTO、VO、entity、枚举、响应结构、异常、工具类、MyBatis/Jackson/Redis/JWT 等通用能力。 |
+| `.apboa/cluster` | `source/agent-platform/agent-infra/infra-stream` | `infra-stream` | Redis 发布订阅、集群消息发布/订阅基础能力。 |
+| `.apboa/security/script-security` | `source/agent-platform/agent-infra/infra-security` | `infra-security` | 脚本安全检查与执行安全相关代码。 |
+| `.apboa/biz/resource` | `source/agent-platform/agent-infra/infra-files` | `infra-files` | 附件、文件资源、上传下载、资源协议等文件平台能力。 |
 | `.apboa/biz/params` | `source/agent-platform/agent-admin/admin-system` | `admin-system` | 系统参数配置、参数适配器及参数管理接口。 |
 | `.apboa/biz/model` | `source/agent-platform/agent-admin/admin-provider` | `admin-provider` | 模型供应商与模型配置管理。 |
 | `.apboa/biz/account` | `source/agent-platform/agent-admin/admin-iam` | `admin-iam` | 账号、认证、用户资料、角色管理。 |
@@ -64,10 +64,10 @@
 | --- | --- | --- |
 | `agent-domain` | 预留领域核心模型。第一阶段未承载 Apboa 代码主体。 | 新建骨架 |
 | `agent-api` | 预留 API/SPI 契约。第一阶段未承载 Apboa 代码主体。 | 新建骨架 |
-| `platform-common` | 公共对象、响应、异常、工具类、数据访问基础配置。 | `.apboa/common` |
-| `platform-stream` | Redis 集群消息通道。 | `.apboa/cluster` |
-| `platform-security` | 脚本安全。 | `.apboa/security/script-security` |
-| `platform-files` | 文件/附件资源。 | `.apboa/biz/resource` |
+| `infra-common` | 公共对象、响应、异常、工具类、数据访问基础配置。 | `.apboa/common` |
+| `infra-stream` | Redis 集群消息通道。 | `.apboa/cluster` |
+| `infra-security` | 脚本安全。 | `.apboa/security/script-security` |
+| `infra-files` | 文件/附件资源。 | `.apboa/biz/resource` |
 | `admin-system` | 系统参数。 | `.apboa/biz/params` |
 | `admin-provider` | 模型供应商和模型配置。 | `.apboa/biz/model` |
 | `admin-iam` | 账号、认证、角色、Secret Key。 | `.apboa/biz/account`、`.apboa/biz/sk` |
@@ -212,10 +212,10 @@ git status --short
 
 | 如果 Apboa 变更在... | 优先迁到... |
 | --- | --- |
-| `common` | `platform-common` |
-| `cluster` | `platform-stream` |
-| `security/script-security` | `platform-security` |
-| `biz/resource` | `platform-files` |
+| `common` | `infra-common` |
+| `cluster` | `infra-stream` |
+| `security/script-security` | `infra-security` |
+| `biz/resource` | `infra-files` |
 | `biz/params` | `admin-system` |
 | `biz/model` | `admin-provider` |
 | `biz/account`、`biz/sk` | `admin-iam` |

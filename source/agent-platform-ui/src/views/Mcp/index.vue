@@ -13,9 +13,9 @@ import type { McpProtocol, McpServerVO, McpToolVO } from '@/types'
 import { McpActivationStatus, McpFailureSource } from '@/types'
 import * as mcpApi from '@/api/mcp'
 import { useMcpStore } from '@/stores'
-import { ApboaModalApi } from '@/components/common/ApboaModalApi.ts'
-import ApboaInfiniteLoading from '@/components/common/ApboaInfiniteLoading.vue'
-import CreateCard from '@/components/mcp/CreateCard.vue'
+import { AgentModalApi } from '@/components/common/AgentModalApi.ts'
+import AgentInfiniteLoading from '@/components/common/AgentInfiniteLoading.vue'
+import CreateCard from '@/components/mcp/McpCreateCard.vue'
 import McpCard from '@/components/mcp/McpCard.vue'
 import McpForm from '@/components/mcp/McpForm.vue'
 import { getMcpConnectionStatusText } from '@/composables/useMcpPresentation'
@@ -62,7 +62,7 @@ async function handleView(id: string) {
   const response = await mcpApi.detail(id)
   const data = response.data.data
 
-  ApboaModalApi.open({
+  AgentModalApi.open({
     title: 'MCP 服务详情',
     titleIcon: CloudServerOutlined,
     footer: null,
@@ -332,7 +332,7 @@ onActivated(() => {
         />
       </div>
 
-      <ApboaInfiniteLoading
+      <AgentInfiniteLoading
         :loading-key="infiniteLoadingKey"
         @infinite="handleInfiniteLoading"
       />
@@ -345,7 +345,7 @@ onActivated(() => {
       @success="handleFormSuccess"
     />
 
-    <ApboaModal
+    <AgentModal
       :open="toolModalVisible"
       title="工具治理"
       :footer="null"
@@ -399,7 +399,7 @@ onActivated(() => {
           </div>
         </ASpin>
       </div>
-    </ApboaModal>
+    </AgentModal>
   </div>
 </template>
 

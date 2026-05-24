@@ -1,7 +1,7 @@
 package com.htam.agent.repo.mybatis.iam;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.htam.agent.account.mapper.AccountRoleMapper;
+import com.htam.agent.repo.mybatis.iam.mapper.AccountRoleMapper;
 import com.htam.agent.common.entity.AccountRole;
 import com.htam.agent.repo.iam.AccountRoleRepository;
 import lombok.RequiredArgsConstructor;

@@ -4,7 +4,7 @@
  * @author huxuehao
  */
 <template>
-  <ApboaModal
+  <AgentModal
     :open="visible"
     :title="modalTitle"
     :confirm-loading="loading"
@@ -174,7 +174,7 @@
         </div>
       </div>
     </template>
-  </ApboaModal>
+  </AgentModal>
 </template>
 
 <script setup lang="ts">

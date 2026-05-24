@@ -2,7 +2,7 @@ package com.htam.agent.repo.mybatis.agent;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.htam.agent.agent.mapper.AgentDefinitionMapper;
+import com.htam.agent.repo.mybatis.agent.mapper.AgentDefinitionMapper;
 import com.htam.agent.common.entity.AgentDefinition;
 import com.htam.agent.common.enums.AgentType;
 import com.htam.agent.common.mp.support.MP;

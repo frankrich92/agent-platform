@@ -1,5 +1,5 @@
 export default {
-  systemName: "apboa",
+  systemName: "agent",
   repeatReqInterval: 500, // 重复请求时间间隔（毫秒）
   tokenHeader: "Authorization",
   refreshTokenRequest: "Is_Refresh_Token_Request",

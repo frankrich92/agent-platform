@@ -220,7 +220,7 @@ watch(() => props.visible, (val) => {
 </script>
 
 <template>
-  <ApboaModal
+  <AgentModal
     :open="visible"
     :title-icon="AppstoreOutlined"
     title="导入技能压缩包"
@@ -355,7 +355,7 @@ watch(() => props.visible, (val) => {
         <template #extra>开启后，若存在同名技能包，将以新导入的内容覆盖原有数据</template>
       </AFormItem>
     </AForm>
-  </ApboaModal>
+  </AgentModal>
 </template>
 
 <style scoped lang="scss">

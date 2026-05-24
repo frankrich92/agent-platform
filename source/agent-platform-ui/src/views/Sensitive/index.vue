@@ -12,10 +12,10 @@ import { storeToRefs } from 'pinia'
 import * as sensitiveApi from '@/api/sensitive'
 import type { SensitiveWordConfigVO } from '@/types'
 import SensitiveCard from '@/components/sensitive/SensitiveCard.vue'
-import CreateCard from '@/components/sensitive/CreateCard.vue'
+import CreateCard from '@/components/sensitive/SensitiveCreateCard.vue'
 import SensitiveForm from '@/components/sensitive/SensitiveForm.vue'
-import { ApboaModalApi } from "@/components/common/ApboaModalApi.ts";
-import ApboaInfiniteLoading from '@/components/common/ApboaInfiniteLoading.vue'
+import { AgentModalApi } from "@/components/common/AgentModalApi.ts";
+import AgentInfiniteLoading from '@/components/common/AgentInfiniteLoading.vue'
 
 const store = useSensitiveStore()
 const { list, categories, selectedCategory, keyword, loading, hasMore } = storeToRefs(store)
@@ -57,7 +57,7 @@ async function handleView(id: string) {
   const data = response.data.data
   const wordsList = data.words || []
 
-  ApboaModalApi.open({
+  AgentModalApi.open({
     title: '敏感词配置详情',
     titleIcon: SafetyCertificateOutlined,
     footer: null,
@@ -270,7 +270,7 @@ onMounted(() => {
         />
       </div>
 
-      <ApboaInfiniteLoading
+      <AgentInfiniteLoading
         :loading-key="infiniteLoadingKey"
         @infinite="handleInfiniteLoading"
       />

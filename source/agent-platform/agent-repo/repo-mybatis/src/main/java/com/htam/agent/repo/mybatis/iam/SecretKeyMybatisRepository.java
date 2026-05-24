@@ -3,7 +3,7 @@ package com.htam.agent.repo.mybatis.iam;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.htam.agent.common.entity.SecretKey;
 import com.htam.agent.repo.iam.SecretKeyRepository;
-import com.htam.agent.sk.mapper.SecretKeyMapper;
+import com.htam.agent.repo.mybatis.iam.mapper.SecretKeyMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

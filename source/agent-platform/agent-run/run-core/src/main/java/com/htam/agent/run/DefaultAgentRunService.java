@@ -1,0 +1,106 @@
+package com.htam.agent.run;
+
+import com.htam.agent.profile.agent.service.ChatSessionService;
+import com.htam.agent.capability.CapabilityPlan;
+import com.htam.agent.capability.CapabilityPlanService;
+import com.htam.agent.common.dto.ChatMessageAppendDTO;
+import com.htam.agent.common.vo.ChatMessageVO;
+import com.htam.agent.runtime.AgentRunRequest;
+import com.htam.agent.runtime.AgentRunResult;
+import com.htam.agent.runtime.AgentRuntimeRunner;
+import org.springframework.stereotype.Service;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.UUID;
+
+@Service
+public class DefaultAgentRunService implements AgentRunService {
+
+    private final AgentRuntimeRunner runtimeRunner;
+    private final CapabilityPlanService capabilityPlanService;
+    private final ChatSessionService chatSessionService;
+    private final AgentRunLedgerRecorder ledgerRecorder;
+
+    public DefaultAgentRunService(
+            AgentRuntimeRunner runtimeRunner,
+            CapabilityPlanService capabilityPlanService,
+            ChatSessionService chatSessionService,
+            AgentRunLedgerRecorder ledgerRecorder) {
+        this.runtimeRunner = runtimeRunner;
+        this.capabilityPlanService = capabilityPlanService;
+        this.chatSessionService = chatSessionService;
+        this.ledgerRecorder = ledgerRecorder;
+    }
+
+    @Override
+    public AgentRunSummary run(AgentRunCommand command) {
+        String runId = command.runId() == null || command.runId().isBlank()
+                ? UUID.randomUUID().toString()
+                : command.runId();
+        CapabilityPlan capabilityPlan = capabilityPlanService.resolvePlan(command.agentId());
+
+        ChatMessageVO userMessage = null;
+        if (command.recordMessages() && command.sessionId() != null) {
+            userMessage = appendMessage(command.sessionId(), "user", command.input());
+        }
+
+        ledgerRecorder.runStarted(
+                runId,
+                command,
+                capabilityPlan,
+                userMessage == null ? null : userMessage.getId());
+
+        AgentRunResult runtimeResult;
+        try {
+            runtimeResult = runtimeRunner.run(new AgentRunRequest(
+                    command.agentId(),
+                    command.input(),
+                    command.sessionId() == null ? null : String.valueOf(command.sessionId()),
+                    runId,
+                    capabilityPlan.planId(),
+                    runtimeMetadata(runId, capabilityPlan)));
+        } catch (RuntimeException e) {
+            ledgerRecorder.runFailed(runId, command.sessionId(), command.agentId(), e);
+            throw e;
+        }
+
+        ChatMessageVO assistantMessage = null;
+        if (command.recordMessages() && command.sessionId() != null && runtimeResult.message() != null) {
+            assistantMessage = appendMessage(command.sessionId(), "assistant", runtimeResult.message());
+        }
+        ledgerRecorder.runFinished(
+                runId,
+                command.sessionId(),
+                runtimeResult,
+                userMessage == null ? null : userMessage.getId(),
+                assistantMessage == null ? null : assistantMessage.getId());
+
+        return new AgentRunSummary(
+                runId,
+                command.agentId(),
+                command.sessionId(),
+                runtimeResult,
+                capabilityPlan,
+                userMessage == null ? null : userMessage.getId(),
+                assistantMessage == null ? null : assistantMessage.getId());
+    }
+
+    private ChatMessageVO appendMessage(Long sessionId, String role, String content) {
+        ChatMessageAppendDTO dto = new ChatMessageAppendDTO();
+        dto.setRole(role);
+        dto.setContent(content);
+        return chatSessionService.appendMessage(sessionId, dto);
+    }
+
+    private Map<String, Object> runtimeMetadata(String runId, CapabilityPlan capabilityPlan) {
+        Map<String, Object> metadata = new LinkedHashMap<>();
+        metadata.put("traceId", runId);
+        metadata.put("capabilityPlanId", capabilityPlan.planId());
+        metadata.put("capabilityPlanItemCount", capabilityPlan.items().size());
+        metadata.put("capabilityPlanEnabledItemCount", capabilityPlan.enabledItems().size());
+        metadata.put("capabilityPlanExecutableItemCount", capabilityPlan.executableItems().size());
+        metadata.put("capabilityPlanHighRiskDefaultPolicy", capabilityPlan.highRiskDefaultPolicy().name());
+        return metadata;
+    }
+}

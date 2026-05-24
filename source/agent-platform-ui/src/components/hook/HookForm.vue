@@ -157,7 +157,7 @@ function handleCancel() {
 </script>
 
 <template>
-  <ApboaModal
+  <AgentModal
     :open="visible"
     :title-icon="LoginOutlined"
     :title="isEdit ? '编辑钩子' : '新增钩子'"
@@ -194,5 +194,5 @@ function handleCancel() {
         />
       </AFormItem>
     </AForm>
-  </ApboaModal>
+  </AgentModal>
 </template>

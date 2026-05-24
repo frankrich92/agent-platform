@@ -14,12 +14,12 @@ import * as agentApi from '@/api/agent'
 import * as agentA2aApi from '@/api/agentA2a'
 import type { AgentDefinitionVO, WellKnownAgentConfig, NacosAgentConfig } from '@/types'
 import AgentCard from '@/components/agent/AgentCard.vue'
-import CreateCard from '@/components/agent/CreateCard.vue'
+import CreateCard from '@/components/agent/AgentCreateCard.vue'
 import AgentForm from '@/components/agent/AgentForm.vue'
 import AgentA2aForm from '@/components/agent/AgentA2aForm.vue'
 import AgentConfigPanel from '@/components/agent/config/AgentConfigPanel.vue'
-import {ApboaModalApi} from "@/components/common/ApboaModalApi.ts";
-import ApboaInfiniteLoading from '@/components/common/ApboaInfiniteLoading.vue'
+import {AgentModalApi} from "@/components/common/AgentModalApi.ts";
+import AgentInfiniteLoading from '@/components/common/AgentInfiniteLoading.vue'
 
 const store = useAgentStore()
 const { list, tags, selectedAgentType, selectedTag, keyword, loading, hasMore } = storeToRefs(store)
@@ -148,7 +148,7 @@ async function handleView(id: string) {
         content = h('p', {}, 'A2A 配置暂无数据')
       }
 
-      ApboaModalApi.open({
+      AgentModalApi.open({
         title: 'A2A 智能体详情',
         titleIcon: null,
         footer: null,
@@ -160,7 +160,7 @@ async function handleView(id: string) {
     return
   }
 
-  ApboaModalApi.open({
+  AgentModalApi.open({
     title: '智能体详情',
     titleIcon: RobotOutlined,
     footer: null,
@@ -431,7 +431,7 @@ onMounted(() => {
         />
       </div>
 
-      <ApboaInfiniteLoading
+      <AgentInfiniteLoading
         :loading-key="infiniteLoadingKey"
         @infinite="handleInfiniteLoading"
       />

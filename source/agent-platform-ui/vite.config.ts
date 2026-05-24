@@ -26,6 +26,34 @@ function resolveInputs(target: string, rootDir: string): Record<string, string> 
   return input
 }
 
+function splitVendorChunk(id: string): string | undefined {
+  if (!id.includes('node_modules')) return undefined
+
+  if (id.includes('/ant-design-vue/') || id.includes('/@ant-design/icons-vue/')) {
+    return 'vendor-antd'
+  }
+  if (id.includes('/mermaid/')) {
+    return 'vendor-mermaid'
+  }
+  if (id.includes('/katex/')) {
+    return 'vendor-katex'
+  }
+  if (id.includes('/@codemirror/') || id.includes('/codemirror/') || id.includes('/@lezer/')) {
+    return 'vendor-codemirror'
+  }
+  if (id.includes('/echarts/') || id.includes('/zrender/')) {
+    return 'vendor-echarts'
+  }
+  if (id.includes('/@vue-flow/')) {
+    return 'vendor-vue-flow'
+  }
+  if (id.includes('/vue/') || id.includes('/vue-router/') || id.includes('/pinia/') || id.includes('/@vue/')) {
+    return 'vendor-vue'
+  }
+
+  return undefined
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const rootDir = fileURLToPath(new URL('.', import.meta.url))
@@ -76,7 +104,7 @@ export default defineConfig(({ mode }) => {
     // 开发服务器配置
     server: {
       // 指定服务器端口
-      port: 3000,
+      port: 3001,
       // 指定开发服务器绑定的主机地址，绑定到0.0.0.0，支持外部设备通过你的机器的 IP 地址访问本地服务器
       host: true,
       // 启动服务器后是否自动打开浏览器
@@ -103,8 +131,12 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       outDir,
+      chunkSizeWarningLimit: 3000,
       rollupOptions: {
         input: resolveInputs(target, rootDir),
+        output: {
+          manualChunks: splitVendorChunk,
+        },
       },
     },
   }

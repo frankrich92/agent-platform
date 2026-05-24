@@ -6,8 +6,8 @@ import {type AccountVO, type TokenType} from "@/types";
 const TokenKey = setting.systemName + '-' + setting.accessToken;
 const refreshTokenKey = setting.systemName + '-' + setting.refreshToken;
 const userKey = setting.systemName + '-' + setting.user;
-const ACCESS_TOKEN_COOKIE_KEY = 'apboa-access-token';
-const REFRESH_TOKEN_COOKIE_KEY = 'apboa-refresh-token';
+const ACCESS_TOKEN_COOKIE_KEY = 'agent-access-token';
+const REFRESH_TOKEN_COOKIE_KEY = 'agent-refresh-token';
 
 /**
  * 获取token

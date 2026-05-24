@@ -257,7 +257,7 @@ async function handleEnable(id: string) {
 </script>
 
 <template>
-  <ApboaModal
+  <AgentModal
     :open="visible"
     :title="`${providerName} - 配置模型`"
     defaultWidth="1000px"
@@ -349,7 +349,7 @@ async function handleEnable(id: string) {
       :data="currentData"
       @success="handleFormSuccess"
     />
-  </ApboaModal>
+  </AgentModal>
 </template>
 
 <style scoped lang="scss">

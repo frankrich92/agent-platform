@@ -6,7 +6,7 @@ import com.htam.agent.common.entity.HookConfig;
 import com.htam.agent.common.enums.HookType;
 import com.htam.agent.common.mp.support.MP;
 import com.htam.agent.common.mp.support.PageParams;
-import com.htam.agent.hook.mapper.HookConfigMapper;
+import com.htam.agent.repo.mybatis.capability.mapper.HookConfigMapper;
 import com.htam.agent.repo.capability.HookConfigRepository;
 import com.htam.agent.repo.support.RepoPage;
 import lombok.RequiredArgsConstructor;

@@ -18,7 +18,7 @@ dayjs.locale('zh-cn');
 import App from './App.vue'
 import router from './router'
 import { useAccountStore } from '@/stores'
-import ApboaModal from '@/components/common/ApboaModal.vue'
+import AgentModal from '@/components/common/AgentModal.vue'
 
 const app = createApp(App)
 
@@ -27,7 +27,7 @@ pinia.use(piniaPluginPersistedstate)
 app.use(pinia)
 app.use(router)
 app.use(Antd)
-app.component('ApboaModal', ApboaModal)
+app.component('AgentModal', AgentModal)
 message.config({
   top: '50px',
 })

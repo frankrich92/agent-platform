@@ -1,5 +1,5 @@
 export const WS_CONFIG = {
-  URL: `ws://${window.location.hostname}:${window.location.port}/api/ws/apboa`,
+  URL: `ws://${window.location.hostname}:${window.location.port}/api/ws/agent`,
   MAX_RECONNECT_ATTEMPTS: 1440, // 约6小时
   INITIAL_RECONNECT_DELAY: 45000, // 45秒
   MAX_RECONNECT_DELAY: 300000, // 最大重连延迟5分钟

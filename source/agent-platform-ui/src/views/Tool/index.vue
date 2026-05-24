@@ -13,10 +13,10 @@ import { storeToRefs } from 'pinia'
 import * as toolApi from '@/api/tool'
 import type {ToolVO} from '@/types'
 import ToolCard from '@/components/tool/ToolCard.vue'
-import CreateCard from '@/components/tool/CreateCard.vue'
+import CreateCard from '@/components/tool/ToolCreateCard.vue'
 import ToolForm from '@/components/tool/ToolForm.vue'
-import {ApboaModalApi} from "@/components/common/ApboaModalApi.ts";
-import ApboaInfiniteLoading from '@/components/common/ApboaInfiniteLoading.vue'
+import {AgentModalApi} from "@/components/common/AgentModalApi.ts";
+import AgentInfiniteLoading from '@/components/common/AgentInfiniteLoading.vue'
 
 const store = useToolStore()
 const { list, categories, selectedToolType, selectedCategory, keyword, loading, hasMore } = storeToRefs(store)
@@ -74,7 +74,7 @@ async function handleView(id: string) {
   const data = response.data.data
   const inputSchemaList = data.inputSchema || []
 
-  ApboaModalApi.open({
+  AgentModalApi.open({
     title: '工具详情',
     titleIcon: ToolOutlined,
     footer: null,
@@ -316,7 +316,7 @@ onMounted(() => {
         />
       </div>
 
-      <ApboaInfiniteLoading
+      <AgentInfiniteLoading
         :loading-key="infiniteLoadingKey"
         @infinite="handleInfiniteLoading"
       />

@@ -1,7 +1,9 @@
 package com.htam.agent.repo.mybatis.agent;
 
+import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.htam.agent.agent.mapper.ChatMessageMapper;
+import com.htam.agent.repo.mybatis.agent.mapper.ChatMessageMapper;
+import com.htam.agent.common.consts.DataSourceConst;
 import com.htam.agent.common.entity.ChatMessage;
 import com.htam.agent.repo.agent.ChatMessageRepository;
 import java.util.Collections;
@@ -11,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 @Repository
+@DS(DataSourceConst.CONVERSATION)
 @RequiredArgsConstructor
 public class ChatMessageMybatisRepository implements ChatMessageRepository {
     private final ChatMessageMapper chatMessageMapper;

@@ -14,5 +14,7 @@
     <module>repo-spi</module>
     <module>repo-mybatis</module>
     <module>repo-vector</module>
+    <module>repo-cache</module>
+    <module>repo-migration</module>
   </modules>
 </project>

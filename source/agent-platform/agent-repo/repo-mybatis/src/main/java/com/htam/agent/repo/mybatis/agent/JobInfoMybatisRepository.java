@@ -1,7 +1,7 @@
 package com.htam.agent.repo.mybatis.agent;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.htam.agent.agent.mapper.IJobInfoMapper;
+import com.htam.agent.repo.mybatis.agent.mapper.IJobInfoMapper;
 import com.htam.agent.common.entity.JobInfo;
 import com.htam.agent.repo.agent.JobInfoRepository;
 import java.util.List;
@@ -68,7 +68,7 @@ public class JobInfoMybatisRepository implements JobInfoRepository {
     public List<JobInfo> listAgentJobsByBizId(Long bizId) {
         return jobInfoMapper.selectList(Wrappers.<JobInfo>lambdaQuery()
                 .eq(JobInfo::getType, "AGENT")
-                .eq(JobInfo::getBizId, bizId));
+                .eq(JobInfo::getBizId, String.valueOf(bizId)));
     }
 
     @Override
@@ -76,8 +76,11 @@ public class JobInfoMybatisRepository implements JobInfoRepository {
         if (bizIds == null || bizIds.isEmpty()) {
             return List.of();
         }
+        List<String> bizIdValues = bizIds.stream()
+                .map(String::valueOf)
+                .toList();
         return jobInfoMapper.selectList(Wrappers.<JobInfo>lambdaQuery()
                 .eq(JobInfo::getType, "AGENT")
-                .in(JobInfo::getBizId, bizIds));
+                .in(JobInfo::getBizId, bizIdValues));
     }
 }

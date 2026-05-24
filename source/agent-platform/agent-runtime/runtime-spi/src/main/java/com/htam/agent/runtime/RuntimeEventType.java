@@ -1,0 +1,16 @@
+package com.htam.agent.runtime;
+
+public enum RuntimeEventType {
+    RUN_STARTED,
+    RUN_COMPLETED,
+    RUN_FAILED,
+    STEP_STARTED,
+    STEP_COMPLETED,
+    TOOL_CALL_STARTED,
+    TOOL_CALL_COMPLETED,
+    TOOL_CALL_FAILED,
+    MEMORY_FLUSHED,
+    CONTEXT_COMPRESSED,
+    APPROVAL_REQUIRED,
+    UNKNOWN
+}

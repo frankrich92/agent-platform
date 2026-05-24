@@ -1,6 +1,6 @@
 package com.htam.agent.repo.mybatis.agent;
 
-import com.htam.agent.agent.mapper.CodeExecutionConfigMapper;
+import com.htam.agent.repo.mybatis.agent.mapper.CodeExecutionConfigMapper;
 import com.htam.agent.common.entity.CodeExecutionConfig;
 import com.htam.agent.repo.agent.CodeExecutionConfigRepository;
 import java.util.List;

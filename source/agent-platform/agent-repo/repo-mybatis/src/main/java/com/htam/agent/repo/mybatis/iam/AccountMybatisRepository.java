@@ -1,7 +1,7 @@
 package com.htam.agent.repo.mybatis.iam;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.htam.agent.account.mapper.AccountMapper;
+import com.htam.agent.repo.mybatis.iam.mapper.AccountMapper;
 import com.htam.agent.common.entity.Account;
 import com.htam.agent.repo.iam.AccountRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +30,10 @@ public class AccountMybatisRepository implements AccountRepository {
 
     @Override
     public Account getById(String id) {
-        return accountMapper.selectById(id);
+        if (id == null || id.isBlank()) {
+            return null;
+        }
+        return accountMapper.selectById(Long.valueOf(id));
     }
 
     @Override

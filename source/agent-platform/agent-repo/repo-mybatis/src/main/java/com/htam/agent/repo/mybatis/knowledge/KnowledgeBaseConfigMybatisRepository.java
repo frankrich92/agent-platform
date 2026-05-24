@@ -6,7 +6,7 @@ import com.htam.agent.common.entity.KnowledgeBaseConfig;
 import com.htam.agent.common.enums.KbType;
 import com.htam.agent.common.mp.support.MP;
 import com.htam.agent.common.mp.support.PageParams;
-import com.htam.agent.knowledge.mapper.KnowledgeBaseConfigMapper;
+import com.htam.agent.repo.mybatis.knowledge.mapper.KnowledgeBaseConfigMapper;
 import com.htam.agent.repo.knowledge.KnowledgeBaseConfigRepository;
 import com.htam.agent.repo.support.RepoPage;
 import java.util.List;

@@ -5,8 +5,8 @@ import { Modal } from 'ant-design-vue'
 import { useAgentDetail } from '@/composables/chat/useAgentDetail'
 import { useSessions } from '@/composables/chat/useSessions'
 import { useCurrentSession } from '@/composables/chat/useCurrentSession'
-import ChatSidebar from '@/components/chatHistory/ChatSidebar.vue'
-import ChatMain from '@/components/chatHistory/ChatMain.vue'
+import ChatSidebar from '@/components/chatHistory/ChatHistorySidebar.vue'
+import ChatMain from '@/components/chatHistory/ChatHistoryMain.vue'
 import type { DisplayMessage } from '@/types'
 
 const route = useRoute()

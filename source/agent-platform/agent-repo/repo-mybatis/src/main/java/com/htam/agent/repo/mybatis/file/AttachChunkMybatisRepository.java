@@ -3,7 +3,7 @@ package com.htam.agent.repo.mybatis.file;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.htam.agent.common.entity.AttachChunk;
 import com.htam.agent.repo.file.AttachChunkRepository;
-import com.htam.agent.resource.mapper.AttachChunkMapper;
+import com.htam.agent.repo.mybatis.file.mapper.AttachChunkMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

@@ -1,0 +1,74 @@
+package com.htam.agent.runtime.agentscope.agui;
+
+import com.htam.agent.profile.agent.service.AgentDefinitionService;
+import com.htam.agent.common.entity.AgentDefinition;
+import com.htam.agent.runtime.agentscope.agent.IAgentFactory;
+import io.agentscope.core.agui.registry.AguiAgentRegistry;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.context.annotation.Configuration;
+
+/**
+ * 描述：AGUI智能体注册
+ *
+ * @author huxuehao
+ **/
+@Slf4j
+@Configuration
+@RequiredArgsConstructor
+public class AguiAgentConfiguration implements ApplicationRunner {
+    private final AgentDefinitionService agentDefinitionService;
+    private final IAgentFactory iAgentFactory;
+    private final AguiAgentRegistry registry;
+
+    @Override
+    public void run(ApplicationArguments args) {
+        configureAgents(registry);
+    }
+    public void configureAgents(AguiAgentRegistry registry) {
+        try {
+            agentDefinitionService.list()
+                    .stream()
+                    .filter(item -> item.getEnabled() == true)
+                    .forEach(agentDefinition ->
+                        registry.registerFactory(
+                                agentDefinition.getAgentCode(),
+                                () -> iAgentFactory.getAgent(agentDefinition)));
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 重新注册智能体
+     * @param agentDefinition 智能体定义
+     */
+    public void reRegisterAgent(AgentDefinition agentDefinition) {
+        if (registry == null) return;
+
+        try {
+            unregisterAgent(agentDefinition.getAgentCode());
+            registry.registerFactory(
+                    agentDefinition.getAgentCode(),
+                    () -> iAgentFactory.getAgent(agentDefinition));
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 注销单个智能体注册
+     *
+     * @param agentCode 智能体Code
+     */
+    public void unregisterAgent(String agentCode) {
+        try {
+            registry.unregister(agentCode);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
+    }
+}

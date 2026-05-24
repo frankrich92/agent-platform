@@ -2,7 +2,7 @@ package com.htam.agent.repo.mybatis.knowledge;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.htam.agent.common.entity.RagDocument;
-import com.htam.agent.core.rag.mapper.RagDocumentMapper;
+import com.htam.agent.repo.mybatis.knowledge.mapper.RagDocumentMapper;
 import com.htam.agent.repo.knowledge.RagDocumentRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

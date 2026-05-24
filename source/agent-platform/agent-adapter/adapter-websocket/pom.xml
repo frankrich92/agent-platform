@@ -17,11 +17,11 @@
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>platform-stream</artifactId>
+      <artifactId>run-event</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>platform-common</artifactId>
+      <artifactId>common-core</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>

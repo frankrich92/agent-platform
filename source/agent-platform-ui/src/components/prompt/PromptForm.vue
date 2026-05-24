@@ -193,7 +193,7 @@ const addItem = (e: any) => {
 </script>
 
 <template>
-  <ApboaModal
+  <AgentModal
     :open="visible"
     :title-icon="FileTextOutlined"
     :title="isEdit ? '编辑提示词模板' : '新增提示词模板'"
@@ -253,7 +253,7 @@ const addItem = (e: any) => {
         />
       </AFormItem>
     </AForm>
-  </ApboaModal>
+  </AgentModal>
 </template>
 
 <style scoped lang="scss"></style>

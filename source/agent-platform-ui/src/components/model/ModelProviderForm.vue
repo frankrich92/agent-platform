@@ -223,7 +223,7 @@ function handleCancel() {
 </script>
 
 <template>
-  <ApboaModal
+  <AgentModal
     :open="visible"
     :title-icon="ApiOutlined"
     :title="isEdit ? '编辑供应商' : '新增供应商'"
@@ -281,7 +281,7 @@ function handleCancel() {
         <AInput v-model:value="formData.envVarName" placeholder="请输入环境变量名，如: OPENAI_API_KEY" />
       </AFormItem>
     </AForm>
-  </ApboaModal>
+  </AgentModal>
 </template>
 
 <style scoped lang="scss">

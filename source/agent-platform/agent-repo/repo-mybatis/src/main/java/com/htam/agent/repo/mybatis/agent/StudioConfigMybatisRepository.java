@@ -2,7 +2,7 @@ package com.htam.agent.repo.mybatis.agent;
 
 import com.htam.agent.common.entity.StudioConfig;
 import com.htam.agent.repo.agent.StudioConfigRepository;
-import com.htam.agent.studio.mapper.StudioConfigMapper;
+import com.htam.agent.repo.mybatis.agent.mapper.StudioConfigMapper;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;

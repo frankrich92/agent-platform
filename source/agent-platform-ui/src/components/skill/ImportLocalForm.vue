@@ -8,6 +8,7 @@ import { ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { FolderOpenOutlined, AppstoreOutlined } from '@ant-design/icons-vue'
 import * as skillApi from '@/api/skill'
+import { runtimeDefaults } from '@/constants/runtimeDefaults'
 import { finishSkillImport } from '@/utils/skillImportMessage'
 import type { LocalImportConfig } from '@/types'
 
@@ -31,7 +32,7 @@ const loading = ref(false)
 
 const form = ref<LocalImportConfig>({
   category: '本地导入',
-  path: '.apboa/skills',
+  path: runtimeDefaults.skillsDir,
   cover: false
 })
 
@@ -49,7 +50,7 @@ const rules = {
 function resetForm() {
   form.value = {
     category: '本地导入',
-    path: '.apboa/skills',
+    path: runtimeDefaults.skillsDir,
     cover: false
   }
 }
@@ -87,7 +88,7 @@ watch(() => props.visible, (val) => {
 </script>
 
 <template>
-  <ApboaModal
+  <AgentModal
     :open="visible"
     :title-icon="AppstoreOutlined"
     title="装载本地技能包"
@@ -101,7 +102,7 @@ watch(() => props.visible, (val) => {
     <div class="import-desc">
       <FolderOpenOutlined class="import-desc__icon" />
       <div class="import-desc__text">
-        <p>从服务器本地文件系统路径中扫描并导入技能包文件。路径需为服务端可访问的目录，默认指向 <code>.apboa/skills</code> 目录。</p>
+        <p>从服务器本地文件系统路径中扫描并导入技能包文件。路径需为服务端可访问的目录，默认指向 <code>{{ runtimeDefaults.skillsDir }}</code> 目录。</p>
       </div>
     </div>
 
@@ -142,7 +143,7 @@ watch(() => props.visible, (val) => {
         <template #extra>开启后，若存在同名技能包，将以新导入的内容覆盖原有数据</template>
       </AFormItem>
     </AForm>
-  </ApboaModal>
+  </AgentModal>
 </template>
 
 <style scoped lang="scss">

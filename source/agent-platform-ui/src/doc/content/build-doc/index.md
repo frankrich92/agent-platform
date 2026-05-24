@@ -1,6 +1,6 @@
 # 打包构建与部署
 
-本文档介绍 Apboa 智能体平台的五种部署方案，从开发环境到生产环境的完整指南。
+本文档介绍 Agent 智能体平台的五种部署方案，从开发环境到生产环境的完整指南。
 
 
 ## 一、环境要求
@@ -11,7 +11,7 @@
 |------|----------|------|
 | **JDK** | 21+ | Java 运行与编译环境 |
 | **Maven** | 3.8+ | Java 项目构建工具 |
-| **MySQL** | 8.0+ | 数据库 |
+| **PostgreSQL** | 15+ | 主数据库 |
 | **Redis** | 6.0+ | 缓存与消息中间件 |
 
 ### 前端环境
@@ -32,22 +32,26 @@
 ## 二、数据库初始化
 
 :::info 前提条件
-确保 MySQL 服务已启动。
+确保 PostgreSQL 服务已启动；如使用本地 RAG 向量检索，还需要在向量库中安装 `vector` 扩展。
 :::
 
 ```sql
--- 创建数据库（如尚未创建）
-CREATE DATABASE IF NOT EXISTS `apboa` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+-- 使用管理员账号创建主库与向量库（如尚未创建）
+CREATE DATABASE agent_platform;
+CREATE DATABASE agent_platform_vector;
+
+-- 连接到 agent_platform_vector 后启用 pgvector 扩展
+CREATE EXTENSION IF NOT EXISTS vector;
 ```
 
 执行项目 `docs/once_db_init/` 下的初始化脚本：
 
 ```bash
-mysql -u root -p apboa < docs/once_db_init/db_init.sql
+psql -h 127.0.0.1 -p 5432 -U htam_agent -d agent_platform -f docs/once_db_init/db_init.sql
 ```
 
 :::warning 提醒
-db_init.sql 已包含建库语句（`CREATE DATABASE IF NOT EXISTS`）和全量表结构及初始数据，一条命令即可完成初始化。
+应用默认通过 Flyway 初始化主库表结构；`db_init.sql` 仅用于需要手工初始化数据库的场景。向量库需要管理员先执行 `CREATE EXTENSION IF NOT EXISTS vector;`。会话数据源当前默认指向主库，后续迁出时调整 `spring.datasource.dynamic.datasource.conversation` 配置即可。
 :::
 
 
@@ -55,8 +59,8 @@ db_init.sql 已包含建库语句（`CREATE DATABASE IF NOT EXISTS`）和全量�
 
 | 方案 | 适用场景 | 复杂度 | 依赖项 |
 |------|---------|--------|--------|
-| 方案一：前后端分离 | 传统部署，灵活可控 | 中等 | 自行安装 MySQL/Redis |
-| 方案二：一体化 JAR | 单机快速部署 | 低 | 自行安装 MySQL/Redis |
+| 方案一：前后端分离 | 传统部署，灵活可控 | 中等 | 自行安装 PostgreSQL/Redis |
+| 方案二：一体化 JAR | 单机快速部署 | 低 | 自行安装 PostgreSQL/Redis |
 | 方案三：Dockerfile 自定义 | 手动构建镜像，灵活可定制 | 较高 | Docker |
 | 方案四：Docker Compose | 一键编排，开箱即用 | 低 | Docker |
 | 方案五：Agent 容器化隔离 | 智能体独立容器，ToB 多租户 | 高 | Docker |
@@ -152,12 +156,12 @@ graph TD
     end
 
     subgraph Host["宿主机"]
-        Backend["Apboa Backend\n(console.jar)\n端口 3060"]
+        Backend["Agent Platform Backend\n(console.jar)\n端口 3060"]
         Frontend["前端静态资源\n(ui/dist)"]
     end
 
     subgraph Infrastructure["基础设施（手动安装）"]
-        MySQL["MySQL"]
+        PostgreSQL["PostgreSQL"]
         Redis["Redis"]
         Pgvector["pgvector"]
     end
@@ -165,7 +169,7 @@ graph TD
     Browser -->|"HTTP :80"| Nginx
     Nginx -->|"/web/ → 静态资源"| Frontend
     Nginx -->|"/web/ → API 代理"| Backend
-    Backend --> MySQL
+    Backend --> PostgreSQL
     Backend --> Redis
     Backend --> Pgvector
 ```
@@ -215,17 +219,17 @@ graph TD
     end
 
     subgraph Host["宿主机"]
-        Monolith["Apboa 一体化 JAR\n(console.jar 含 ui 静态资源)\n端口 3060\n后端 API + 前端资源"]
+        Monolith["Agent Platform 一体化 JAR\n(console.jar 含 ui 静态资源)\n端口 3060\n后端 API + 前端资源"]
     end
 
     subgraph Infrastructure["基础设施（手动安装）"]
-        MySQL["MySQL"]
+        PostgreSQL["PostgreSQL"]
         Redis["Redis"]
         Pgvector["pgvector"]
     end
 
     Browser -->|"HTTP :3060"| Monolith
-    Monolith --> MySQL
+    Monolith --> PostgreSQL
     Monolith --> Redis
     Monolith --> Pgvector
 ```
@@ -241,7 +245,7 @@ graph TD
 # 在项目根目录执行
 docker build \
   -f docker/backend/Dockerfile \
-  -t apboa-backend:latest \
+  -t agent-platform-backend:latest \
   .
 ```
 
@@ -252,7 +256,7 @@ docker build \
   -f docker/frontend/Dockerfile \
   --build-arg VITE_APP_BASE_API=/web \
   --build-arg VITE_APP_CONTEXT_PATH=/web \
-  -t apboa-frontend:latest \
+  -t agent-platform-frontend:latest \
   .
 ```
 
@@ -260,26 +264,26 @@ docker build \
 
 ```bash
 # 创建网络
-docker network create apboa_network
+docker network create agent_network
 
-# 启动后端（确保 MySQL / Redis 已就绪）
+# 启动后端（确保 PostgreSQL / Redis 已就绪）
 docker run -d \
-  --name apboa-backend \
-  --network apboa_network \
+  --name agent-platform-backend \
+  --network agent_network \
   -e SPRING_PROFILES_ACTIVE=docker \
-  -e MYSQL_HOST=your-mysql-host \
-  -e MYSQL_PASSWORD=your_password \
+  -e POSTGRES_HOST=your-postgres-host \
+  -e POSTGRES_PASSWORD=your_password \
   -e REDIS_HOST=your-redis-host \
   -e REDIS_PASSWORD=your_password \
   -p 3060:3060 \
-  apboa-backend:latest
+  agent-platform-backend:latest
 
 # 启动前端
 docker run -d \
-  --name apboa-frontend \
-  --network apboa_network \
+  --name agent-platform-frontend \
+  --network agent_network \
   -p 80:80 \
-  apboa-frontend:latest
+  agent-platform-frontend:latest
 ```
 
 ### 6.4 Dockerfile 文件说明
@@ -301,40 +305,40 @@ graph TD
         Browser["浏览器"]
     end
 
-    subgraph DockerNetwork["Docker Network: apboa_network"]
-        Nginx["apboa-frontend\n(Nginx)\n端口 80"]
-        Backend["apboa-backend\n(Spring Boot)\n端口 3060"]
-        MySQL["apboa-mysql\n(MySQL)"]
-        Redis["apboa-redis\n(Redis)"]
-        Pgvector["apboa-pgvector\n(pgvector PG16)"]
+    subgraph DockerNetwork["Docker Network: agent_network"]
+        Nginx["agent-platform-frontend\n(Nginx)\n端口 80"]
+        Backend["agent-platform-backend\n(Spring Boot)\n端口 3060"]
+        PostgreSQL["agent-postgresql\n(PostgreSQL)"]
+        Redis["agent-redis\n(Redis)"]
+        Pgvector["agent-pgvector\n(pgvector PG16)"]
     end
 
     subgraph Host["宿主机"]
         Compose["docker-compose.yml\n(一键编排)"]
-        Volumes["持久化卷\nmysql_data / redis_data / pgvector_data"]
+        Volumes["持久化卷\npostgresql_data / redis_data / pgvector_data"]
     end
 
     Browser -->|"HTTP :80"| Nginx
     Nginx -->|"/web/ → 静态资源"| Nginx
     Nginx -->|"/web/ → API 代理"| Backend
-    Backend --> MySQL
+    Backend --> PostgreSQL
     Backend --> Redis
     Backend --> Pgvector
-    Volumes --> MySQL
+    Volumes --> PostgreSQL
     Volumes --> Redis
     Volumes --> Pgvector
 ```
 
 ## 七、方案四：Docker Compose 一键部署
 
-一键启动 MySQL、Redis、pgvector（向量库）、后端、前端全部服务。
+一键启动 PostgreSQL、Redis、pgvector（向量库）、后端、前端全部服务。
 
 ### 7.1 配置
 
 编辑 `docker/.env`，按需修改密码等配置：
 
 ```bash
-MYSQL_ROOT_PASSWORD=your_password
+POSTGRES_PASSWORD=your_password
 REDIS_PASSWORD=your_password
 PG_PASSWORD=your_password
 JWT_SECRET=your_secret
@@ -366,10 +370,10 @@ docker compose start  # 启动所有（不重新构建）
 
 ```bash
 # 重新构建后端（不使用缓存）
-docker compose build --no-cache apboa-backend
+docker compose build --no-cache agent-platform-backend
 
 # 重新构建并启动
-docker compose up -d --build apboa-backend
+docker compose up -d --build agent-platform-backend
 ```
 
 
@@ -397,7 +401,7 @@ graph TD
     subgraph DockerEnv["Docker 环境"]
         NginxC["Nginx 容器\n(独立构建/运行)"]
         BackendC["Backend 容器\n(独立构建/运行)\n端口 3060"]
-        MySQLC["MySQL 容器\n(独立运行)"]
+        PostgreSQLC["PostgreSQL 容器\n(独立运行)"]
         RedisC["Redis 容器\n(独立运行)"]
         PgvectorC["pgvector 容器\n(独立运行)"]
     end
@@ -408,14 +412,14 @@ graph TD
 
     Browser -->|"HTTP :80"| NginxC
     NginxC -->|"API 代理"| BackendC
-    BackendC --> MySQLC
+    BackendC --> PostgreSQLC
     BackendC --> RedisC
     BackendC --> PgvectorC
 ```
 
 ### 7.5 使用外置服务
 
-如果已有外部 MySQL / Redis / pgvector，修改 `.env` 中的 `*_HOST` 为外部地址，并注释 `docker-compose.yml` 中对应服务块。
+如果已有外部 PostgreSQL / Redis / pgvector，修改 `.env` 中的 `*_HOST` 为外部地址，并注释 `docker-compose.yml` 中对应服务块。
 
 ### 7.6 离线部署
 
@@ -457,14 +461,14 @@ graph TD
         Admin["管理员"]
     end
 
-    subgraph DockerNetwork["Docker Network: apboa_network"]
-        Nginx["apboa-frontend\n(Nginx 动态路由)\nresolver 127.0.0.11"]
+    subgraph DockerNetwork["Docker Network: agent_network"]
+        Nginx["agent-platform-frontend\n(Nginx 动态路由)\nresolver 127.0.0.11"]
 
-        Backend["apboa-backend 主控后端\nSpring Boot + DooD\n管理 API + 容器管理"]
+        Backend["agent-platform-backend 主控后端\nSpring Boot + DooD\n管理 API + 容器管理"]
 
-        MySQL["apboa-mysql\n(MySQL)"]
-        Redis["apboa-redis\n(Redis pub/sub)"]
-        Pgvector["apboa-pgvector\n(pgvector)"]
+        PostgreSQL["agent-postgresql\n(PostgreSQL)"]
+        Redis["agent-redis\n(Redis pub/sub)"]
+        Pgvector["agent-pgvector\n(pgvector)"]
 
         subgraph AgentContainers["Agent Runner 容器（按智能体动态创建/销毁）"]
             AgentA["agent-a 容器\n(Python + Node + JRE)\n端口 3060\n仅暴露 AGUI 端点"]
@@ -482,13 +486,13 @@ graph TD
     Admin -->|"管理 API\n(智能体启停)"| Backend
     Browser -->|"HTTP :80"| Nginx
     Nginx -->|"/web/ → 静态资源 + 管理 API"| Backend
-    Nginx -->|"动态路由\n/apboa/agui/$agent_code"| AgentA
-    Nginx -->|"动态路由\n/apboa/agui/$agent_code"| AgentB
+    Nginx -->|"动态路由\n/agent/agui/$agent_code"| AgentA
+    Nginx -->|"动态路由\n/agent/agui/$agent_code"| AgentB
     Nginx -->|"动态路由"| AgentC
 
     Backend -->|"DooD 创建/启动/停止/销毁"| AgentContainers
     Backend -.->|"Redis pub/sub\n生命周期事件"| Redis
-    Backend --> MySQL
+    Backend --> PostgreSQL
     Backend --> Redis
     Backend --> Pgvector
 
@@ -520,7 +524,7 @@ graph TD
 
 ```bash
 # 必改项（生产环境）
-MYSQL_ROOT_PASSWORD=your_strong_password
+POSTGRES_PASSWORD=your_strong_password
 REDIS_PASSWORD=your_redis_password
 PG_PASSWORD=your_pg_password
 JWT_SECRET=your_jwt_secret
@@ -574,8 +578,8 @@ docker compose stop
 
 # 重新构建特定服务
 # 如修改了后端代码，重新构建主控后端
-docker compose build --no-cache apboa-backend
-docker compose up -d apboa-backend
+docker compose build --no-cache agent-platform-backend
+docker compose up -d agent-platform-backend
 
 # 如修改了 Agent Runner 镜像配置，重新构建基础镜像
 docker compose build --no-cache agent-runner-image
@@ -585,8 +589,8 @@ docker compose up -d agent-runner-image
 docker compose ps
 
 # 查看各服务日志
-docker compose logs -f apboa-backend
-docker compose logs -f apboa-frontend
+docker compose logs -f agent-platform-backend
+docker compose logs -f agent-platform-frontend
 ```
 
 ### 8.6 智能体生命周期
@@ -601,7 +605,7 @@ docker compose logs -f apboa-frontend
         │
         ▼
   后端发布 Redis 消息
-  Channel: apboa:agent:cluster:register
+  Channel: agent:cluster:reRegister
         │
         ▼
   AgentContainerLifecycleListener 监听到消息
@@ -610,19 +614,19 @@ docker compose logs -f apboa-frontend
   AgentContainerManager.createContainer(agentCode)
         │
         ├── 1. 在宿主机创建 Workspace 目录
-        │      /app/.apboa/workspaces/{agentCode}/
+        │      /app/.agent-platform/workspaces/{agentCode}/
         │
         ├── 2. 调用 Docker API 创建容器
         │      - 挂载 Workspace 目录（读写）
         │      - 挂载 Skills 目录（只读）
-        │      - 加入 apboa_network 网络
+        │      - 加入 agent_network 网络
         │      - 应用 CPU / 内存限制
         │      - 设置容器名 = agent-{agentCode}
         │
         ├── 3. 启动容器
         │
         └── 4. Nginx 动态路由自动生效
-               URL /apboa/agui/{agentCode}/*
+               URL /agent/agui/{agentCode}/*
                → http://agent-{agentCode}:3060
 ```
 
@@ -633,7 +637,7 @@ docker compose logs -f apboa-frontend
         │
         ▼
   后端发布 Redis 消息
-  Channel: apboa:agent:cluster:unregister
+  Channel: agent:cluster:unRegister
         │
         ▼
   AgentContainerLifecycleListener 监听到消息
@@ -656,7 +660,7 @@ docker compose logs -f apboa-frontend
 
 ```nginx
 # 动态路由：从 URL 中提取 agent_code，路由到同名容器
-location ~ ^/apboa/agui/(?<agent_code>[a-z0-9_-]+)(?<remaining>/.*)?$ {
+location ~ ^/agent/agui/(?<agent_code>[a-z0-9_-]+)(?<remaining>/.*)?$ {
     resolver 127.0.0.11 ipv6=off;
 
     # 使用 $remaining 确保路径完整传递
@@ -680,7 +684,7 @@ location ~ ^/apboa/agui/(?<agent_code>[a-z0-9_-]+)(?<remaining>/.*)?$ {
 
 **工作原理**：
 
-1. Nginx 正则匹配 URL 中的 `agent_code`（如 `/apboa/agui/my-agent/chat` → `agent_code = my-agent`）
+1. Nginx 正则匹配 URL 中的 `agent_code`（如 `/agent/agui/my-agent/chat` → `agent_code = my-agent`）
 2. 将 `agent_code` 作为主机名，通过 Docker DNS（`127.0.0.11`）解析为容器 IP
 3. 代理请求到对应 Agent Runner 容器
 4. 如果容器不存在，Docker DNS 解析失败，Nginx 返回 502
@@ -693,8 +697,8 @@ location ~ ^/apboa/agui/(?<agent_code>[a-z0-9_-]+)(?<remaining>/.*)?$ {
 
 #### 8.8.1 网络隔离
 
-- 所有容器位于独立 Docker 网络 `apboa_network`，与宿主机网络隔离
-- Agent Runner 容器**仅暴露 `/apboa/agui/` 端点**，任何对管理 API 的请求返回 403
+- 所有容器位于独立 Docker 网络 `agent_network`，与宿主机网络隔离
+- Agent Runner 容器**仅暴露 `/agent/agui/` 端点**，任何对管理 API 的请求返回 403
 - 安全机制：`AgentModeSecurityConfig` Filter（`@Profile("agent")`）在请求进入 Controller 之前拦截
 
 #### 8.8.2 文件系统隔离
@@ -707,7 +711,7 @@ location ~ ^/apboa/agui/(?<agent_code>[a-z0-9_-]+)(?<remaining>/.*)?$ {
 
 | 服务 | 数据库迁移 | 说明 |
 |------|-----------|------|
-| 主控后端（apboa-backend） | ✅ 执行 | Flyway / Liquibase 管理表结构变更 |
+| 主控后端（agent-platform-backend） | ✅ 执行 | Flyway / Liquibase 管理表结构变更 |
 | Agent Runner 容器 | ❌ 禁用 | 配置 `spring.flyway.enabled=false` |
 
 这确保只有主控后端有权限修改数据库结构，Agent 容器仅能读写业务数据。
@@ -740,7 +744,7 @@ docker-agent/
 │                                 #   - resolver 127.0.0.11（Docker DNS）
 │                                 #   - 正则匹配 agent_code 动态代理
 └── data/                         # 运行时数据（自动生成，加入 .gitignore）
-    ├── mysql_data/               # MySQL 数据持久化
+    ├── postgresql_data/               # PostgreSQL 数据持久化
     ├── redis_data/               # Redis 数据持久化
     ├── pgvector_data/            # pgvector 数据持久化
     ├── logs/                     # 后端日志
@@ -811,10 +815,10 @@ docker compose build --no-cache agent-runner-image
 
 ### 后端启动报数据库连接失败？
 
-1. 确认 MySQL 服务已启动
-2. 确认 `apboa` 数据库已通过 `db_init.sql` 初始化
+1. 确认 PostgreSQL 服务已启动
+2. 确认 `agent_platform` 数据库已通过 `db_init.sql` 初始化
 3. 确认配置文件中的数据库连接信息正确
-4. 确认 MySQL 用户有 `apboa` 库的读写权限
+4. 确认 PostgreSQL 用户有 `agent_platform` 库的读写权限
 
 ### Docker 构建镜像时下载依赖失败？
 

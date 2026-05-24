@@ -2,7 +2,7 @@ import { useAccountStore } from '@/stores'
 import { md5 } from 'js-md5';
 import type {AccountVO} from "@/types";
 
-const WS_URL = `ws://${window.location.hostname}:${window.location.port}/apboa/ws`
+const WS_URL = `ws://${window.location.hostname}:${window.location.port}/api/ws/agent`
 
 let reconnectAttempts:number = 0; // 重新连接尝试的次数
 let reconnectDelay:number=  45000; // 初始重连延迟 45 秒

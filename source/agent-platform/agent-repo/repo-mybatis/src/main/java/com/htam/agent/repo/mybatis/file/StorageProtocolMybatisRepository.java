@@ -7,7 +7,7 @@ import com.htam.agent.common.mp.support.MP;
 import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.repo.file.StorageProtocolRepository;
 import com.htam.agent.repo.support.RepoPage;
-import com.htam.agent.resource.mapper.StorageProtocolMapper;
+import com.htam.agent.repo.mybatis.file.mapper.StorageProtocolMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
