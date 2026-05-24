@@ -1,6 +1,7 @@
 package com.htam.agent.common.config.mybatis;
 
 import com.baomidou.mybatisplus.extension.handlers.AbstractJsonTypeHandler;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.ibatis.type.JdbcType;
@@ -27,9 +28,9 @@ public class JsonNodeTypeHandler extends AbstractJsonTypeHandler<Object> {
             return null;
         }
         try {
-            return OBJECT_MAPPER.readTree(json);
+            return parseJsonNode(json);
         } catch (Exception e) {
-            throw new RuntimeException("JSON反序列化失败", e);
+            return parseEscapedJsonNode(json, e);
         }
     }
 
@@ -49,5 +50,38 @@ public class JsonNodeTypeHandler extends AbstractJsonTypeHandler<Object> {
         } catch (Exception e) {
             throw new RuntimeException("JSON序列化失败", e);
         }
+    }
+
+    private JsonNode parseJsonNode(String json) throws JsonProcessingException {
+        JsonNode node = OBJECT_MAPPER.readTree(json);
+        if (node != null && node.isTextual() && looksLikeJson(node.asText())) {
+            return parseJsonNode(node.asText());
+        }
+        return node;
+    }
+
+    private JsonNode parseEscapedJsonNode(String json, Exception cause) {
+        String text = json.trim();
+        if (!looksLikeEscapedJson(text)) {
+            throw new RuntimeException("JSON反序列化失败", cause);
+        }
+        try {
+            String decoded = OBJECT_MAPPER.readValue("\"" + text + "\"", String.class);
+            return parseJsonNode(decoded);
+        } catch (Exception decodeException) {
+            throw new RuntimeException("JSON反序列化失败", cause);
+        }
+    }
+
+    private boolean looksLikeJson(String text) {
+        if (text == null) {
+            return false;
+        }
+        String trimmed = text.trim();
+        return trimmed.startsWith("{") || trimmed.startsWith("[");
+    }
+
+    private boolean looksLikeEscapedJson(String text) {
+        return text.startsWith("{\\\"") || text.startsWith("[\\\"");
     }
 }
