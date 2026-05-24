@@ -2,8 +2,8 @@ package com.htam.agent.runtime.agentscope.studio;
 
 import com.htam.agent.common.entity.AgentDefinition;
 import com.htam.agent.common.entity.StudioConfig;
-import com.htam.agent.studio.service.AgentStudioService;
-import com.htam.agent.studio.service.StudioConfigService;
+import com.htam.agent.profile.studio.service.AgentStudioService;
+import com.htam.agent.profile.studio.service.StudioConfigService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

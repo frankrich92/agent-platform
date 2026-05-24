@@ -1,4 +1,4 @@
-package com.htam.agent.studio.service;
+package com.htam.agent.profile.studio.service;
 
 import com.htam.agent.common.entity.StudioConfig;
 

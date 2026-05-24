@@ -25,7 +25,7 @@ import com.htam.agent.capability.provider.service.ModelConfigService;
 import com.htam.agent.params.core.ParamsAdapter;
 import com.htam.agent.capability.skill.service.AgentSkillPackageService;
 import com.htam.agent.capability.skill.service.SkillPackageService;
-import com.htam.agent.studio.service.AgentStudioService;
+import com.htam.agent.profile.studio.service.AgentStudioService;
 import com.htam.agent.capability.tool.service.AgentToolService;
 import com.htam.agent.profile.agent.service.AgentCodeExecutionService;
 import com.htam.agent.capability.tool.service.ToolService;

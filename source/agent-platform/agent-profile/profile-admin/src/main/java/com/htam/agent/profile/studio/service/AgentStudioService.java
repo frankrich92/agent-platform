@@ -1,4 +1,4 @@
-package com.htam.agent.studio.service;
+package com.htam.agent.profile.studio.service;
 
 import java.util.List;
 import java.util.Map;

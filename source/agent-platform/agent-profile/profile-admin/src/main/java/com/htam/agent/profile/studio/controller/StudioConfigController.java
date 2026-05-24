@@ -1,10 +1,10 @@
-package com.htam.agent.studio.controller;
+package com.htam.agent.profile.studio.controller;
 
 import com.htam.agent.common.config.auth.RoleNeed;
 import com.htam.agent.common.entity.StudioConfig;
 import com.htam.agent.common.enums.Role;
 import com.htam.agent.common.r.R;
-import com.htam.agent.studio.service.StudioConfigService;
+import com.htam.agent.profile.studio.service.StudioConfigService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 

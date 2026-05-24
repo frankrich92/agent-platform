@@ -1,11 +1,11 @@
-package com.htam.agent.studio.service.impl;
+package com.htam.agent.profile.studio.service.impl;
 
 import com.htam.agent.common.entity.AgentDefinition;
 import com.htam.agent.common.entity.StudioConfig;
 import com.htam.agent.repo.agent.AgentDefinitionRepository;
 import com.htam.agent.repo.agent.StudioConfigRepository;
-import com.htam.agent.studio.service.AgentStudioService;
-import com.htam.agent.studio.service.StudioConfigService;
+import com.htam.agent.profile.studio.service.AgentStudioService;
+import com.htam.agent.profile.studio.service.StudioConfigService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
