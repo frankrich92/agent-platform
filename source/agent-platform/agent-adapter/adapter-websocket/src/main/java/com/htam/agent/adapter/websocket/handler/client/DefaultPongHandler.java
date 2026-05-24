@@ -1,8 +1,8 @@
-package com.htam.agent.websocket.handler.client;
+package com.htam.agent.adapter.websocket.handler.client;
 
+import com.htam.agent.adapter.websocket.context.AgentWebSocketSession;
 import com.htam.agent.common.enums.WsMessageType;
-import com.htam.agent.websocket.context.AgentWebSocketSession;
-import com.htam.agent.websocket.model.WsClientMessage;
+import com.htam.agent.adapter.websocket.model.WsClientMessage;
 import org.springframework.stereotype.Service;
 
 /**
@@ -12,10 +12,10 @@ import org.springframework.stereotype.Service;
  * @author huxuehao
  **/
 @Service
-public class DefaultClientHandler implements ClientMessageHandler {
+public class DefaultPongHandler implements ClientMessageHandler {
     @Override
     public WsMessageType messageType() {
-        return WsMessageType.CLIENT;
+        return WsMessageType.PONG;
     }
 
     @Override
@@ -23,7 +23,7 @@ public class DefaultClientHandler implements ClientMessageHandler {
         if (msg == null) {
             return;
         }
-        session.setClientId(msg.getContent().toString());
+        session.setActivateTime(System.currentTimeMillis());
     }
 
     @Override

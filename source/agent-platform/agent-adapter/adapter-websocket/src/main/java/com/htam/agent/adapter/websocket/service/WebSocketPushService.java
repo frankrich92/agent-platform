@@ -1,12 +1,12 @@
-package com.htam.agent.websocket.service;
+package com.htam.agent.adapter.websocket.service;
 
 import com.htam.agent.common.consts.SysConst;
 import com.htam.agent.common.util.JsonUtils;
-import com.htam.agent.websocket.cluster.ClusterMessage;
-import com.htam.agent.websocket.cluster.RedisSessionManager;
-import com.htam.agent.websocket.config.AgentWebSocketSessionManager;
-import com.htam.agent.websocket.context.AgentWebSocketSession;
-import com.htam.agent.websocket.model.WsServerMessage;
+import com.htam.agent.adapter.websocket.cluster.ClusterMessage;
+import com.htam.agent.adapter.websocket.cluster.RedisSessionManager;
+import com.htam.agent.adapter.websocket.config.AgentWebSocketSessionManager;
+import com.htam.agent.adapter.websocket.context.AgentWebSocketSession;
+import com.htam.agent.adapter.websocket.model.WsServerMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 

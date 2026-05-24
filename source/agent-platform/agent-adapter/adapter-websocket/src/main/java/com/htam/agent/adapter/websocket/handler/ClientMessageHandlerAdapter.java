@@ -1,7 +1,7 @@
-package com.htam.agent.websocket.handler;
+package com.htam.agent.adapter.websocket.handler;
 
 import com.htam.agent.common.enums.WsMessageType;
-import com.htam.agent.websocket.handler.client.ClientMessageHandler;
+import com.htam.agent.adapter.websocket.handler.client.ClientMessageHandler;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

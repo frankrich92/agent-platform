@@ -1,4 +1,4 @@
-package com.htam.agent.websocket.interceptor;
+package com.htam.agent.adapter.websocket.interceptor;
 
 import com.htam.agent.common.UserDetail;
 import com.htam.agent.common.consts.SysConst;

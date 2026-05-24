@@ -1,4 +1,4 @@
-package com.htam.agent.websocket.context;
+package com.htam.agent.adapter.websocket.context;
 
 import com.htam.agent.common.UserDetail;
 import lombok.Getter;

@@ -1,10 +1,10 @@
-package com.htam.agent.websocket.config;
+package com.htam.agent.adapter.websocket.config;
 
-import com.htam.agent.websocket.context.AgentWebSocketSession;
+import com.htam.agent.adapter.websocket.context.AgentWebSocketSession;
 import com.htam.agent.common.enums.WsMessageType;
-import com.htam.agent.websocket.handler.ServiceMessageHandlerAdapter;
-import com.htam.agent.websocket.handler.server.ServerMessageHandler;
-import com.htam.agent.websocket.model.WsServerMessage;
+import com.htam.agent.adapter.websocket.handler.ServiceMessageHandlerAdapter;
+import com.htam.agent.adapter.websocket.handler.server.ServerMessageHandler;
+import com.htam.agent.adapter.websocket.model.WsServerMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.TextMessage;

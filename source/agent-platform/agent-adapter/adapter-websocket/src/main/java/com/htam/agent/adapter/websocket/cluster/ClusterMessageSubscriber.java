@@ -1,11 +1,11 @@
-package com.htam.agent.websocket.cluster;
+package com.htam.agent.adapter.websocket.cluster;
 
 import com.htam.agent.run.event.cluster.core.ChannelSubscriber;
 import com.htam.agent.common.consts.RedisChannelTopic;
 import com.htam.agent.common.util.JsonUtils;
-import com.htam.agent.websocket.config.AgentWebSocketSessionManager;
-import com.htam.agent.websocket.context.AgentWebSocketSession;
-import com.htam.agent.websocket.model.WsServerMessage;
+import com.htam.agent.adapter.websocket.config.AgentWebSocketSessionManager;
+import com.htam.agent.adapter.websocket.context.AgentWebSocketSession;
+import com.htam.agent.adapter.websocket.model.WsServerMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.Topic;

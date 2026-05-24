@@ -1,4 +1,4 @@
-package com.htam.agent.websocket.config;
+package com.htam.agent.adapter.websocket.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

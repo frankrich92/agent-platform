@@ -1,4 +1,4 @@
-package com.htam.agent.websocket.cluster;
+package com.htam.agent.adapter.websocket.cluster;
 
 import com.htam.agent.run.event.cluster.core.MessagePublisher;
 import lombok.extern.slf4j.Slf4j;

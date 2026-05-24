@@ -1,4 +1,4 @@
-package com.htam.agent.websocket.cluster;
+package com.htam.agent.adapter.websocket.cluster;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

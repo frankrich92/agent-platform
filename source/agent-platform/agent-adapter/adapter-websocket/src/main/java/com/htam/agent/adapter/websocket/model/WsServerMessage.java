@@ -1,4 +1,4 @@
-package com.htam.agent.websocket.model;
+package com.htam.agent.adapter.websocket.model;
 
 import com.htam.agent.common.util.JsonUtils;
 import lombok.Builder;

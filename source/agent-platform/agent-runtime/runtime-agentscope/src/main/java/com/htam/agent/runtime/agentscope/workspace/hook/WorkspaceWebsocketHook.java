@@ -2,8 +2,8 @@ package com.htam.agent.runtime.agentscope.workspace.hook;
 
 import com.htam.agent.common.enums.WsMessageType;
 import com.htam.agent.common.util.AgentMetadataStore;
-import com.htam.agent.websocket.model.WsServerMessage;
-import com.htam.agent.websocket.service.WebSocketPushService;
+import com.htam.agent.adapter.websocket.model.WsServerMessage;
+import com.htam.agent.adapter.websocket.service.WebSocketPushService;
 import io.agentscope.core.agent.AgentBase;
 import io.agentscope.core.hook.Hook;
 import io.agentscope.core.hook.HookEvent;

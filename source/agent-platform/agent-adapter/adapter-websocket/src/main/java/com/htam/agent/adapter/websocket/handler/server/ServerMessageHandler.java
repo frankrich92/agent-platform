@@ -1,9 +1,9 @@
-package com.htam.agent.websocket.handler.server;
+package com.htam.agent.adapter.websocket.handler.server;
 
-import com.htam.agent.websocket.context.AgentWebSocketSession;
+import com.htam.agent.adapter.websocket.context.AgentWebSocketSession;
 import com.htam.agent.common.enums.WsMessageType;
-import com.htam.agent.websocket.handler.ServiceMessageHandlerAdapter;
-import com.htam.agent.websocket.model.WsServerMessage;
+import com.htam.agent.adapter.websocket.handler.ServiceMessageHandlerAdapter;
+import com.htam.agent.adapter.websocket.model.WsServerMessage;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 
 /**

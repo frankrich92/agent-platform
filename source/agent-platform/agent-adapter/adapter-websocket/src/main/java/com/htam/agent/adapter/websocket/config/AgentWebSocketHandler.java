@@ -1,12 +1,12 @@
-package com.htam.agent.websocket.config;
+package com.htam.agent.adapter.websocket.config;
 
 import com.htam.agent.common.UserDetail;
 import com.htam.agent.common.consts.SysConst;
 import com.htam.agent.common.util.JsonUtils;
-import com.htam.agent.websocket.context.AgentWebSocketSession;
-import com.htam.agent.websocket.handler.ClientMessageHandlerAdapter;
-import com.htam.agent.websocket.handler.client.ClientMessageHandler;
-import com.htam.agent.websocket.model.WsClientMessage;
+import com.htam.agent.adapter.websocket.context.AgentWebSocketSession;
+import com.htam.agent.adapter.websocket.handler.ClientMessageHandlerAdapter;
+import com.htam.agent.adapter.websocket.handler.client.ClientMessageHandler;
+import com.htam.agent.adapter.websocket.model.WsClientMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;

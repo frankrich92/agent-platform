@@ -1,6 +1,6 @@
-package com.htam.agent.websocket.config;
+package com.htam.agent.adapter.websocket.config;
 
-import com.htam.agent.websocket.interceptor.WebSocketAuthInterceptor;
+import com.htam.agent.adapter.websocket.interceptor.WebSocketAuthInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
