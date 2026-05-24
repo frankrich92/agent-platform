@@ -1,4 +1,4 @@
-package com.htam.agent.knowledge.service.impl;
+package com.htam.agent.capability.knowledge.service.impl;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -7,8 +7,8 @@ import com.htam.agent.common.consts.RedisChannelTopic;
 import com.htam.agent.common.dto.KnowledgeBaseConfigDTO;
 import com.htam.agent.common.entity.KnowledgeBaseConfig;
 import com.htam.agent.common.mp.support.PageParams;
-import com.htam.agent.knowledge.service.AgentKnowledgeBaseService;
-import com.htam.agent.knowledge.service.KnowledgeBaseConfigService;
+import com.htam.agent.capability.knowledge.service.AgentKnowledgeBaseService;
+import com.htam.agent.capability.knowledge.service.KnowledgeBaseConfigService;
 import com.htam.agent.repo.agent.AgentDefinitionRepository;
 import com.htam.agent.repo.knowledge.KnowledgeBaseConfigRepository;
 import com.htam.agent.repo.support.RepoPage;

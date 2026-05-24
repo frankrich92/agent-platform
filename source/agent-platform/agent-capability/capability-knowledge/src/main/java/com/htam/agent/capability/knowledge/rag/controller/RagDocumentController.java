@@ -1,4 +1,4 @@
-package com.htam.agent.rag.controller;
+package com.htam.agent.capability.knowledge.rag.controller;
 
 import com.htam.agent.common.config.auth.RoleNeed;
 import com.htam.agent.common.entity.KnowledgeBaseConfig;
@@ -9,7 +9,7 @@ import com.htam.agent.common.enums.Role;
 import com.htam.agent.common.r.R;
 import com.htam.agent.common.vo.RagDocumentChunkVO;
 import com.htam.agent.capability.knowledge.rag.DocumentParser;
-import com.htam.agent.knowledge.service.KnowledgeBaseConfigService;
+import com.htam.agent.capability.knowledge.service.KnowledgeBaseConfigService;
 import com.htam.agent.capability.knowledge.rag.service.LocalRagService;
 import com.htam.agent.repo.knowledge.RagDocumentChunkRepository;
 import com.htam.agent.repo.knowledge.RagDocumentRepository;

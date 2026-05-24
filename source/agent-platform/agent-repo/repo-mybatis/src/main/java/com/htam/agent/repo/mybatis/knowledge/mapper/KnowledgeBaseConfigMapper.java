@@ -1,4 +1,4 @@
-package com.htam.agent.knowledge.mapper;
+package com.htam.agent.repo.mybatis.knowledge.mapper;
 
 import com.htam.agent.common.entity.KnowledgeBaseConfig;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;

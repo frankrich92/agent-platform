@@ -2,7 +2,7 @@ package com.htam.agent.repo.mybatis.knowledge;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.htam.agent.common.entity.AgentKnowledgeBase;
-import com.htam.agent.knowledge.mapper.AgentKnowledgeBaseMapper;
+import com.htam.agent.repo.mybatis.knowledge.mapper.AgentKnowledgeBaseMapper;
 import com.htam.agent.repo.knowledge.AgentKnowledgeBaseRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

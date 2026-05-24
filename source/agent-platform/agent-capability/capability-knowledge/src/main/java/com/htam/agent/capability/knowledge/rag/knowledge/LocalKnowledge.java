@@ -2,7 +2,7 @@ package com.htam.agent.capability.knowledge.rag.knowledge;
 
 import com.htam.agent.common.entity.KnowledgeBaseConfig;
 import com.htam.agent.common.vo.RagDocumentChunkVO;
-import com.htam.agent.knowledge.service.KnowledgeBaseConfigService;
+import com.htam.agent.capability.knowledge.service.KnowledgeBaseConfigService;
 import com.htam.agent.capability.knowledge.rag.service.LocalRagService;
 import io.agentscope.core.message.TextBlock;
 import io.agentscope.core.rag.Knowledge;

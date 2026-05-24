@@ -4,7 +4,7 @@ import com.htam.agent.common.entity.AgentDefinition;
 import com.htam.agent.common.entity.KnowledgeBaseConfig;
 import com.htam.agent.common.enums.KbType;
 import com.htam.agent.capability.knowledge.KnowledgeWrapper;
-import com.htam.agent.knowledge.service.KnowledgeBaseConfigService;
+import com.htam.agent.capability.knowledge.service.KnowledgeBaseConfigService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

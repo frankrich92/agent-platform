@@ -1,4 +1,4 @@
-package com.htam.agent.knowledge.controller;
+package com.htam.agent.capability.knowledge.controller;
 
 import com.htam.agent.common.config.auth.RoleNeed;
 import com.htam.agent.common.dto.KnowledgeBaseConfigDTO;
@@ -8,7 +8,7 @@ import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.common.r.R;
 import com.htam.agent.common.util.BeanUtils;
 import com.htam.agent.common.vo.KnowledgeBaseConfigVO;
-import com.htam.agent.knowledge.service.KnowledgeBaseConfigService;
+import com.htam.agent.capability.knowledge.service.KnowledgeBaseConfigService;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

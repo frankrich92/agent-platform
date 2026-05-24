@@ -1,7 +1,7 @@
-package com.htam.agent.knowledge.service.impl;
+package com.htam.agent.capability.knowledge.service.impl;
 
 import com.htam.agent.common.entity.AgentKnowledgeBase;
-import com.htam.agent.knowledge.service.AgentKnowledgeBaseService;
+import com.htam.agent.capability.knowledge.service.AgentKnowledgeBaseService;
 import com.htam.agent.repo.knowledge.AgentKnowledgeBaseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

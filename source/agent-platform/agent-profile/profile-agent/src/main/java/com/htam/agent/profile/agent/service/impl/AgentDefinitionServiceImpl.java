@@ -19,7 +19,7 @@ import com.htam.agent.common.vo.AgentDefinitionVO;
 import com.htam.agent.common.vo.SkillPackageVO;
 import com.htam.agent.common.vo.ToolVO;
 import com.htam.agent.capability.tool.hook.service.AgentHookService;
-import com.htam.agent.knowledge.service.AgentKnowledgeBaseService;
+import com.htam.agent.capability.knowledge.service.AgentKnowledgeBaseService;
 import com.htam.agent.capability.mcp.service.AgentMcpServerService;
 import com.htam.agent.model.service.ModelConfigService;
 import com.htam.agent.params.core.ParamsAdapter;

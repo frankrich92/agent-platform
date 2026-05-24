@@ -14,7 +14,7 @@ import com.htam.agent.capability.knowledge.rag.EmbeddingRecord;
 import com.htam.agent.capability.knowledge.rag.EmbeddingService;
 import com.htam.agent.capability.knowledge.rag.RetrievalResult;
 import com.htam.agent.capability.knowledge.rag.store.VectorStore;
-import com.htam.agent.knowledge.service.KnowledgeBaseConfigService;
+import com.htam.agent.capability.knowledge.service.KnowledgeBaseConfigService;
 import com.htam.agent.capability.knowledge.rag.service.TextChunker.ChunkResult;
 import com.htam.agent.repo.knowledge.RagDocumentChunkRepository;
 import com.htam.agent.repo.knowledge.RagDocumentRepository;

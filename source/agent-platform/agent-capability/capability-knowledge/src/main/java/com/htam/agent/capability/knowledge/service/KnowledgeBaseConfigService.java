@@ -1,4 +1,4 @@
-package com.htam.agent.knowledge.service;
+package com.htam.agent.capability.knowledge.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.htam.agent.common.dto.KnowledgeBaseConfigDTO;
