@@ -1,8 +1,8 @@
-package com.htam.agent.account.service.impl;
+package com.htam.agent.governance.iam.account.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-import com.htam.agent.account.service.AccountRoleService;
-import com.htam.agent.account.service.AccountService;
+import com.htam.agent.governance.iam.account.service.AccountRoleService;
+import com.htam.agent.governance.iam.account.service.AccountService;
 import com.htam.agent.profile.agent.service.AgentChatKeyService;
 import com.htam.agent.profile.agent.service.AgentDefinitionService;
 import com.htam.agent.common.UserDetail;

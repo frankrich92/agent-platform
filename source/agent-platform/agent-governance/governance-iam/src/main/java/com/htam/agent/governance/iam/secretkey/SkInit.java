@@ -1,7 +1,7 @@
-package com.htam.agent.sk;
+package com.htam.agent.governance.iam.secretkey;
 
 import com.htam.agent.common.config.auth.AuthInterceptor;
-import com.htam.agent.sk.service.SecretKeyService;
+import com.htam.agent.governance.iam.secretkey.service.SecretKeyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;

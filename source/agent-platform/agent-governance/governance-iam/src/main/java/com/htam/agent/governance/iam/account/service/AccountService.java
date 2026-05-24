@@ -1,4 +1,4 @@
-package com.htam.agent.account.service;
+package com.htam.agent.governance.iam.account.service;
 
 import com.htam.agent.common.dto.*;
 import com.htam.agent.common.entity.Account;

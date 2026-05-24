@@ -1,7 +1,7 @@
-package com.htam.agent.account.controller;
+package com.htam.agent.governance.iam.account.controller;
 
-import com.htam.agent.account.service.AccountRoleService;
-import com.htam.agent.account.service.AccountService;
+import com.htam.agent.governance.iam.account.service.AccountRoleService;
+import com.htam.agent.governance.iam.account.service.AccountService;
 import com.htam.agent.common.config.auth.ChatKeyAccess;
 import com.htam.agent.common.config.auth.RoleNeed;
 import com.htam.agent.common.config.auth.SkAccess;

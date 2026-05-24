@@ -1,4 +1,4 @@
-package com.htam.agent.sk.service;
+package com.htam.agent.governance.iam.secretkey.service;
 
 import com.htam.agent.common.entity.SecretKey;
 import com.htam.agent.common.vo.SecretKeyVo;

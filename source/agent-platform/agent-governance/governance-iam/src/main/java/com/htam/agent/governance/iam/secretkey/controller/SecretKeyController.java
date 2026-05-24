@@ -1,8 +1,8 @@
-package com.htam.agent.sk.controller;
+package com.htam.agent.governance.iam.secretkey.controller;
 
 import com.htam.agent.common.r.R;
 import com.htam.agent.common.vo.SecretKeyVo;
-import com.htam.agent.sk.service.SecretKeyService;
+import com.htam.agent.governance.iam.secretkey.service.SecretKeyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 

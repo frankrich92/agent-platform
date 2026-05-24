@@ -1,6 +1,6 @@
-package com.htam.agent.account.service.impl;
+package com.htam.agent.governance.iam.account.service.impl;
 
-import com.htam.agent.account.service.AccountRoleService;
+import com.htam.agent.governance.iam.account.service.AccountRoleService;
 import com.htam.agent.common.config.auth.AuthInterceptor;
 import com.htam.agent.common.entity.AccountRole;
 import com.htam.agent.repo.iam.AccountRoleRepository;

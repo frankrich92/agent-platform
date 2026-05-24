@@ -1,4 +1,4 @@
-package com.htam.agent.account.mapper;
+package com.htam.agent.repo.mybatis.iam.mapper;
 
 import com.htam.agent.common.entity.Account;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
