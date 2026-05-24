@@ -2,7 +2,7 @@ package com.htam.agent.repo.mybatis.capability;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.htam.agent.common.entity.AgentMcpTool;
-import com.htam.agent.mcp.mapper.AgentMcpToolMapper;
+import com.htam.agent.repo.mybatis.capability.mapper.AgentMcpToolMapper;
 import com.htam.agent.repo.capability.AgentMcpToolRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;

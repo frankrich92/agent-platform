@@ -1,7 +1,7 @@
 package com.htam.agent.runtime.agentscope.hook;
 
 import com.htam.agent.common.wrapper.HookConfigWrapper;
-import com.htam.agent.hook.service.HookConfigService;
+import com.htam.agent.capability.tool.hook.service.HookConfigService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;

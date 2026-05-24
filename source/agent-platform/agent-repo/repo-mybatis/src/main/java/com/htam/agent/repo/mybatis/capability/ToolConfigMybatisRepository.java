@@ -8,7 +8,7 @@ import com.htam.agent.common.mp.support.MP;
 import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.repo.capability.ToolConfigRepository;
 import com.htam.agent.repo.support.RepoPage;
-import com.htam.agent.tool.mapper.ToolMapper;
+import com.htam.agent.repo.mybatis.capability.mapper.ToolMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

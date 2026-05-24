@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.htam.agent.common.entity.SystemPromptTemplate;
 import com.htam.agent.common.mp.support.MP;
 import com.htam.agent.common.mp.support.PageParams;
-import com.htam.agent.prompt.mapper.SystemPromptTemplateMapper;
+import com.htam.agent.repo.mybatis.capability.mapper.SystemPromptTemplateMapper;
 import com.htam.agent.repo.capability.SystemPromptTemplateRepository;
 import com.htam.agent.repo.support.RepoPage;
 import lombok.RequiredArgsConstructor;

@@ -3,7 +3,7 @@ package com.htam.agent.repo.mybatis.capability;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.htam.agent.common.entity.SkillTool;
 import com.htam.agent.repo.capability.SkillToolRepository;
-import com.htam.agent.skill.mapper.SkillToolMapper;
+import com.htam.agent.repo.mybatis.capability.mapper.SkillToolMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

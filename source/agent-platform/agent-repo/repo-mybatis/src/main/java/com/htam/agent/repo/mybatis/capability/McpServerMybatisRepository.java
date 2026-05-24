@@ -8,7 +8,7 @@ import com.htam.agent.common.enums.McpActivationStatus;
 import com.htam.agent.common.enums.McpProtocol;
 import com.htam.agent.common.mp.support.MP;
 import com.htam.agent.common.mp.support.PageParams;
-import com.htam.agent.mcp.mapper.McpServerMapper;
+import com.htam.agent.repo.mybatis.capability.mapper.McpServerMapper;
 import com.htam.agent.repo.capability.McpServerRepository;
 import com.htam.agent.repo.support.RepoPage;
 import lombok.RequiredArgsConstructor;

@@ -3,7 +3,7 @@ package com.htam.agent.repo.mybatis.capability;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.htam.agent.common.entity.AgentSkillPackage;
 import com.htam.agent.repo.capability.AgentSkillPackageRepository;
-import com.htam.agent.skill.mapper.AgentSkillPackageMapper;
+import com.htam.agent.repo.mybatis.capability.mapper.AgentSkillPackageMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

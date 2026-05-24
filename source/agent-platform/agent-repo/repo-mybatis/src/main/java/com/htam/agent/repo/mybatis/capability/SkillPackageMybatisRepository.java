@@ -7,7 +7,7 @@ import com.htam.agent.common.mp.support.MP;
 import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.repo.capability.SkillPackageRepository;
 import com.htam.agent.repo.support.RepoPage;
-import com.htam.agent.skill.mapper.SkillPackageMapper;
+import com.htam.agent.repo.mybatis.capability.mapper.SkillPackageMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

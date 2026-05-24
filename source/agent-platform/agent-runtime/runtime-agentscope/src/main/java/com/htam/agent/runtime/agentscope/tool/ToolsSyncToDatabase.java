@@ -1,7 +1,7 @@
 package com.htam.agent.runtime.agentscope.tool;
 
 import com.htam.agent.common.wrapper.ToolInfoWrapper;
-import com.htam.agent.tool.service.ToolService;
+import com.htam.agent.capability.tool.service.ToolService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;

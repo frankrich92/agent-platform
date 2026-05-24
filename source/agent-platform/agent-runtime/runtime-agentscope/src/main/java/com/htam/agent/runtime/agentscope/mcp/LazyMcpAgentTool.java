@@ -1,6 +1,6 @@
 package com.htam.agent.runtime.agentscope.mcp;
 
-import com.htam.agent.mcp.service.McpRuntimeDegradeService;
+import com.htam.agent.capability.mcp.service.McpRuntimeDegradeService;
 import io.agentscope.core.message.ToolResultBlock;
 import io.agentscope.core.tool.AgentTool;
 import io.agentscope.core.tool.ToolCallParam;

@@ -10,7 +10,7 @@ import com.htam.agent.runtime.agentscope.tool.IAgentTool;
 import com.htam.agent.runtime.agentscope.tool.ToolsRegister;
 import com.htam.agent.runtime.agentscope.tool.dynamices.IDynamicAgentTool;
 import com.htam.agent.runtime.agentscope.tool.dynamices.ToolInstanceLoadFactory;
-import com.htam.agent.tool.service.ToolService;
+import com.htam.agent.capability.tool.service.ToolService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 

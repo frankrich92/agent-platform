@@ -3,7 +3,7 @@ package com.htam.agent.runtime.agentscope.prompt.impl;
 import com.htam.agent.common.entity.AgentDefinition;
 import com.htam.agent.common.entity.SystemPromptTemplate;
 import com.htam.agent.runtime.agentscope.prompt.AgentSysPrompt;
-import com.htam.agent.prompt.service.SystemPromptTemplateService;
+import com.htam.agent.profile.prompt.service.SystemPromptTemplateService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

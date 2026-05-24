@@ -4,7 +4,7 @@ import com.htam.agent.common.entity.AgentDefinition;
 import com.htam.agent.common.entity.SensitiveWordConfig;
 import com.htam.agent.runtime.agentscope.workspace.hook.ToolConstants;
 import com.htam.agent.governance.sensitive.SensitiveWordHelper;
-import com.htam.agent.sensitive.service.SensitiveWordConfigService;
+import com.htam.agent.governance.sensitive.service.SensitiveWordConfigService;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
