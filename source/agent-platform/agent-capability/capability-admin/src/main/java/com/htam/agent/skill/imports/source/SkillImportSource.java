@@ -1,8 +1,9 @@
 package com.htam.agent.skill.imports.source;
 
-import io.agentscope.core.skill.repository.AgentSkillRepository;
+import com.htam.agent.skill.imports.ImportedSkill;
 
 import java.nio.file.Path;
+import java.util.List;
 
 /**
  * Prepared source for one skill import run.
@@ -10,7 +11,9 @@ import java.nio.file.Path;
 public interface SkillImportSource extends AutoCloseable {
     Path skillsDir();
 
-    AgentSkillRepository repository();
+    List<String> skillNames();
+
+    ImportedSkill skill(String skillName);
 
     @Override
     void close();

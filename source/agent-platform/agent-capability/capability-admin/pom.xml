@@ -24,10 +24,6 @@
       <artifactId>repo-spi</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.htam.agent</groupId>
-      <artifactId>repo-mybatis</artifactId>
-    </dependency>
-    <dependency>
       <groupId>io.agentscope</groupId>
       <artifactId>agentscope-core</artifactId>
       <version>${agentscope.version}</version>

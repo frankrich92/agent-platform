@@ -5,8 +5,8 @@ import com.htam.agent.common.exception.BusinessException;
 import com.htam.agent.common.runtime.RuntimePaths;
 import com.htam.agent.common.util.FolderUtils;
 import com.htam.agent.common.util.ZipExtractUtils;
+import com.htam.agent.skill.imports.ImportedSkill;
 import com.htam.agent.skill.imports.SkillImportPathResolver;
-import io.agentscope.core.skill.repository.AgentSkillRepository;
 import io.agentscope.core.skill.repository.FileSystemSkillRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 @Slf4j
 public class UploadSkillImportSource implements SkillImportSource {
@@ -45,8 +46,13 @@ public class UploadSkillImportSource implements SkillImportSource {
     }
 
     @Override
-    public AgentSkillRepository repository() {
-        return repository;
+    public List<String> skillNames() {
+        return repository.getAllSkillNames();
+    }
+
+    @Override
+    public ImportedSkill skill(String skillName) {
+        return AgentScopeSkillMapper.fromAgentScope(repository.getSkill(skillName));
     }
 
     @Override

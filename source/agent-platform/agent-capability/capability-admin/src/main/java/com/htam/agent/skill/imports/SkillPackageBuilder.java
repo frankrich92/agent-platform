@@ -2,37 +2,36 @@ package com.htam.agent.skill.imports;
 
 import com.htam.agent.common.entity.SkillPackage;
 import com.htam.agent.common.util.JsonUtils;
-import io.agentscope.core.skill.AgentSkill;
 
 import java.util.ArrayList;
 import java.util.Map;
 
 /**
- * 描述：技能包构建器，负责将 AgentSkill 转换为 SkillPackage 实体
+ * 描述：技能包构建器，负责将导入源解析结果转换为 SkillPackage 实体
  *
  * @author huxuehao
  **/
 public class SkillPackageBuilder {
 
     /**
-     * 基于 AgentSkill 构建 SkillPackage 实体
+     * 基于导入源解析结果构建 SkillPackage 实体
      *
-     * @param agentSkill AgentSkill 对象
+     * @param importedSkill 导入源解析结果
      * @param category   技能分类
      * @return SkillPackage 实体
      */
-    public static SkillPackage build(AgentSkill agentSkill, String category) {
+    public static SkillPackage build(ImportedSkill importedSkill, String category) {
         SkillPackage skillPackage = new SkillPackage();
         skillPackage.setCategory(category);
-        skillPackage.setName(agentSkill.getName());
-        skillPackage.setDescription(agentSkill.getDescription());
-        skillPackage.setSkillContent(agentSkill.getSkillContent());
+        skillPackage.setName(importedSkill.name());
+        skillPackage.setDescription(importedSkill.description());
+        skillPackage.setSkillContent(importedSkill.skillContent());
 
         ArrayList<SkillPackageItem> examples = new ArrayList<>();
         ArrayList<SkillPackageItem> references = new ArrayList<>();
         ArrayList<SkillPackageItem> scripts = new ArrayList<>();
 
-        Map<String, String> resources = agentSkill.getResources();
+        Map<String, String> resources = importedSkill.resources();
         resources.forEach((path, content) -> {
             if (path.startsWith("examples/")) {
                 examples.add(

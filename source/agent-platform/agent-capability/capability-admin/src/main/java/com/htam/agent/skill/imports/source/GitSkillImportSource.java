@@ -2,14 +2,15 @@ package com.htam.agent.skill.imports.source;
 
 import com.htam.agent.common.runtime.RuntimePaths;
 import com.htam.agent.common.util.FolderUtils;
+import com.htam.agent.skill.imports.ImportedSkill;
 import com.htam.agent.skill.imports.SkillImportPathResolver;
 import com.htam.agent.skill.imports.config.GitImportConfig;
-import io.agentscope.core.skill.repository.AgentSkillRepository;
 import io.agentscope.core.skill.repository.GitSkillRepository;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 
 @Slf4j
 public class GitSkillImportSource implements SkillImportSource {
@@ -39,8 +40,13 @@ public class GitSkillImportSource implements SkillImportSource {
     }
 
     @Override
-    public AgentSkillRepository repository() {
-        return repository;
+    public List<String> skillNames() {
+        return repository.getAllSkillNames();
+    }
+
+    @Override
+    public ImportedSkill skill(String skillName) {
+        return AgentScopeSkillMapper.fromAgentScope(repository.getSkill(skillName));
     }
 
     @Override

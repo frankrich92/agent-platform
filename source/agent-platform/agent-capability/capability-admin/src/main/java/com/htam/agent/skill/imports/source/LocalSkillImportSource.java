@@ -1,10 +1,11 @@
 package com.htam.agent.skill.imports.source;
 
 import com.htam.agent.skill.imports.config.LocalImportConfig;
-import io.agentscope.core.skill.repository.AgentSkillRepository;
+import com.htam.agent.skill.imports.ImportedSkill;
 import io.agentscope.core.skill.repository.FileSystemSkillRepository;
 
 import java.nio.file.Path;
+import java.util.List;
 
 public class LocalSkillImportSource implements SkillImportSource {
     private final Path skillsDir;
@@ -21,8 +22,13 @@ public class LocalSkillImportSource implements SkillImportSource {
     }
 
     @Override
-    public AgentSkillRepository repository() {
-        return repository;
+    public List<String> skillNames() {
+        return repository.getAllSkillNames();
+    }
+
+    @Override
+    public ImportedSkill skill(String skillName) {
+        return AgentScopeSkillMapper.fromAgentScope(repository.getSkill(skillName));
     }
 
     @Override

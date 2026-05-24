@@ -10,8 +10,6 @@ import com.htam.agent.skill.imports.source.LocalSkillImportSource;
 import com.htam.agent.skill.imports.source.SkillImportSource;
 import com.htam.agent.skill.imports.source.UploadSkillImportSource;
 import com.htam.agent.skill.service.SkillPackageService;
-import io.agentscope.core.skill.AgentSkill;
-import io.agentscope.core.skill.repository.AgentSkillRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -75,21 +73,19 @@ public class SkillImportService {
     /**
      * 执行导入
      *
-     * @param skillsDir 技能包根目录（包含各技能包子目录）
-     * @param repo      AgentSkillRepository
+     * @param source    导入源
      * @param isCover   是否覆盖
      * @param category  分类
      */
     private SkillImportResult doImport(SkillImportSource source, boolean isCover, String category) {
         Path skillsDir = source.skillsDir();
-        AgentSkillRepository repo = source.repository();
         try {
             SkillImportNormalizer.normalizeSkillFiles(skillsDir);
         } catch (IOException e) {
             log.warn("Normalize skill files failed: {}", e.getMessage());
         }
 
-        List<String> allSkillNames = repo.getAllSkillNames();
+        List<String> allSkillNames = source.skillNames();
         if (allSkillNames.isEmpty()) {
             return SkillImportResult.withHint(0, 0, 0, SkillImportInspector.buildHint(skillsDir));
         }
@@ -112,8 +108,8 @@ public class SkillImportService {
                 continue;
             }
 
-            AgentSkill agentSkill = repo.getSkill(skillName);
-            SkillPackage skillPackage = SkillPackageBuilder.build(agentSkill, category);
+            ImportedSkill importedSkill = source.skill(skillName);
+            SkillPackage skillPackage = SkillPackageBuilder.build(importedSkill, category);
 
             SkillPackage oldSkillPackage = skillPackageService.getByName(skillName);
 

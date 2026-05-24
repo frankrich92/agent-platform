@@ -25,7 +25,7 @@
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>repo-mybatis</artifactId>
+      <artifactId>repo-spi</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
