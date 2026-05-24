@@ -17,4 +17,9 @@ public record WorkflowWorkerPlan(
     public static WorkflowWorkerPlan internalDefault(String planId) {
         return new WorkflowWorkerPlan(planId, WorkflowWorkerType.INTERNAL, true, true, Map.of());
     }
+
+    public static WorkflowWorkerPlan langGraphWorker(String planId, String workerRef) {
+        return new WorkflowWorkerPlan(planId, WorkflowWorkerType.LANGGRAPH, true, true,
+                Map.of("workerRef", workerRef == null ? "langgraph" : workerRef));
+    }
 }

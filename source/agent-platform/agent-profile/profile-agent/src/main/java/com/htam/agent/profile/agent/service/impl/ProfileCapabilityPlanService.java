@@ -14,6 +14,7 @@ import com.htam.agent.capability.tool.HookPolicy;
 import com.htam.agent.capability.tool.hook.service.AgentHookService;
 import com.htam.agent.capability.tool.hook.service.HookConfigService;
 import com.htam.agent.common.entity.AgentDefinition;
+import com.htam.agent.common.entity.CodeExecutionConfig;
 import com.htam.agent.common.entity.HookConfig;
 import com.htam.agent.common.entity.KnowledgeBaseConfig;
 import com.htam.agent.common.entity.McpServer;
@@ -26,6 +27,8 @@ import com.htam.agent.common.enums.ToolType;
 import com.htam.agent.common.vo.AgentMcpBindingVO;
 import com.htam.agent.profile.agent.service.AgentDefinitionService;
 import com.htam.agent.profile.agent.service.AgentSubAgentService;
+import com.htam.agent.profile.agent.service.AgentCodeExecutionService;
+import com.htam.agent.profile.agent.service.CodeExecutionConfigService;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -41,6 +44,8 @@ public class ProfileCapabilityPlanService implements CapabilityPlanService {
 
     private final AgentDefinitionService agentDefinitionService;
     private final AgentSubAgentService agentSubAgentService;
+    private final AgentCodeExecutionService agentCodeExecutionService;
+    private final CodeExecutionConfigService codeExecutionConfigService;
     private final AgentHookService agentHookService;
     private final HookConfigService hookConfigService;
     private final AgentMcpServerService agentMcpServerService;
@@ -63,6 +68,7 @@ public class ProfileCapabilityPlanService implements CapabilityPlanService {
         addKnowledgeBases(items, agentId);
         addHooks(items, agentId);
         addSubAgents(items, agent);
+        addWorker(items, agentId);
 
         return new CapabilityPlan(
                 "agent-" + agentId + "-profile-plan",
@@ -280,6 +286,40 @@ public class ProfileCapabilityPlanService implements CapabilityPlanService {
                             "summaryRequired", true,
                             "parentMaxSubtasks", parentAgent.getMaxSubtasks())));
         }
+    }
+
+    private void addWorker(List<CapabilityItem> items, Long agentId) {
+        Long codeExecutionId = agentCodeExecutionService.getCodeExecutionIdByAgentId(agentId);
+        if (codeExecutionId == null) {
+            return;
+        }
+        CodeExecutionConfig config = codeExecutionConfigService.getById(codeExecutionId);
+        if (config == null) {
+            return;
+        }
+        boolean highRisk = Boolean.TRUE.equals(config.getEnableShell()) || Boolean.TRUE.equals(config.getEnableWrite());
+        boolean readOnly = Boolean.TRUE.equals(config.getEnableRead()) && !highRisk;
+        items.add(new CapabilityItem(
+                CapabilityKind.WORKER,
+                String.valueOf(config.getId()),
+                firstNonBlank(config.getConfigName(), String.valueOf(config.getId())),
+                "worker:sandbox",
+                Boolean.TRUE.equals(config.getEnabled()),
+                readOnly,
+                highRisk ? CapabilityRiskLevel.HIGH : CapabilityRiskLevel.LOW,
+                highRisk ? CapabilityRiskPolicy.ASK : CapabilityRiskPolicy.ALLOW,
+                null,
+                List.of(),
+                List.of(),
+                attributes(
+                        "workDir", config.getWorkDir(),
+                        "uploadDir", config.getUploadDir(),
+                        "autoUpload", config.getAutoUpload(),
+                        "enableShell", config.getEnableShell(),
+                        "enableRead", config.getEnableRead(),
+                        "enableWrite", config.getEnableWrite(),
+                        "allowedCommands", config.getCommand(),
+                        "sandboxRequired", true)));
     }
 
     private static List<String> toolIdsAsPatterns(List<Long> toolIds) {

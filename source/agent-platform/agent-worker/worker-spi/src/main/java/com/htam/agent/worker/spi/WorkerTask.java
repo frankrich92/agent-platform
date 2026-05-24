@@ -18,4 +18,8 @@ public record WorkerTask(
         riskPolicy = riskPolicy == null ? WorkerRiskPolicy.ASK : riskPolicy;
         input = input == null ? Map.of() : Map.copyOf(input);
     }
+
+    public boolean requiresApproval() {
+        return riskPolicy == WorkerRiskPolicy.ASK;
+    }
 }
