@@ -1,4 +1,4 @@
-package com.htam.agent.model.service.impl;
+package com.htam.agent.capability.provider.service.impl;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -10,8 +10,8 @@ import com.htam.agent.common.entity.ModelConfig;
 import com.htam.agent.common.entity.ModelProvider;
 import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.common.wrapper.ModelWrapper;
-import com.htam.agent.model.service.ModelConfigService;
-import com.htam.agent.model.service.ModelProviderService;
+import com.htam.agent.capability.provider.service.ModelConfigService;
+import com.htam.agent.capability.provider.service.ModelProviderService;
 import com.htam.agent.repo.agent.AgentDefinitionRepository;
 import com.htam.agent.repo.provider.ModelConfigRepository;
 import com.htam.agent.repo.support.RepoPage;

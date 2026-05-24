@@ -5,7 +5,7 @@ import com.htam.agent.common.enums.ModelProviderType;
 import com.htam.agent.common.util.ExtendConfigHelper;
 import com.htam.agent.common.wrapper.ModelConfigWrapper;
 import com.htam.agent.common.wrapper.ModelWrapper;
-import com.htam.agent.model.service.ModelConfigService;
+import com.htam.agent.capability.provider.service.ModelConfigService;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.agentscope.core.model.Model;
 import org.springframework.stereotype.Component;

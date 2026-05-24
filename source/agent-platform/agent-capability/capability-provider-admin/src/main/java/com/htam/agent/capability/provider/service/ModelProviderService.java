@@ -1,4 +1,4 @@
-package com.htam.agent.model.service;
+package com.htam.agent.capability.provider.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.htam.agent.common.dto.ModelProviderDTO;

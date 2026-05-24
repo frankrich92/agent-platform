@@ -1,4 +1,4 @@
-package com.htam.agent.model.controller;
+package com.htam.agent.capability.provider.controller;
 
 import com.htam.agent.common.config.auth.RoleNeed;
 import com.htam.agent.common.dto.ModelProviderDTO;
@@ -8,7 +8,7 @@ import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.common.r.R;
 import com.htam.agent.common.util.BeanUtils;
 import com.htam.agent.common.vo.ModelProviderVO;
-import com.htam.agent.model.service.ModelProviderService;
+import com.htam.agent.capability.provider.service.ModelProviderService;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

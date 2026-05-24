@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.htam.agent.common.entity.ModelProvider;
 import com.htam.agent.common.mp.support.MP;
 import com.htam.agent.common.mp.support.PageParams;
-import com.htam.agent.model.mapper.ModelProviderMapper;
+import com.htam.agent.repo.mybatis.provider.mapper.ModelProviderMapper;
 import com.htam.agent.repo.provider.ModelProviderRepository;
 import com.htam.agent.repo.support.RepoPage;
 import lombok.RequiredArgsConstructor;
