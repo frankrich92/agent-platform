@@ -10,6 +10,8 @@ import com.htam.agent.runtime.AgentRunResult;
 import com.htam.agent.runtime.AgentRuntimeRunner;
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -46,7 +48,7 @@ public class DefaultAgentRunService implements AgentRunService {
                 command.sessionId() == null ? null : String.valueOf(command.sessionId()),
                 runId,
                 capabilityPlan.planId(),
-                null));
+                runtimeMetadata(runId, capabilityPlan)));
 
         ChatMessageVO assistantMessage = null;
         if (command.recordMessages() && command.sessionId() != null && runtimeResult.message() != null) {
@@ -68,5 +70,16 @@ public class DefaultAgentRunService implements AgentRunService {
         dto.setRole(role);
         dto.setContent(content);
         return chatSessionService.appendMessage(sessionId, dto);
+    }
+
+    private Map<String, Object> runtimeMetadata(String runId, CapabilityPlan capabilityPlan) {
+        Map<String, Object> metadata = new LinkedHashMap<>();
+        metadata.put("traceId", runId);
+        metadata.put("capabilityPlanId", capabilityPlan.planId());
+        metadata.put("capabilityPlanItemCount", capabilityPlan.items().size());
+        metadata.put("capabilityPlanEnabledItemCount", capabilityPlan.enabledItems().size());
+        metadata.put("capabilityPlanExecutableItemCount", capabilityPlan.executableItems().size());
+        metadata.put("capabilityPlanHighRiskDefaultPolicy", capabilityPlan.highRiskDefaultPolicy().name());
+        return metadata;
     }
 }

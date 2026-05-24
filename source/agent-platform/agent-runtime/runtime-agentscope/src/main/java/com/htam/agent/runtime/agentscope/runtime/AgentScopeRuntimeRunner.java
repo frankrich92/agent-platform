@@ -3,7 +3,10 @@ package com.htam.agent.runtime.agentscope.runtime;
 import com.htam.agent.runtime.agentscope.agent.IAgentFactory;
 import com.htam.agent.runtime.AgentRunRequest;
 import com.htam.agent.runtime.AgentRunResult;
+import com.htam.agent.runtime.AgentRunStatus;
 import com.htam.agent.runtime.AgentRuntimeRunner;
+import com.htam.agent.runtime.RunStep;
+import com.htam.agent.runtime.RunStepType;
 import com.htam.agent.runtime.RuntimeEvent;
 import com.htam.agent.runtime.RuntimeEventType;
 import io.agentscope.core.agent.Agent;
@@ -11,7 +14,10 @@ import io.agentscope.core.message.Msg;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -28,20 +34,56 @@ public class AgentScopeRuntimeRunner implements AgentRuntimeRunner {
         String runId = request.runId() == null || request.runId().isBlank()
                 ? UUID.randomUUID().toString()
                 : request.runId();
-        RuntimeEvent started = RuntimeEvent.of(UUID.randomUUID().toString(),
-                RuntimeEventType.RUN_STARTED, runId, 1);
+        String traceId = metadataValue(request, "traceId", runId);
+        String stepId = UUID.randomUUID().toString();
+        Instant startedAt = Instant.now();
+        List<RuntimeEvent> events = new ArrayList<>();
+        events.add(event(RuntimeEventType.RUN_STARTED, runId, request.threadId(), null, traceId, 1,
+                Map.of(
+                        "capabilityPlanId", request.capabilityPlanId() == null ? "" : request.capabilityPlanId(),
+                        "capabilityPlanItemCount", metadataValue(request, "capabilityPlanItemCount", "0"),
+                        "runtime", "agentscope")));
+        events.add(event(RuntimeEventType.STEP_STARTED, runId, request.threadId(), stepId, traceId, 2,
+                Map.of("stepType", RunStepType.MODEL_CALL.name(), "runtime", "agentscope")));
         try {
             Agent agent = agentFactory.getAgent(request.agentId());
             agent.call(Msg.builder()
                     .textContent(request.input())
                     .build()).block();
-            RuntimeEvent completed = RuntimeEvent.of(UUID.randomUUID().toString(),
-                    RuntimeEventType.RUN_COMPLETED, runId, 2);
-            return AgentRunResult.success(request.agentId(), runId, null, List.of(started, completed));
+            Instant endedAt = Instant.now();
+            events.add(event(RuntimeEventType.STEP_COMPLETED, runId, request.threadId(), stepId, traceId, 3,
+                    Map.of("stepType", RunStepType.MODEL_CALL.name(), "status", AgentRunStatus.SUCCEEDED.name())));
+            events.add(event(RuntimeEventType.RUN_COMPLETED, runId, request.threadId(), null, traceId, 4,
+                    Map.of("status", AgentRunStatus.SUCCEEDED.name())));
+            RunStep step = new RunStep(stepId, runId, RunStepType.MODEL_CALL, AgentRunStatus.SUCCEEDED,
+                    startedAt, endedAt, Map.of("runtime", "agentscope"));
+            return new AgentRunResult(request.agentId(), runId, AgentRunStatus.SUCCEEDED, null,
+                    events, List.of(step), List.of());
         } catch (RuntimeException ex) {
-            RuntimeEvent failed = RuntimeEvent.of(UUID.randomUUID().toString(),
-                    RuntimeEventType.RUN_FAILED, runId, 2);
-            return AgentRunResult.failure(request.agentId(), runId, ex.getMessage(), List.of(started, failed));
+            Instant endedAt = Instant.now();
+            events.add(event(RuntimeEventType.RUN_FAILED, runId, request.threadId(), stepId, traceId, 3,
+                    Map.of("status", AgentRunStatus.FAILED.name(), "error", ex.getMessage() == null ? "" : ex.getMessage())));
+            RunStep step = new RunStep(stepId, runId, RunStepType.MODEL_CALL, AgentRunStatus.FAILED,
+                    startedAt, endedAt, Map.of("runtime", "agentscope", "error", ex.getMessage() == null ? "" : ex.getMessage()));
+            return new AgentRunResult(request.agentId(), runId, AgentRunStatus.FAILED, ex.getMessage(),
+                    events, List.of(step), List.of());
         }
+    }
+
+    private RuntimeEvent event(
+            RuntimeEventType eventType,
+            String runId,
+            String sessionId,
+            String stepId,
+            String traceId,
+            long sequence,
+            Map<String, Object> payload) {
+        return new RuntimeEvent(UUID.randomUUID().toString(), eventType, runId, sessionId, stepId, traceId,
+                sequence, Instant.now(), payload);
+    }
+
+    private String metadataValue(AgentRunRequest request, String key, String fallback) {
+        Object value = request.metadata().get(key);
+        return value == null ? fallback : String.valueOf(value);
     }
 }
