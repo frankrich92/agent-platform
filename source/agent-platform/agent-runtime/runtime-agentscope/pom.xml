@@ -13,6 +13,11 @@
   <dependencies>
     <dependency>
       <groupId>com.htam.agent</groupId>
+      <artifactId>runtime-core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
       <artifactId>runtime-spi</artifactId>
     </dependency>
     <dependency>

@@ -10,4 +10,15 @@
   </parent>
   <artifactId>runtime-core</artifactId>
   <packaging>jar</packaging>
+  <dependencies>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>runtime-spi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
 </project>

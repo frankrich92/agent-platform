@@ -10,4 +10,27 @@
   </parent>
   <artifactId>run-history</artifactId>
   <packaging>jar</packaging>
+  <dependencies>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>runtime-spi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>run-event</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>run-step</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>run-tool-call</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>run-message</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
 </project>

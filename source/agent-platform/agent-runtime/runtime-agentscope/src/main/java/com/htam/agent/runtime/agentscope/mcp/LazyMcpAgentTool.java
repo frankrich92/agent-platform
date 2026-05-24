@@ -1,6 +1,8 @@
 package com.htam.agent.runtime.agentscope.mcp;
 
 import com.htam.agent.capability.mcp.service.McpRuntimeDegradeService;
+import com.htam.agent.common.util.JsonUtils;
+import com.htam.agent.runtime.core.RuntimeInteractionRecorder;
 import io.agentscope.core.message.ToolResultBlock;
 import io.agentscope.core.tool.AgentTool;
 import io.agentscope.core.tool.ToolCallParam;
@@ -12,6 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
@@ -66,6 +69,8 @@ public class LazyMcpAgentTool implements AgentTool {
 
     @Override
     public Mono<ToolResultBlock> callAsync(ToolCallParam param) {
+        Instant startedAt = Instant.now();
+        String parameterSummary = JsonUtils.toJsonStr(param.getInput());
         return initializedClientSupplier.get()
                 .flatMap(client -> client.callTool(getName(), param.getInput()))
                 .doOnSuccess(result -> mcpRuntimeDegradeService.recordSuccess(
@@ -73,7 +78,18 @@ public class LazyMcpAgentTool implements AgentTool {
                         degradeContext.activationRevision(),
                         degradeContext.configHash(),
                         degradeContext.runtimeFailThreshold()))
-                .map(McpContentConverter::convertCallToolResult)
+                .map(result -> {
+                    ToolResultBlock block = McpContentConverter.convertCallToolResult(result);
+                    RuntimeInteractionRecorder.recordMcpCall(
+                            degradeContext.serverName(),
+                            getName(),
+                            startedAt,
+                            Instant.now(),
+                            parameterSummary,
+                            block.toString(),
+                            null);
+                    return block;
+                })
                 .onErrorResume(e -> {
                     mcpRuntimeDegradeService.recordFailure(
                             degradeContext.serverId(),
@@ -83,6 +99,14 @@ public class LazyMcpAgentTool implements AgentTool {
                             e);
                     log.warn("MCP tool '{}' from '{}' unavailable: {}",
                             getName(), degradeContext.serverName(), e.getMessage());
+                    RuntimeInteractionRecorder.recordMcpCall(
+                            degradeContext.serverName(),
+                            getName(),
+                            startedAt,
+                            Instant.now(),
+                            parameterSummary,
+                            null,
+                            e.getMessage());
                     return Mono.just(ToolResultBlock.error(unavailableMessage(e)));
                 });
     }

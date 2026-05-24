@@ -6,6 +6,8 @@ import com.htam.agent.common.util.FuncUtils;
 import com.htam.agent.common.util.JsonUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.htam.agent.runtime.agentscope.agui.AgentContext;
+import com.htam.agent.runtime.ToolCallPolicy;
+import com.htam.agent.runtime.core.RuntimeInteractionRecorder;
 import io.agentscope.core.message.TextBlock;
 import io.agentscope.core.message.ToolResultBlock;
 import io.agentscope.core.tool.AgentTool;
@@ -13,6 +15,7 @@ import io.agentscope.core.tool.ToolCallParam;
 import reactor.core.publisher.Mono;
 
 import java.lang.reflect.Method;
+import java.time.Instant;
 import java.util.*;
 
 /**
@@ -84,6 +87,8 @@ public class DynamicAgentTool implements AgentTool {
     @Override
     public Mono<ToolResultBlock> callAsync(ToolCallParam param) {
         return Mono.fromCallable(() -> {
+            Instant startedAt = Instant.now();
+            String parameterSummary = JsonUtils.toJsonStr(param.getInput());
             try {
                 // 获取工具执行参数
                 List<Object> args = getObjects(param);
@@ -103,12 +108,35 @@ public class DynamicAgentTool implements AgentTool {
                     result = dynamicAgentTool.execute(args.toArray());
                 }
 
+                String resultSummary = JsonUtils.toJsonStr(R.data(result));
+                RuntimeInteractionRecorder.recordToolCall(
+                        getName(),
+                        Boolean.TRUE.equals(toolConfig.getNeedConfirm()) ? ToolCallPolicy.ASK : ToolCallPolicy.ALLOW,
+                        false,
+                        startedAt,
+                        Instant.now(),
+                        parameterSummary,
+                        resultSummary,
+                        null,
+                        null,
+                        Map.of("capability", "tool", "toolType", toolConfig.getToolType() == null ? "" : toolConfig.getToolType().name()));
                 return ToolResultBlock.of(
                         param.getToolUseBlock().getId(),
                         param.getToolUseBlock().getName(),
-                        TextBlock.builder().text(JsonUtils.toJsonStr(R.data(result))).build()
+                        TextBlock.builder().text(resultSummary).build()
                 );
             } catch (Exception e) {
+                RuntimeInteractionRecorder.recordToolCall(
+                        getName(),
+                        ToolCallPolicy.ASK,
+                        false,
+                        startedAt,
+                        Instant.now(),
+                        parameterSummary,
+                        null,
+                        e.getClass().getSimpleName(),
+                        e.getMessage(),
+                        Map.of("capability", "tool"));
                 return ToolResultBlock.of(
                         param.getToolUseBlock().getId(),
                         param.getToolUseBlock().getName(),

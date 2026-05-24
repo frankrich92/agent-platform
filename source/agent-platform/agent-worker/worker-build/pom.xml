@@ -10,4 +10,15 @@
   </parent>
   <artifactId>worker-build</artifactId>
   <packaging>jar</packaging>
+  <dependencies>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>worker-spi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>worker-shell</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
 </project>

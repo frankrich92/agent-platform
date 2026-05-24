@@ -10,4 +10,10 @@
   </parent>
   <artifactId>runtime-langgraph</artifactId>
   <packaging>jar</packaging>
+  <dependencies>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>runtime-spi</artifactId>
+    </dependency>
+  </dependencies>
 </project>

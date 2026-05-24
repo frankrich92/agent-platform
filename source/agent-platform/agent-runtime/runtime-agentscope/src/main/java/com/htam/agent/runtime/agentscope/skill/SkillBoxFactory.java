@@ -17,6 +17,7 @@ import com.htam.agent.capability.skill.service.AgentSkillPackageService;
 import com.htam.agent.capability.skill.service.SkillPackageService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.htam.agent.capability.skill.service.SkillToolService;
+import com.htam.agent.runtime.core.RuntimeInteractionRecorder;
 import io.agentscope.core.skill.AgentSkill;
 import io.agentscope.core.skill.SkillBox;
 import io.agentscope.core.tool.Toolkit;
@@ -88,6 +89,7 @@ public class SkillBoxFactory {
                 .name(skillPackage.getName())
                 .description(skillPackage.getDescription())
                 .skillContent(skillPackage.getSkillContent());
+        RuntimeInteractionRecorder.recordSkillLoad(skillPackage.getName(), "skill:" + skillPackage.getId());
 
         // 添加资源引用
         addResources(skillBuilder, skillPackage.getReferences(), SkillReferencesKey.prefix,

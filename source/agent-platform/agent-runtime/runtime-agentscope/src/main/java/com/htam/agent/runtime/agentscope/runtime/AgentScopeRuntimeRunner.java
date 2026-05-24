@@ -9,6 +9,8 @@ import com.htam.agent.runtime.RunStep;
 import com.htam.agent.runtime.RunStepType;
 import com.htam.agent.runtime.RuntimeEvent;
 import com.htam.agent.runtime.RuntimeEventType;
+import com.htam.agent.runtime.core.RuntimeInteractionRecorder;
+import com.htam.agent.runtime.core.RuntimeInteractionTrace;
 import io.agentscope.core.agent.Agent;
 import io.agentscope.core.message.Msg;
 import lombok.RequiredArgsConstructor;
@@ -47,10 +49,19 @@ public class AgentScopeRuntimeRunner implements AgentRuntimeRunner {
                 Map.of("stepType", RunStepType.MODEL_CALL.name(), "runtime", "agentscope")));
         try {
             Agent agent = agentFactory.getAgent(request.agentId());
-            agent.call(Msg.builder()
-                    .textContent(request.input())
-                    .build()).block();
+            RuntimeInteractionTrace trace = RuntimeInteractionRecorder.withinTrace(
+                    runId,
+                    request.threadId(),
+                    traceId,
+                    3,
+                    () -> {
+                        agent.call(Msg.builder()
+                                .textContent(request.input())
+                                .build()).block();
+                        return RuntimeInteractionRecorder.currentTrace();
+                    });
             Instant endedAt = Instant.now();
+            events.addAll(trace.events());
             events.add(event(RuntimeEventType.STEP_COMPLETED, runId, request.threadId(), stepId, traceId, 3,
                     Map.of("stepType", RunStepType.MODEL_CALL.name(), "status", AgentRunStatus.SUCCEEDED.name())));
             events.add(event(RuntimeEventType.RUN_COMPLETED, runId, request.threadId(), null, traceId, 4,
@@ -58,7 +69,7 @@ public class AgentScopeRuntimeRunner implements AgentRuntimeRunner {
             RunStep step = new RunStep(stepId, runId, RunStepType.MODEL_CALL, AgentRunStatus.SUCCEEDED,
                     startedAt, endedAt, Map.of("runtime", "agentscope"));
             return new AgentRunResult(request.agentId(), runId, AgentRunStatus.SUCCEEDED, null,
-                    events, List.of(step), List.of());
+                    events, mergeSteps(step, trace), trace.toolCalls());
         } catch (RuntimeException ex) {
             Instant endedAt = Instant.now();
             events.add(event(RuntimeEventType.RUN_FAILED, runId, request.threadId(), stepId, traceId, 3,
@@ -85,5 +96,12 @@ public class AgentScopeRuntimeRunner implements AgentRuntimeRunner {
     private String metadataValue(AgentRunRequest request, String key, String fallback) {
         Object value = request.metadata().get(key);
         return value == null ? fallback : String.valueOf(value);
+    }
+
+    private List<RunStep> mergeSteps(RunStep modelStep, RuntimeInteractionTrace trace) {
+        List<RunStep> steps = new ArrayList<>();
+        steps.add(modelStep);
+        steps.addAll(trace.steps());
+        return steps;
     }
 }
