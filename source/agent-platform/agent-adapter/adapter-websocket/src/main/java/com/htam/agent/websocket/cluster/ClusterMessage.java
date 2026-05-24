@@ -59,5 +59,6 @@ public class ClusterMessage implements Serializable {
     /**
      * 时间戳
      */
+    @Builder.Default
     private Long timestamp = System.currentTimeMillis();
 }

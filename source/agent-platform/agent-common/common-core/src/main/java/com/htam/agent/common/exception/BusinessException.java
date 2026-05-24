@@ -9,7 +9,7 @@ import lombok.EqualsAndHashCode;
  * @author huxuehao
  */
 @Data
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = false)
 public class BusinessException extends RuntimeException {
     private Integer code;
 
