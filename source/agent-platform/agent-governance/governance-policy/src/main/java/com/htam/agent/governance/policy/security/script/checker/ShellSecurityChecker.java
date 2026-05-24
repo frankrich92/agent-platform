@@ -1,10 +1,10 @@
-package com.htam.agent.security.script.checker;
+package com.htam.agent.governance.policy.security.script.checker;
 
-import com.htam.agent.security.script.AbstractScriptChecker;
-import com.htam.agent.security.script.model.FindingCategory;
-import com.htam.agent.security.script.model.RuleDefinition;
-import com.htam.agent.security.script.model.ScriptType;
-import com.htam.agent.security.script.model.Severity;
+import com.htam.agent.governance.policy.security.script.AbstractScriptChecker;
+import com.htam.agent.governance.policy.security.script.model.FindingCategory;
+import com.htam.agent.governance.policy.security.script.model.RuleDefinition;
+import com.htam.agent.governance.policy.security.script.model.ScriptType;
+import com.htam.agent.governance.policy.security.script.model.Severity;
 
 import java.util.regex.Pattern;
 

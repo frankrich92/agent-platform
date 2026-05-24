@@ -1,12 +1,12 @@
-package com.htam.agent.security.script;
+package com.htam.agent.governance.policy.security.script;
 
-import com.htam.agent.security.script.checker.HtmlSecurityChecker;
-import com.htam.agent.security.script.checker.NodeJsSecurityChecker;
-import com.htam.agent.security.script.checker.PythonSecurityChecker;
-import com.htam.agent.security.script.checker.ShellSecurityChecker;
-import com.htam.agent.security.script.model.ScriptType;
-import com.htam.agent.security.script.model.SecurityFinding;
-import com.htam.agent.security.script.model.SecurityReport;
+import com.htam.agent.governance.policy.security.script.checker.HtmlSecurityChecker;
+import com.htam.agent.governance.policy.security.script.checker.NodeJsSecurityChecker;
+import com.htam.agent.governance.policy.security.script.checker.PythonSecurityChecker;
+import com.htam.agent.governance.policy.security.script.checker.ShellSecurityChecker;
+import com.htam.agent.governance.policy.security.script.model.ScriptType;
+import com.htam.agent.governance.policy.security.script.model.SecurityFinding;
+import com.htam.agent.governance.policy.security.script.model.SecurityReport;
 
 import java.util.*;
 

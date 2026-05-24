@@ -1,4 +1,4 @@
-package com.htam.agent.security.script.model;
+package com.htam.agent.governance.policy.security.script.model;
 
 /**
  * 描述：单条安全检查发现，记录匹配到的一处不安全行为

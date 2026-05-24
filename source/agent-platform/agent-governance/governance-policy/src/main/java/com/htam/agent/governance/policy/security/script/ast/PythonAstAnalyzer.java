@@ -1,8 +1,8 @@
-package com.htam.agent.security.script.ast;
+package com.htam.agent.governance.policy.security.script.ast;
 
-import com.htam.agent.security.script.model.FindingCategory;
-import com.htam.agent.security.script.model.SecurityFinding;
-import com.htam.agent.security.script.model.Severity;
+import com.htam.agent.governance.policy.security.script.model.FindingCategory;
+import com.htam.agent.governance.policy.security.script.model.SecurityFinding;
+import com.htam.agent.governance.policy.security.script.model.Severity;
 
 import java.util.ArrayList;
 import java.util.List;

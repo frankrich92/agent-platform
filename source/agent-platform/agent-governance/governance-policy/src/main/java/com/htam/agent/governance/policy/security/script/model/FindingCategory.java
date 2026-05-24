@@ -1,4 +1,4 @@
-package com.htam.agent.security.script.model;
+package com.htam.agent.governance.policy.security.script.model;
 
 /**
  * 描述：不安全行为的分类枚举

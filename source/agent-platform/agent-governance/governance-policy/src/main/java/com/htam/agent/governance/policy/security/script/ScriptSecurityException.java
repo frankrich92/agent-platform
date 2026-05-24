@@ -1,4 +1,4 @@
-package com.htam.agent.security.script;
+package com.htam.agent.governance.policy.security.script;
 
 /**
  * 描述：脚本安全检查过程中抛出的异常

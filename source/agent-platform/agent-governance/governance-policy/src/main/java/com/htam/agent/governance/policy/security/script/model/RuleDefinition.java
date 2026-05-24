@@ -1,4 +1,4 @@
-package com.htam.agent.security.script.model;
+package com.htam.agent.governance.policy.security.script.model;
 
 import java.util.regex.Pattern;
 

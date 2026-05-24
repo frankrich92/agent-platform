@@ -1,6 +1,6 @@
-package com.htam.agent.security.script.ast;
+package com.htam.agent.governance.policy.security.script.ast;
 
-import com.htam.agent.security.script.model.SecurityFinding;
+import com.htam.agent.governance.policy.security.script.model.SecurityFinding;
 
 import java.util.List;
 
