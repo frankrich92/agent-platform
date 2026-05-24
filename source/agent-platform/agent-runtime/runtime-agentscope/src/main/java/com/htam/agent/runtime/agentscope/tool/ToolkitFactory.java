@@ -1,9 +1,9 @@
 package com.htam.agent.runtime.agentscope.tool;
 
-import com.htam.agent.agent.service.AgentCodeExecutionService;
-import com.htam.agent.agent.service.AgentDefinitionService;
-import com.htam.agent.agent.service.AgentSubAgentService;
-import com.htam.agent.agent.service.CodeExecutionConfigService;
+import com.htam.agent.profile.agent.service.AgentCodeExecutionService;
+import com.htam.agent.profile.agent.service.AgentDefinitionService;
+import com.htam.agent.profile.agent.service.AgentSubAgentService;
+import com.htam.agent.profile.agent.service.CodeExecutionConfigService;
 import com.htam.agent.common.entity.AgentDefinition;
 import com.htam.agent.common.entity.CodeExecutionConfig;
 import com.htam.agent.common.entity.ToolConfig;

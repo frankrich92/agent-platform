@@ -1,6 +1,6 @@
 package com.htam.agent.runtime.agentscope.agui;
 
-import com.htam.agent.agent.service.AgentDefinitionService;
+import com.htam.agent.profile.agent.service.AgentDefinitionService;
 import com.htam.agent.common.entity.AgentDefinition;
 import com.htam.agent.runtime.agentscope.agent.IAgentFactory;
 import io.agentscope.core.agui.registry.AguiAgentRegistry;

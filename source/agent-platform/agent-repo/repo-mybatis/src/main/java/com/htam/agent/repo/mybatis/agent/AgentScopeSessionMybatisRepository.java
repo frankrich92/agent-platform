@@ -1,7 +1,7 @@
 package com.htam.agent.repo.mybatis.agent;
 
 import com.baomidou.dynamic.datasource.annotation.DS;
-import com.htam.agent.agent.mapper.AgentScopeSessionMapper;
+import com.htam.agent.repo.mybatis.agent.mapper.AgentScopeSessionMapper;
 import com.htam.agent.common.consts.DataSourceConst;
 import com.htam.agent.repo.agent.AgentScopeSessionRepository;
 import lombok.RequiredArgsConstructor;

@@ -1,7 +1,7 @@
 package com.htam.agent.repo.mybatis.agent;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.htam.agent.a2a.mapper.AgentA2aMapper;
+import com.htam.agent.repo.mybatis.agent.mapper.AgentA2aMapper;
 import com.htam.agent.common.entity.AgentA2A;
 import com.htam.agent.repo.agent.AgentA2aRepository;
 import java.util.List;

@@ -1,6 +1,6 @@
 package com.htam.agent.runtime.agentscope.agent;
 
-import com.htam.agent.agent.service.AgentDefinitionService;
+import com.htam.agent.profile.agent.service.AgentDefinitionService;
 import com.htam.agent.common.entity.AgentDefinition;
 import com.htam.agent.runtime.agentscope.agui.AgentContext;
 import io.agentscope.core.ReActAgent;

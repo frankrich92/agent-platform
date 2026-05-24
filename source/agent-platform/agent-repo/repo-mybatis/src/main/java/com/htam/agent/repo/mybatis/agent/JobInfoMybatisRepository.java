@@ -1,7 +1,7 @@
 package com.htam.agent.repo.mybatis.agent;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.htam.agent.agent.mapper.IJobInfoMapper;
+import com.htam.agent.repo.mybatis.agent.mapper.IJobInfoMapper;
 import com.htam.agent.common.entity.JobInfo;
 import com.htam.agent.repo.agent.JobInfoRepository;
 import java.util.List;

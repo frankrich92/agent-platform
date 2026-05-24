@@ -1,6 +1,6 @@
 package com.htam.agent.runtime.agentscope.agui;
 
-import com.htam.agent.agent.service.AgentDefinitionService;
+import com.htam.agent.profile.agent.service.AgentDefinitionService;
 import com.htam.agent.cluster.core.ChannelSubscriber;
 import com.htam.agent.common.consts.RedisChannelTopic;
 import com.htam.agent.common.entity.AgentDefinition;

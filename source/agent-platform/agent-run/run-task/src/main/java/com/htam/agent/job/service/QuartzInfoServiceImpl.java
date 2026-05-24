@@ -1,6 +1,6 @@
 package com.htam.agent.job.service;
 
-import com.htam.agent.agent.service.AgentDefinitionService;
+import com.htam.agent.profile.agent.service.AgentDefinitionService;
 import com.htam.agent.common.entity.AgentDefinition;
 import com.htam.agent.common.entity.JobInfo;
 import com.htam.agent.common.util.CryptoUtils;

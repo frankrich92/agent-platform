@@ -1,7 +1,7 @@
 package com.htam.agent.repo.mybatis.agent;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.htam.agent.agent.mapper.AgentChatKeyMapper;
+import com.htam.agent.repo.mybatis.agent.mapper.AgentChatKeyMapper;
 import com.htam.agent.common.entity.AgentChatKey;
 import com.htam.agent.repo.agent.AgentChatKeyRepository;
 import java.util.List;

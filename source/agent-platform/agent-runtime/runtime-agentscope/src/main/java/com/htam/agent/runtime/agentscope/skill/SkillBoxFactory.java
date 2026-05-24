@@ -1,7 +1,7 @@
 package com.htam.agent.runtime.agentscope.skill;
 
-import com.htam.agent.agent.service.AgentCodeExecutionService;
-import com.htam.agent.agent.service.CodeExecutionConfigService;
+import com.htam.agent.profile.agent.service.AgentCodeExecutionService;
+import com.htam.agent.profile.agent.service.CodeExecutionConfigService;
 import com.htam.agent.common.consts.SysConst;
 import com.htam.agent.common.entity.AgentDefinition;
 import com.htam.agent.common.entity.CodeExecutionConfig;

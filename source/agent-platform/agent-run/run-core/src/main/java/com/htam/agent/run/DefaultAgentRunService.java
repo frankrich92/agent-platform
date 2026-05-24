@@ -1,6 +1,6 @@
 package com.htam.agent.run;
 
-import com.htam.agent.agent.service.ChatSessionService;
+import com.htam.agent.profile.agent.service.ChatSessionService;
 import com.htam.agent.capability.CapabilityPlan;
 import com.htam.agent.capability.CapabilityPlanService;
 import com.htam.agent.common.dto.ChatMessageAppendDTO;
