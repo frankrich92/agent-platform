@@ -1,6 +1,6 @@
 package com.htam.agent.websocket.cluster;
 
-import com.htam.agent.cluster.core.ChannelSubscriber;
+import com.htam.agent.run.event.cluster.core.ChannelSubscriber;
 import com.htam.agent.common.consts.RedisChannelTopic;
 import com.htam.agent.common.util.JsonUtils;
 import com.htam.agent.websocket.config.AgentWebSocketSessionManager;

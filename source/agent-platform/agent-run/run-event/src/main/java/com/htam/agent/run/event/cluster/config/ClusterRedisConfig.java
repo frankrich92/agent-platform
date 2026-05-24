@@ -1,6 +1,6 @@
-package com.htam.agent.cluster.config;
+package com.htam.agent.run.event.cluster.config;
 
-import com.htam.agent.cluster.core.ChannelSubscriber;
+import com.htam.agent.run.event.cluster.core.ChannelSubscriber;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;

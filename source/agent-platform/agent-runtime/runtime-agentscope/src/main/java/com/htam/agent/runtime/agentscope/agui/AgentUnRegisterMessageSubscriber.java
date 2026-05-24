@@ -1,6 +1,6 @@
 package com.htam.agent.runtime.agentscope.agui;
 
-import com.htam.agent.cluster.core.ChannelSubscriber;
+import com.htam.agent.run.event.cluster.core.ChannelSubscriber;
 import com.htam.agent.common.consts.RedisChannelTopic;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.listener.ChannelTopic;

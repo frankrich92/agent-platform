@@ -2,7 +2,7 @@ package com.htam.agent.capability.knowledge.service.impl;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.htam.agent.cluster.core.MessagePublisher;
+import com.htam.agent.run.event.cluster.core.MessagePublisher;
 import com.htam.agent.common.consts.RedisChannelTopic;
 import com.htam.agent.common.dto.KnowledgeBaseConfigDTO;
 import com.htam.agent.common.entity.KnowledgeBaseConfig;

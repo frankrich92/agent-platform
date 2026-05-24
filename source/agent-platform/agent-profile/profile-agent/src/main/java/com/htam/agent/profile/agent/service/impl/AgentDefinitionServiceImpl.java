@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.htam.agent.profile.a2a.service.AgentA2aService;
 import com.htam.agent.profile.agent.service.AgentDefinitionService;
 import com.htam.agent.profile.agent.service.AgentSubAgentService;
-import com.htam.agent.cluster.core.MessagePublisher;
+import com.htam.agent.run.event.cluster.core.MessagePublisher;
 import com.htam.agent.common.consts.RedisChannelTopic;
 import com.htam.agent.common.dto.AgentDefinitionDTO;
 import com.htam.agent.common.entity.*;

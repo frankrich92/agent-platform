@@ -1,6 +1,6 @@
 package com.htam.agent.capability.mcp.service.impl;
 
-import com.htam.agent.cluster.core.MessagePublisher;
+import com.htam.agent.run.event.cluster.core.MessagePublisher;
 import com.htam.agent.common.consts.RedisChannelTopic;
 import com.htam.agent.common.entity.McpServer;
 import com.htam.agent.common.enums.HealthStatus;

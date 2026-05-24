@@ -1,7 +1,7 @@
 package com.htam.agent.profile.agent.controller;
 
 import com.htam.agent.profile.agent.service.AgentDefinitionService;
-import com.htam.agent.cluster.core.MessagePublisher;
+import com.htam.agent.run.event.cluster.core.MessagePublisher;
 import com.htam.agent.common.config.auth.ChatKeyAccess;
 import com.htam.agent.common.config.auth.RoleNeed;
 import com.htam.agent.common.config.auth.SkAccess;

@@ -1,6 +1,6 @@
 package com.htam.agent.common.config.auth;
 
-import com.htam.agent.cluster.core.MessagePublisher;
+import com.htam.agent.run.event.cluster.core.MessagePublisher;
 import com.htam.agent.common.consts.RedisChannelTopic;
 import com.htam.agent.common.consts.SysConst;
 import com.htam.agent.common.message.SkSyncMessage;

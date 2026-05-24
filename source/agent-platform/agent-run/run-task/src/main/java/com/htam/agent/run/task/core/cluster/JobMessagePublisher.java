@@ -1,6 +1,6 @@
 package com.htam.agent.run.task.core.cluster;
 
-import com.htam.agent.cluster.core.MessagePublisher;
+import com.htam.agent.run.event.cluster.core.MessagePublisher;
 import com.htam.agent.common.consts.RedisChannelTopic;
 import com.htam.agent.common.util.JsonUtils;
 import com.htam.agent.run.task.core.cluster.message.JobControlMessage;
