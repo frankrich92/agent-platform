@@ -11,7 +11,9 @@
   <artifactId>agent-worker</artifactId>
   <packaging>pom</packaging>
   <modules>
+    <module>worker-spi</module>
     <module>worker-file</module>
     <module>worker-sandbox</module>
+    <module>worker-coding-cli</module>
   </modules>
 </project>

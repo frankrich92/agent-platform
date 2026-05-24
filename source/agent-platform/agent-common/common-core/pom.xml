@@ -24,26 +24,6 @@
       <artifactId>governance-policy</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.agentscope</groupId>
-      <artifactId>agentscope-core</artifactId>
-      <version>${agentscope.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.agentscope</groupId>
-      <artifactId>agentscope-agui-spring-boot-starter</artifactId>
-      <version>${agentscope.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.agentscope</groupId>
-      <artifactId>agentscope-extensions-a2a-client</artifactId>
-      <version>${agentscope.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.agentscope</groupId>
-      <artifactId>agentscope-extensions-studio</artifactId>
-      <version>${agentscope.version}</version>
-    </dependency>
-    <dependency>
       <groupId>com.anthropic</groupId>
       <artifactId>anthropic-java</artifactId>
     </dependency>

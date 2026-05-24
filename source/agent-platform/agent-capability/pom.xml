@@ -12,6 +12,9 @@
   <packaging>pom</packaging>
   <modules>
     <module>capability-core</module>
+    <module>capability-tool</module>
+    <module>capability-mcp</module>
+    <module>capability-skill</module>
     <module>capability-provider</module>
     <module>capability-provider-admin</module>
     <module>capability-admin</module>

@@ -12,6 +12,9 @@
   <packaging>pom</packaging>
   <modules>
     <module>governance-policy</module>
+    <module>governance-sensitive</module>
+    <module>governance-approval</module>
+    <module>governance-eval</module>
     <module>governance-observability</module>
     <module>governance-system</module>
     <module>governance-iam</module>

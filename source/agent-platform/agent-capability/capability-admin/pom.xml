@@ -27,5 +27,15 @@
       <groupId>com.htam.agent</groupId>
       <artifactId>repo-mybatis</artifactId>
     </dependency>
+    <dependency>
+      <groupId>io.agentscope</groupId>
+      <artifactId>agentscope-core</artifactId>
+      <version>${agentscope.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.agentscope</groupId>
+      <artifactId>agentscope</artifactId>
+      <version>${agentscope.version}</version>
+    </dependency>
   </dependencies>
 </project>

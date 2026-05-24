@@ -12,6 +12,8 @@
   <packaging>pom</packaging>
   <modules>
     <module>profile-agent</module>
+    <module>profile-binding</module>
+    <module>profile-version</module>
     <module>profile-admin</module>
   </modules>
 </project>

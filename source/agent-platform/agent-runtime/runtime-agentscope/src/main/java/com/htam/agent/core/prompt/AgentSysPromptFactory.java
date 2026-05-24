@@ -3,6 +3,7 @@ package com.htam.agent.core.prompt;
 import com.htam.agent.common.entity.AgentDefinition;
 import com.htam.agent.common.entity.SensitiveWordConfig;
 import com.htam.agent.core.workspace.hook.ToolConstants;
+import com.htam.agent.governance.sensitive.SensitiveWordHelper;
 import com.htam.agent.sensitive.service.SensitiveWordConfigService;
 import org.springframework.stereotype.Component;
 

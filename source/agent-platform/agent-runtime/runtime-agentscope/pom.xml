@@ -25,6 +25,10 @@
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
+      <artifactId>governance-sensitive</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
       <artifactId>capability-provider</artifactId>
     </dependency>
     <dependency>
@@ -70,6 +74,31 @@
     <dependency>
       <groupId>com.alibaba.nacos</groupId>
       <artifactId>nacos-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.agentscope</groupId>
+      <artifactId>agentscope-core</artifactId>
+      <version>${agentscope.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.agentscope</groupId>
+      <artifactId>agentscope</artifactId>
+      <version>${agentscope.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.agentscope</groupId>
+      <artifactId>agentscope-agui-spring-boot-starter</artifactId>
+      <version>${agentscope.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.agentscope</groupId>
+      <artifactId>agentscope-extensions-a2a-client</artifactId>
+      <version>${agentscope.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.agentscope</groupId>
+      <artifactId>agentscope-extensions-studio</artifactId>
+      <version>${agentscope.version}</version>
     </dependency>
   </dependencies>
 </project>

@@ -220,12 +220,47 @@
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
+        <artifactId>capability-tool</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
+        <artifactId>capability-mcp</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
+        <artifactId>capability-skill</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
         <artifactId>capability-provider</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
+        <artifactId>worker-spi</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
         <artifactId>worker-file</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
+        <artifactId>governance-sensitive</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
+        <artifactId>governance-approval</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
+        <artifactId>governance-eval</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -270,12 +305,27 @@
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
+        <artifactId>worker-coding-cli</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
         <artifactId>runtime-hermes</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
         <artifactId>profile-agent</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
+        <artifactId>profile-binding</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
+        <artifactId>profile-version</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
