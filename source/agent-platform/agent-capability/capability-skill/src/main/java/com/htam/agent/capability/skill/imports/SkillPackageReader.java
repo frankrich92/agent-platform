@@ -1,6 +1,7 @@
 package com.htam.agent.capability.skill.imports;
 
 import java.io.IOException;
+import java.nio.charset.MalformedInputException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -91,7 +92,8 @@ public final class SkillPackageReader {
             files.filter(Files::isRegularFile)
                     .forEach(file -> {
                         Path relative = skillDir.relativize(file);
-                        resources.put(relative.toString().replace('\\', '/'), readString(file));
+                        readResourceString(file)
+                                .ifPresent(content -> resources.put(relative.toString().replace('\\', '/'), content));
                     });
         } catch (IOException e) {
             throw new IllegalStateException("读取技能资源失败: " + resourceDir, e);
@@ -114,6 +116,16 @@ public final class SkillPackageReader {
     private static String readString(Path path) {
         try {
             return Files.readString(path, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new IllegalStateException("读取文件失败: " + path, e);
+        }
+    }
+
+    private static Optional<String> readResourceString(Path path) {
+        try {
+            return Optional.of(Files.readString(path, StandardCharsets.UTF_8));
+        } catch (MalformedInputException e) {
+            return Optional.empty();
         } catch (IOException e) {
             throw new IllegalStateException("读取文件失败: " + path, e);
         }
