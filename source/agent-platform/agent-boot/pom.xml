@@ -73,7 +73,19 @@
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
+      <artifactId>governance-risk</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>governance-observability</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
       <artifactId>runtime-memory</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>run-core</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>

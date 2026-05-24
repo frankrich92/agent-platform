@@ -13,6 +13,10 @@
   <dependencies>
     <dependency>
       <groupId>com.htam.agent</groupId>
+      <artifactId>runtime-spi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
       <artifactId>agent-domain</artifactId>
     </dependency>
     <dependency>

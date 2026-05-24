@@ -20,14 +20,17 @@ public class DefaultAgentRunService implements AgentRunService {
     private final AgentRuntimeRunner runtimeRunner;
     private final CapabilityPlanService capabilityPlanService;
     private final ChatSessionService chatSessionService;
+    private final AgentRunLedgerRecorder ledgerRecorder;
 
     public DefaultAgentRunService(
             AgentRuntimeRunner runtimeRunner,
             CapabilityPlanService capabilityPlanService,
-            ChatSessionService chatSessionService) {
+            ChatSessionService chatSessionService,
+            AgentRunLedgerRecorder ledgerRecorder) {
         this.runtimeRunner = runtimeRunner;
         this.capabilityPlanService = capabilityPlanService;
         this.chatSessionService = chatSessionService;
+        this.ledgerRecorder = ledgerRecorder;
     }
 
     @Override
@@ -42,18 +45,36 @@ public class DefaultAgentRunService implements AgentRunService {
             userMessage = appendMessage(command.sessionId(), "user", command.input());
         }
 
-        AgentRunResult runtimeResult = runtimeRunner.run(new AgentRunRequest(
-                command.agentId(),
-                command.input(),
-                command.sessionId() == null ? null : String.valueOf(command.sessionId()),
+        ledgerRecorder.runStarted(
                 runId,
-                capabilityPlan.planId(),
-                runtimeMetadata(runId, capabilityPlan)));
+                command,
+                capabilityPlan,
+                userMessage == null ? null : userMessage.getId());
+
+        AgentRunResult runtimeResult;
+        try {
+            runtimeResult = runtimeRunner.run(new AgentRunRequest(
+                    command.agentId(),
+                    command.input(),
+                    command.sessionId() == null ? null : String.valueOf(command.sessionId()),
+                    runId,
+                    capabilityPlan.planId(),
+                    runtimeMetadata(runId, capabilityPlan)));
+        } catch (RuntimeException e) {
+            ledgerRecorder.runFailed(runId, command.sessionId(), command.agentId(), e);
+            throw e;
+        }
 
         ChatMessageVO assistantMessage = null;
         if (command.recordMessages() && command.sessionId() != null && runtimeResult.message() != null) {
             assistantMessage = appendMessage(command.sessionId(), "assistant", runtimeResult.message());
         }
+        ledgerRecorder.runFinished(
+                runId,
+                command.sessionId(),
+                runtimeResult,
+                userMessage == null ? null : userMessage.getId(),
+                assistantMessage == null ? null : assistantMessage.getId());
 
         return new AgentRunSummary(
                 runId,

@@ -1,10 +1,10 @@
 package com.htam.agent.run.task.scheduler;
 
 import com.htam.agent.common.wrapper.AgentJobWrapper;
+import com.htam.agent.run.AgentRunCommand;
+import com.htam.agent.run.AgentRunService;
 import com.htam.agent.run.task.consts.JobConst;
 import com.htam.agent.run.task.core.job.QuartzJob;
-import com.htam.agent.runtime.AgentRunRequest;
-import com.htam.agent.runtime.AgentRuntimeRunner;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.JobExecutionContext;
 
@@ -28,8 +28,8 @@ public class AgentScheduler extends QuartzJob {
         }
 
         try {
-            AgentRuntimeRunner runtimeRunner = getBean(AgentRuntimeRunner.class);
-            runtimeRunner.run(AgentRunRequest.of(Long.valueOf(agentId.trim()), wrapper.getInput()));
+            AgentRunService agentRunService = getBean(AgentRunService.class);
+            agentRunService.run(AgentRunCommand.backgroundRun(Long.valueOf(agentId.trim()), wrapper.getInput()));
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return false;

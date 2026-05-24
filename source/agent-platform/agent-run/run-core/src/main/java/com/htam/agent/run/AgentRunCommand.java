@@ -17,4 +17,8 @@ public record AgentRunCommand(
     public static AgentRunCommand sessionRun(Long agentId, Long sessionId, String input) {
         return new AgentRunCommand(agentId, sessionId, input, null, true);
     }
+
+    public static AgentRunCommand backgroundRun(Long agentId, String input) {
+        return new AgentRunCommand(agentId, null, input, null, false);
+    }
 }
