@@ -85,7 +85,7 @@ public class ToolkitFactory {
                             toolkit.registerTool(new DynamicAgentTool(toolConfig));
                         }
 
-                        if (toolConfig.getNeedConfirm()) {
+                        if (needConfirm(toolConfig)) {
                             IConfirmationHook.setNeedConfirmTool(toolConfig.getToolId());
                         } else {
                             IConfirmationHook.removeNeedConfirmTool(toolConfig.getToolId());
@@ -140,7 +140,7 @@ public class ToolkitFactory {
                             toolkit.registerTool(new DynamicAgentTool(toolConfig));
                         }
 
-                        if (toolConfig.getNeedConfirm() && isMemoryActive) {
+                        if (needConfirm(toolConfig) && isMemoryActive) {
                             IConfirmationHook.setNeedConfirmTool(toolConfig.getToolId());
                         } else {
                             IConfirmationHook.removeNeedConfirmTool(toolConfig.getToolId());
@@ -148,6 +148,10 @@ public class ToolkitFactory {
                     });
         }
         return toolkit;
+    }
+
+    static boolean needConfirm(ToolConfig toolConfig) {
+        return toolConfig != null && Boolean.TRUE.equals(toolConfig.getNeedConfirm());
     }
 
     private void registerSubAgents(Toolkit toolkit, List<Long> subAgentIds) {

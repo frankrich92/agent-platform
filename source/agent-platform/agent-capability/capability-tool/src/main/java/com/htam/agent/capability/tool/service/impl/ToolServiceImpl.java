@@ -111,6 +111,7 @@ public class ToolServiceImpl implements ToolService {
                 toolConfig.setDescription(toolInfo.getDescription());
                 toolConfig.setClassPath(toolInfo.getClassPath());
                 toolConfig.setInputSchema(JsonUtils.toJsonNode(toolInfo.getParams()));
+                toolConfig.setNeedConfirm(false);
                 toolConfig.setEnabled(true);
                 toolConfigRepository.save(toolConfig);
             } else {
@@ -120,6 +121,9 @@ public class ToolServiceImpl implements ToolService {
                         list.get(i).setToolType(ToolType.BUILTIN);
                         list.get(i).setClassPath(toolInfo.getClassPath());
                         list.get(i).setInputSchema(JsonUtils.toJsonNode(toolInfo.getParams()));
+                        if (list.get(i).getNeedConfirm() == null) {
+                            list.get(i).setNeedConfirm(false);
+                        }
                         toolConfigRepository.updateById(list.get(i));
                     } else {
                         toolConfigRepository.deleteById(list.get(i).getId());
