@@ -9,7 +9,7 @@ import com.htam.agent.common.util.JsonUtils;
 import com.htam.agent.capability.knowledge.KnowledgeWrapper;
 import com.htam.agent.core.agui.AgentContext;
 import com.htam.agent.core.hook.HooksFactory;
-import com.htam.agent.core.knowledge.KnowledgeFactory;
+import com.htam.agent.capability.knowledge.agentscope.KnowledgeFactory;
 import com.htam.agent.core.model.ChatModelFactory;
 import com.htam.agent.core.prompt.AgentSysPromptFactory;
 import com.htam.agent.core.skill.SkillBoxFactory;
