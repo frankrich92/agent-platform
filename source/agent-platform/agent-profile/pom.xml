@@ -11,9 +11,12 @@
   <artifactId>agent-profile</artifactId>
   <packaging>pom</packaging>
   <modules>
+    <module>profile-core</module>
     <module>profile-agent</module>
     <module>profile-binding</module>
     <module>profile-version</module>
+    <module>profile-prompt</module>
+    <module>profile-model-policy</module>
     <module>profile-admin</module>
   </modules>
 </project>

@@ -10,4 +10,22 @@
   </parent>
   <artifactId>governance-sensitive</artifactId>
   <packaging>jar</packaging>
+  <dependencies>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>common-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>agent-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>repo-spi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>run-event</artifactId>
+    </dependency>
+  </dependencies>
 </project>

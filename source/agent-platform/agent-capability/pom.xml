@@ -16,9 +16,9 @@
     <module>capability-mcp</module>
     <module>capability-skill</module>
     <module>capability-provider</module>
-    <module>capability-provider-admin</module>
-    <module>capability-admin</module>
     <module>capability-knowledge</module>
-    <module>capability-knowledge-admin</module>
+    <module>capability-rag</module>
+    <module>capability-connector</module>
+    <module>capability-registry</module>
   </modules>
 </project>

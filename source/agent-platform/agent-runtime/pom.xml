@@ -12,8 +12,13 @@
   <packaging>pom</packaging>
   <modules>
     <module>runtime-spi</module>
+    <module>runtime-core</module>
+    <module>runtime-context</module>
     <module>runtime-agentscope</module>
     <module>runtime-memory</module>
+    <module>runtime-planning</module>
     <module>runtime-hermes</module>
+    <module>runtime-langgraph</module>
+    <module>runtime-testkit</module>
   </modules>
 </project>

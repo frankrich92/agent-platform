@@ -11,12 +11,13 @@
   <artifactId>agent-governance</artifactId>
   <packaging>pom</packaging>
   <modules>
+    <module>governance-auth</module>
     <module>governance-policy</module>
     <module>governance-sensitive</module>
     <module>governance-approval</module>
     <module>governance-eval</module>
     <module>governance-observability</module>
-    <module>governance-system</module>
+    <module>governance-risk</module>
     <module>governance-iam</module>
     <module>governance-audit</module>
   </modules>

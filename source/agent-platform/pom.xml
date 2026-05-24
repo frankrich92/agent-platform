@@ -54,6 +54,7 @@
     <jgit.version>7.3.0.202506031305-r</jgit.version>
     <nacos-client.version>3.1.1</nacos-client.version>
     <flyway.version>11.20.3</flyway.version>
+    <mcp-sdk.version>0.17.1</mcp-sdk.version>
   </properties>
 
   <dependencyManagement>
@@ -189,6 +190,11 @@
         <version>${nacos-client.version}</version>
       </dependency>
       <dependency>
+        <groupId>io.modelcontextprotocol.sdk</groupId>
+        <artifactId>mcp-core</artifactId>
+        <version>${mcp-sdk.version}</version>
+      </dependency>
+      <dependency>
         <groupId>com.htam.agent</groupId>
         <artifactId>agent-domain</artifactId>
         <version>${project.version}</version>
@@ -201,6 +207,11 @@
       <dependency>
         <groupId>com.htam.agent</groupId>
         <artifactId>common-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
+        <artifactId>governance-auth</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -330,6 +341,11 @@
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
+        <artifactId>profile-prompt</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
         <artifactId>run-session</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -355,6 +371,11 @@
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
+        <artifactId>capability-rag</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
         <artifactId>run-task</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -371,31 +392,6 @@
       <dependency>
         <groupId>com.htam.agent</groupId>
         <artifactId>profile-admin</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.htam.agent</groupId>
-        <artifactId>capability-admin</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.htam.agent</groupId>
-        <artifactId>capability-provider-admin</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.htam.agent</groupId>
-        <artifactId>capability-knowledge-admin</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.htam.agent</groupId>
-        <artifactId>run-task-admin</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.htam.agent</groupId>
-        <artifactId>governance-system</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

@@ -41,11 +41,11 @@
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>governance-system</artifactId>
+      <artifactId>governance-auth</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>capability-provider-admin</artifactId>
+      <artifactId>capability-provider</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
@@ -53,7 +53,7 @@
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>capability-admin</artifactId>
+      <artifactId>capability-skill</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>

@@ -12,6 +12,11 @@
   <packaging>pom</packaging>
   <modules>
     <module>workflow-core</module>
+    <module>workflow-definition</module>
     <module>workflow-engine</module>
+    <module>workflow-node</module>
+    <module>workflow-human-task</module>
+    <module>workflow-event</module>
+    <module>workflow-runtime</module>
   </modules>
 </project>

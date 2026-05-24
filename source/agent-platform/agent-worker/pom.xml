@@ -12,8 +12,15 @@
   <packaging>pom</packaging>
   <modules>
     <module>worker-spi</module>
+    <module>worker-core</module>
     <module>worker-file</module>
     <module>worker-sandbox</module>
+    <module>worker-workspace</module>
+    <module>worker-shell</module>
+    <module>worker-build</module>
     <module>worker-coding-cli</module>
+    <module>worker-codex</module>
+    <module>worker-qwen-code</module>
+    <module>worker-opencode</module>
   </modules>
 </project>

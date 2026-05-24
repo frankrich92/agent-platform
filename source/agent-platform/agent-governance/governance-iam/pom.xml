@@ -29,7 +29,7 @@
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>governance-system</artifactId>
+      <artifactId>governance-auth</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>

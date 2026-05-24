@@ -14,5 +14,8 @@
     <module>adapter-rest</module>
     <module>adapter-websocket</module>
     <module>adapter-agui</module>
+    <module>adapter-openapi</module>
+    <module>adapter-admin</module>
+    <module>adapter-internal</module>
   </modules>
 </project>

@@ -41,27 +41,35 @@
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>capability-admin</artifactId>
+      <artifactId>profile-prompt</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>capability-provider-admin</artifactId>
+      <artifactId>capability-tool</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>capability-knowledge-admin</artifactId>
+      <artifactId>capability-mcp</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>run-task-admin</artifactId>
+      <artifactId>capability-skill</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>governance-system</artifactId>
+      <artifactId>capability-provider</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>governance-policy</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
       <artifactId>governance-audit</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>governance-sensitive</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
@@ -74,6 +82,10 @@
     <dependency>
       <groupId>com.htam.agent</groupId>
       <artifactId>capability-knowledge</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>capability-rag</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>

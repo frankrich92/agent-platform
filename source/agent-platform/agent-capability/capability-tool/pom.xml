@@ -15,5 +15,25 @@
       <groupId>com.htam.agent</groupId>
       <artifactId>capability-core</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>capability-skill</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>common-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>agent-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>repo-spi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>run-event</artifactId>
+    </dependency>
   </dependencies>
 </project>

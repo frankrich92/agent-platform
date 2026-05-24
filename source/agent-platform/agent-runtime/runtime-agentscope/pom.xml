@@ -61,15 +61,27 @@
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>capability-admin</artifactId>
+      <artifactId>capability-rag</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>capability-provider-admin</artifactId>
+      <artifactId>capability-tool</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>capability-mcp</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>capability-skill</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
       <artifactId>profile-admin</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>profile-prompt</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
