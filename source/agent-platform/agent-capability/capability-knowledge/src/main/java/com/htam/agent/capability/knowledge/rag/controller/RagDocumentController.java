@@ -13,7 +13,7 @@ import com.htam.agent.capability.knowledge.service.KnowledgeBaseConfigService;
 import com.htam.agent.capability.knowledge.rag.service.LocalRagService;
 import com.htam.agent.repo.knowledge.RagDocumentChunkRepository;
 import com.htam.agent.repo.knowledge.RagDocumentRepository;
-import com.htam.agent.resource.service.AttachService;
+import com.htam.agent.worker.file.service.AttachService;
 import com.htam.agent.common.entity.Attach;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import lombok.RequiredArgsConstructor;

@@ -19,7 +19,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.htam.agent.common.util.BeanUtils;
 import com.htam.agent.common.wrapper.FileBase64Wrapper;
 import com.htam.agent.runtime.agentscope.agui.AgentContext;
-import com.htam.agent.resource.service.AttachService;
+import com.htam.agent.worker.file.service.AttachService;
 import io.agentscope.core.agui.model.AguiFunctionCall;
 import io.agentscope.core.agui.model.AguiMessage;
 import io.agentscope.core.agui.model.AguiToolCall;

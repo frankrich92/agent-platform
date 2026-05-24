@@ -18,7 +18,7 @@ import com.htam.agent.capability.knowledge.service.KnowledgeBaseConfigService;
 import com.htam.agent.capability.knowledge.rag.service.TextChunker.ChunkResult;
 import com.htam.agent.repo.knowledge.RagDocumentChunkRepository;
 import com.htam.agent.repo.knowledge.RagDocumentRepository;
-import com.htam.agent.resource.service.AttachService;
+import com.htam.agent.worker.file.service.AttachService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
