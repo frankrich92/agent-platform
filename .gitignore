@@ -4,6 +4,7 @@ build/
 dist/
 ui/dist-zip/
 logs/
+.logs/
 __pycache__/
 *.py[cod]
 
