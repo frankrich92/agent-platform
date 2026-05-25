@@ -5,9 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import org.springframework.stereotype.Component;
 
-@Component
 public class InMemoryToolCallLedger implements ToolCallLedger {
 
     private final ConcurrentMap<String, List<ToolCall>> toolCallsByRunId = new ConcurrentHashMap<>();

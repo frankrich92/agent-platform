@@ -6,9 +6,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import org.springframework.stereotype.Component;
 
-@Component
 public class InMemoryRunStepLedger implements RunStepLedger {
 
     private final ConcurrentMap<String, List<RunStep>> stepsByRunId = new ConcurrentHashMap<>();

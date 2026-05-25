@@ -52,6 +52,9 @@ public class ToolExecutionPlanner {
         if (item == null || !item.enabled()) {
             return CapabilityRiskPolicy.DENY;
         }
+        if (item.riskPolicy() == CapabilityRiskPolicy.DENY) {
+            return CapabilityRiskPolicy.DENY;
+        }
         if (item.riskLevel() == CapabilityRiskLevel.HIGH) {
             return options.highRiskFallbackPolicy();
         }

@@ -3,6 +3,8 @@ spring:
     active: dev
   application:
     name: agent-platform
+  aop:
+    proxy-target-class: true
   servlet:
     multipart:
       max-file-size: 30MB # 单个文件最大 30MB

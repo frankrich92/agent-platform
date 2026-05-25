@@ -90,7 +90,7 @@ class CapabilityModule(Module):
         self.require_auth()
         tool_id = f"{self.state.prefix}_echo_tool"
         code = (
-            "import com.htam.agent.core.tool.dynamices.IDynamicAgentTool\n"
+            "import com.htam.agent.runtime.agentscope.tool.dynamices.IDynamicAgentTool\n"
             "class E2EEchoTool implements IDynamicAgentTool {\n"
             "  Object execute(Object... args) {\n"
             "    return 'e2e:' + (args == null || args.length == 0 ? '' : args[0].toString())\n"

@@ -19,6 +19,18 @@ agentscope:
       username: apboa
       password: apboa
 
+agent:
+  run:
+    ledger:
+      structured-store: mybatis
+      event-store: jdbc
+      async-enabled: true
+      queue-capacity: 10000
+      shutdown-timeout-millis: 5000
+      fail-fast-on-overflow: false
+      max-retries: 3
+      retry-backoff-millis: 100
+
 spring:
   data:
     redis:

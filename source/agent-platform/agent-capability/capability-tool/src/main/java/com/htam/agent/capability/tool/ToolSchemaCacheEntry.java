@@ -22,4 +22,15 @@ public record ToolSchemaCacheEntry(
         Instant current = now == null ? Instant.now() : now;
         return cachedAt.plus(ttl).isBefore(current);
     }
+
+    public boolean matchesSchemaHash(String latestSchemaHash) {
+        if (latestSchemaHash == null || latestSchemaHash.isBlank()) {
+            return true;
+        }
+        return latestSchemaHash.equals(schemaHash);
+    }
+
+    public boolean refreshRequired(String latestSchemaHash, Instant now) {
+        return expired(now) || !matchesSchemaHash(latestSchemaHash);
+    }
 }

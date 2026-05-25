@@ -14,7 +14,7 @@ import java.util.concurrent.ThreadPoolExecutor;
  * @author huxuehao
  **/
 @Configuration
-@EnableAsync
+@EnableAsync(proxyTargetClass = true)
 public class AsyncConfig {
 
     /**

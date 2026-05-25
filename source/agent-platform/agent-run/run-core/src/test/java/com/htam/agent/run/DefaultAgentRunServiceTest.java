@@ -86,9 +86,59 @@ class DefaultAgentRunServiceTest {
         assertEquals("search", toolCallLedger.listByRunId(summary.runId()).getFirst().toolName());
     }
 
+    @Test
+    void runAddsFailureRecoverySignalForFailedRuntimeResult() {
+        InMemoryRuntimeEventLedger eventLedger = new InMemoryRuntimeEventLedger();
+        AgentRunLedgerRecorder recorder = new AgentRunLedgerRecorder(
+                List.of(eventLedger),
+                List.of(),
+                List.of());
+        CapabilityPlanService capabilityPlanService = agentId -> new CapabilityPlan(
+                "plan-" + agentId,
+                agentId,
+                "model-policy",
+                CapabilityRiskPolicy.ASK,
+                List.of());
+        AgentRuntimeRunner runtimeRunner = request -> new AgentRunResult(
+                request.agentId(),
+                request.runId(),
+                AgentRunStatus.FAILED,
+                "tool approval required",
+                List.of(),
+                List.of(),
+                List.of(new ToolCall(
+                        "tool-call-approval",
+                        request.runId(),
+                        "deploy",
+                        ToolCallPolicy.ASK,
+                        false,
+                        Duration.ofMillis(1),
+                        0,
+                        "{}",
+                        null,
+                        "APPROVAL_REQUIRED",
+                        "approval required",
+                        Map.of())));
+
+        DefaultAgentRunService service = new DefaultAgentRunService(
+                runtimeRunner,
+                capabilityPlanService,
+                null,
+                recorder);
+
+        AgentRunSummary summary = service.run(AgentRunCommand.backgroundRun(9L, "deploy"));
+
+        assertEquals(AgentRunStatus.FAILED, summary.runtimeResult().status());
+        assertTrue(eventLedger.listByRunId(summary.runId()).stream()
+                .anyMatch(event -> event.eventType() == RuntimeEventType.FAILURE_RECOVERY_PLANNED
+                        && "REQUEST_APPROVAL".equals(event.payload().get("action"))));
+    }
+
     private static AgentRunResult runtimeResult(AgentRunRequest request) {
         assertEquals("plan-7", request.capabilityPlanId());
         assertEquals("plan-7", request.metadata().get("capabilityPlanId"));
+        assertEquals("runtime-context-" + request.runId(), request.metadata().get("runtimeContextPlanId"));
+        assertTrue((Integer) request.metadata().get("runtimeContextSegmentCount") >= 2);
         RuntimeEvent toolEvent = new RuntimeEvent(
                 "event-1",
                 RuntimeEventType.TOOL_CALL_COMPLETED,

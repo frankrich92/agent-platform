@@ -6,7 +6,11 @@ import com.htam.agent.run.step.RunStepLedger;
 import com.htam.agent.run.toolcall.ToolCallLedger;
 import java.util.Comparator;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.stereotype.Component;
 
+@Component
 public class LedgerRunHistoryReader implements RunHistoryReader {
 
     private final RuntimeEventLedger eventLedger;
@@ -23,6 +27,15 @@ public class LedgerRunHistoryReader implements RunHistoryReader {
         this.stepLedger = stepLedger;
         this.toolCallLedger = toolCallLedger;
         this.messageLedger = messageLedger;
+    }
+
+    @Autowired
+    public LedgerRunHistoryReader(
+            RuntimeEventLedger eventLedger,
+            RunStepLedger stepLedger,
+            ToolCallLedger toolCallLedger,
+            ObjectProvider<RunMessageLedger> messageLedger) {
+        this(eventLedger, stepLedger, toolCallLedger, messageLedger == null ? null : messageLedger.getIfAvailable());
     }
 
     @Override

@@ -17,6 +17,10 @@
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
+      <artifactId>repo-spi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
       <artifactId>domain-common</artifactId>
     </dependency>
     <dependency>
@@ -66,6 +70,14 @@
     <dependency>
       <groupId>com.htam.agent</groupId>
       <artifactId>worker-file</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-jdbc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
     </dependency>
   </dependencies>
 </project>

@@ -20,6 +20,7 @@ import com.htam.agent.repo.agent.CodeExecutionConfigRepository;
 import com.htam.agent.repo.capability.AgentSkillPackageRepository;
 import com.htam.agent.repo.capability.SkillPackageRepository;
 import com.htam.agent.repo.capability.SkillToolRepository;
+import com.htam.agent.common.skill.SkillMetadata;
 import com.htam.agent.runtime.core.RuntimeInteractionRecorder;
 import io.agentscope.core.skill.AgentSkill;
 import io.agentscope.core.skill.SkillBox;
@@ -54,7 +55,9 @@ public class SkillBoxFactory {
      * @return SkillBox
      */
     public SkillBox getSkillBox(AgentDefinition agentDefinition) {
-        SkillBox skillBox = new SkillBox(new Toolkit());
+        Toolkit skillToolkit = new Toolkit();
+        skillToolkit.registerAgentTool(new LoadSkillContentTool(skillPackageRepository));
+        SkillBox skillBox = new SkillBox(skillToolkit);
 
         // 注册技能包
         List<Long> skillPackageIds = agentSkillPackageRepository.listByAgentDefinitionId(agentDefinition.getId())
@@ -94,25 +97,50 @@ public class SkillBoxFactory {
         AgentSkill.Builder skillBuilder = AgentSkill.builder()
                 .name(skillPackage.getName())
                 .description(skillPackage.getDescription())
-                .skillContent(skillPackage.getSkillContent());
-        RuntimeInteractionRecorder.recordSkillLoad(skillPackage.getName(), "skill:" + skillPackage.getId());
-
-        // 添加资源引用
-        addResources(skillBuilder, skillPackage.getReferences(), SkillReferencesKey.prefix,
-                SkillReferencesKey.name, SkillReferencesKey.content);
-
-        // 添加示例
-        addResources(skillBuilder, skillPackage.getExamples(), SkillExampleKey.prefix,
-                SkillExampleKey.name, SkillExampleKey.content);
-
-        // 添加脚本
-        addResources(skillBuilder, skillPackage.getScripts(), SkillScriptKey.prefix,
-                SkillScriptKey.name, SkillScriptKey.content);
+                .skillContent(progressiveSkillIndex(skillPackage));
+        RuntimeInteractionRecorder.recordSkillLoad(skillPackage.getName(), "skill-index:" + skillPackage.getId());
 
         // 获取关联的工具
         Toolkit toolkit = toolkitFactory.getToolkit(getSkillToolIds(skillPackage.getId()));
+        toolkit.registerAgentTool(new LoadSkillContentTool(skillPackageRepository));
 
         skillBox.registration().skill(skillBuilder.build()).tool(toolkit).apply();
+    }
+
+    private String progressiveSkillIndex(SkillPackage skillPackage) {
+        SkillMetadata metadata = SkillMetadata.from(skillPackage);
+        StringBuilder index = new StringBuilder();
+        index.append("Skill index only. Do not assume full instructions are loaded.\n");
+        index.append("skill_id: ").append(skillPackage.getId()).append('\n');
+        index.append("name: ").append(skillPackage.getName()).append('\n');
+        if (!metadata.version().isBlank()) {
+            index.append("version: ").append(metadata.version()).append('\n');
+        }
+        if (skillPackage.getCategory() != null && !skillPackage.getCategory().isBlank()) {
+            index.append("category: ").append(skillPackage.getCategory()).append('\n');
+        }
+        if (skillPackage.getDescription() != null && !skillPackage.getDescription().isBlank()) {
+            index.append("description: ").append(skillPackage.getDescription()).append('\n');
+        }
+        if (!metadata.trigger().isBlank()) {
+            index.append("trigger: ").append(metadata.trigger()).append('\n');
+        }
+        if (!metadata.allowedTools().isEmpty()) {
+            index.append("allowed_tools: ").append(String.join(", ", metadata.allowedTools())).append('\n');
+        }
+        if (!metadata.riskLevel().isBlank()) {
+            index.append("risk_level: ").append(metadata.riskLevel()).append('\n');
+        }
+        if (!metadata.source().isBlank()) {
+            index.append("source: ").append(metadata.source()).append('\n');
+        }
+        if (!metadata.summaryHash().isBlank()) {
+            index.append("summary_hash: ").append(metadata.summaryHash()).append('\n');
+        }
+        index.append("When this skill is relevant, call load_skill_content with skill_id=")
+                .append(skillPackage.getId())
+                .append(" before following its detailed instructions.");
+        return index.toString();
     }
 
     /**

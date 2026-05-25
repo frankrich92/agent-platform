@@ -10,6 +10,7 @@ import com.htam.agent.capability.knowledge.service.AgentKnowledgeBaseService;
 import com.htam.agent.capability.knowledge.service.KnowledgeBaseConfigService;
 import com.htam.agent.capability.mcp.service.AgentMcpServerService;
 import com.htam.agent.capability.mcp.service.McpServerService;
+import com.htam.agent.capability.mcp.service.McpToolService;
 import com.htam.agent.capability.tool.HookPolicy;
 import com.htam.agent.capability.tool.hook.service.AgentHookService;
 import com.htam.agent.capability.tool.hook.service.HookConfigService;
@@ -18,12 +19,14 @@ import com.htam.agent.common.entity.CodeExecutionConfig;
 import com.htam.agent.common.entity.HookConfig;
 import com.htam.agent.common.entity.KnowledgeBaseConfig;
 import com.htam.agent.common.entity.McpServer;
+import com.htam.agent.common.entity.McpTool;
 import com.htam.agent.common.entity.SkillPackage;
 import com.htam.agent.common.entity.ToolConfig;
 import com.htam.agent.common.enums.HookType;
 import com.htam.agent.common.enums.McpActivationStatus;
 import com.htam.agent.common.enums.McpToolExposureMode;
 import com.htam.agent.common.enums.ToolType;
+import com.htam.agent.common.skill.SkillMetadata;
 import com.htam.agent.common.vo.AgentMcpBindingVO;
 import com.htam.agent.profile.agent.service.AgentDefinitionService;
 import com.htam.agent.profile.agent.service.AgentSubAgentService;
@@ -50,6 +53,7 @@ public class ProfileCapabilityPlanService implements CapabilityPlanService {
     private final HookConfigService hookConfigService;
     private final AgentMcpServerService agentMcpServerService;
     private final McpServerService mcpServerService;
+    private final McpToolService mcpToolService;
     private final AgentKnowledgeBaseService agentKnowledgeBaseService;
     private final KnowledgeBaseConfigService knowledgeBaseConfigService;
 
@@ -140,6 +144,13 @@ public class ProfileCapabilityPlanService implements CapabilityPlanService {
 
     private void addSkills(List<CapabilityItem> items, Long agentId) {
         for (SkillPackage skill : agentDefinitionService.getEnabledSkillsOfAgent(agentId)) {
+            SkillMetadata metadata = SkillMetadata.from(skill);
+            CapabilityRiskLevel riskLevel = skillRiskLevel(metadata.riskLevel());
+            Map<String, Object> attributes = attributes(
+                    "category", skill.getCategory(),
+                    "description", skill.getDescription(),
+                    "contentRef", "skill:" + skill.getId());
+            attributes.putAll(metadata.asAttributes());
             items.add(new CapabilityItem(
                     CapabilityKind.SKILL,
                     String.valueOf(skill.getId()),
@@ -147,15 +158,12 @@ public class ProfileCapabilityPlanService implements CapabilityPlanService {
                     namespace("skill", skill.getCategory()),
                     Boolean.TRUE.equals(skill.getEnabled()),
                     true,
-                    CapabilityRiskLevel.LOW,
-                    CapabilityRiskPolicy.ALLOW,
+                    riskLevel,
+                    riskLevel == CapabilityRiskLevel.HIGH ? CapabilityRiskPolicy.ASK : CapabilityRiskPolicy.ALLOW,
                     null,
                     List.of(),
                     List.of(),
-                    attributes(
-                            "category", skill.getCategory(),
-                            "description", skill.getDescription(),
-                            "contentRef", "skill:" + skill.getId())));
+                    attributes));
         }
     }
 
@@ -172,9 +180,17 @@ public class ProfileCapabilityPlanService implements CapabilityPlanService {
             McpToolExposureMode exposureMode = binding.getExposureMode() == null
                     ? McpToolExposureMode.ALL_GLOBAL
                     : binding.getExposureMode();
+            List<McpTool> runtimeTools = mcpToolService.listRuntimeTools(server.getId());
+            List<McpTool> allTools = mcpToolService.listByServerIds(List.of(server.getId()));
+            List<Long> runtimeToolIds = runtimeTools.stream().map(McpTool::getId).toList();
             List<String> includePatterns = exposureMode == McpToolExposureMode.SELECTED_ONLY
-                    ? toolIdsAsPatterns(binding.getMcpToolIds())
-                    : List.of("*");
+                    ? selectedAvailableToolPatterns(binding.getMcpToolIds(), runtimeToolIds)
+                    : runtimeTools.isEmpty() ? List.of("*") : toolIdsAsPatterns(runtimeToolIds);
+            List<Long> excludedToolIds = allTools.stream()
+                    .filter(tool -> !Boolean.TRUE.equals(tool.getEnabled()) || Boolean.TRUE.equals(tool.getMissing()))
+                    .map(McpTool::getId)
+                    .toList();
+            List<Long> selectedUnavailableToolIds = selectedUnavailableToolIds(binding.getMcpToolIds(), runtimeToolIds);
             boolean active = server.getActivationStatus() == null
                     || server.getActivationStatus() == McpActivationStatus.ACTIVE;
 
@@ -189,7 +205,7 @@ public class ProfileCapabilityPlanService implements CapabilityPlanService {
                     CapabilityRiskPolicy.ASK,
                     "mcp-server:" + server.getId() + ":protocol-config",
                     includePatterns,
-                    List.of(),
+                    toolIdsAsPatterns(excludedToolIds),
                     attributes(
                             "protocol", server.getProtocol(),
                             "mode", server.getMode(),
@@ -198,7 +214,15 @@ public class ProfileCapabilityPlanService implements CapabilityPlanService {
                             "healthStatus", server.getHealthStatus(),
                             "toolCount", server.getToolCount(),
                             "needsSync", server.getNeedsSync(),
-                            "configHash", server.getConfigHash())));
+                            "configHash", server.getConfigHash(),
+                            "runtimeToolIds", runtimeToolIds,
+                            "runtimeToolNames", runtimeTools.stream().map(McpTool::getToolName).toList(),
+                            "runtimeToolSchemaHashes", runtimeTools.stream()
+                                    .map(McpTool::getSchemaHash)
+                                    .filter(hash -> hash != null && !hash.isBlank())
+                                    .toList(),
+                            "excludedToolIds", excludedToolIds,
+                            "selectedUnavailableToolIds", selectedUnavailableToolIds)));
         }
     }
 
@@ -329,6 +353,37 @@ public class ProfileCapabilityPlanService implements CapabilityPlanService {
         return toolIds.stream()
                 .map(toolId -> "mcp-tool:" + toolId)
                 .toList();
+    }
+
+    private static List<String> selectedAvailableToolPatterns(List<Long> selectedToolIds, List<Long> runtimeToolIds) {
+        if (selectedToolIds == null || selectedToolIds.isEmpty()) {
+            return List.of();
+        }
+        List<Long> runtimeIds = runtimeToolIds == null ? List.of() : runtimeToolIds;
+        return toolIdsAsPatterns(selectedToolIds.stream()
+                .filter(runtimeIds::contains)
+                .toList());
+    }
+
+    private static List<Long> selectedUnavailableToolIds(List<Long> selectedToolIds, List<Long> runtimeToolIds) {
+        if (selectedToolIds == null || selectedToolIds.isEmpty()) {
+            return List.of();
+        }
+        List<Long> runtimeIds = runtimeToolIds == null ? List.of() : runtimeToolIds;
+        return selectedToolIds.stream()
+                .filter(toolId -> !runtimeIds.contains(toolId))
+                .toList();
+    }
+
+    private static CapabilityRiskLevel skillRiskLevel(String riskLevel) {
+        if (riskLevel == null || riskLevel.isBlank()) {
+            return CapabilityRiskLevel.LOW;
+        }
+        try {
+            return CapabilityRiskLevel.valueOf(riskLevel.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return CapabilityRiskLevel.LOW;
+        }
     }
 
     private static Map<String, Object> attributes(Object... entries) {

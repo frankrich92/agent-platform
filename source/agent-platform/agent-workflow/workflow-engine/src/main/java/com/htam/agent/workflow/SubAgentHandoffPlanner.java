@@ -10,6 +10,9 @@ public class SubAgentHandoffPlanner {
         if (request == null || request.parentAgentId() == null || request.subAgentId() == null) {
             throw new IllegalArgumentException("parentAgentId and subAgentId are required");
         }
+        if (!request.recursionAllowed()) {
+            throw new IllegalStateException("sub-agent recursion depth exceeded");
+        }
         String input = request.input();
         boolean truncated = input.length() > request.maxInputChars();
         String boundedInput = truncated ? input.substring(0, request.maxInputChars()) : input;
@@ -18,6 +21,9 @@ public class SubAgentHandoffPlanner {
         handoff.put("summaryRequired", true);
         handoff.put("inputTruncated", truncated);
         handoff.put("sourceInputChars", input.length());
+        handoff.put("currentDepth", request.currentDepth());
+        handoff.put("nextDepth", request.currentDepth() + 1);
+        handoff.put("maxDepth", request.maxDepth());
         return new SubAgentHandoffPlan(
                 request.parentAgentId(),
                 request.subAgentId(),
@@ -25,6 +31,8 @@ public class SubAgentHandoffPlanner {
                 isolatedContextRef(request),
                 boundedInput,
                 true,
+                request.currentDepth() + 1,
+                request.maxDepth(),
                 handoff);
     }
 

@@ -33,6 +33,8 @@ class RunReplayServiceTest {
 
         eventLedger.append(new RuntimeEvent("event-1", RuntimeEventType.RUN_STARTED, "run-1",
                 "session-1", null, "trace-1", 1, Instant.now(), Map.of("agentId", 7L)));
+        eventLedger.append(new RuntimeEvent("event-2", RuntimeEventType.RUN_COMPLETED, "run-1",
+                "session-1", "step-1", "trace-1", 2, Instant.now(), Map.of("status", "SUCCEEDED")));
         stepLedger.append(new RunStep("step-1", "run-1", RunStepType.MCP_CALL,
                 AgentRunStatus.SUCCEEDED, Instant.now(), Instant.now(), Map.of("mcpServer", "git")));
         toolCallLedger.append(new ToolCall("tool-1", "run-1", "search",
@@ -45,8 +47,12 @@ class RunReplayServiceTest {
                 eventLedger, stepLedger, toolCallLedger, messageLedger)).createReplay("run-1");
 
         assertEquals("run-1", replay.runId());
-        assertEquals(4, replay.frames().size());
-        assertTrue(replay.frames().stream().anyMatch(frame -> frame.frameType().equals("toolCall")));
-        assertTrue(replay.frames().stream().anyMatch(frame -> frame.frameType().equals("step:MCP_CALL")));
+        assertEquals(2, replay.frames().size());
+        assertTrue(replay.frames().stream().anyMatch(frame -> frame.frameType().equals("event:RUN_STARTED")));
+        assertTrue(replay.frames().stream().anyMatch(frame ->
+                frame.frameType().equals("event:RUN_COMPLETED")
+                        && frame.payload().containsKey("steps")
+                        && frame.payload().containsKey("toolCalls")
+                        && frame.payload().containsKey("messages")));
     }
 }
