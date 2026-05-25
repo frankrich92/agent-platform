@@ -2,6 +2,7 @@ package com.htam.agent.worker.file.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.htam.agent.common.entity.Attach;
+import com.htam.agent.common.file.AttachmentContentReader;
 import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.common.wrapper.FileBase64Wrapper;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,7 +15,7 @@ import java.util.List;
  *
  * @author huxuehao
  **/
-public interface AttachService {
+public interface AttachService extends AttachmentContentReader {
     IPage<Attach> page(PageParams pageParams, Attach query);
 
     Attach getById(Long id);
@@ -61,6 +62,7 @@ public interface AttachService {
     /**
      * 获取文件的base64编码
      */
+    @Override
     FileBase64Wrapper getFileBase64(Long fileId);
 
     /**

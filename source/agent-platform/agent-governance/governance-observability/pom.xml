@@ -11,9 +11,5 @@
   <artifactId>governance-observability</artifactId>
   <packaging>jar</packaging>
   <dependencies>
-    <dependency>
-      <groupId>com.htam.agent</groupId>
-      <artifactId>common-core</artifactId>
-    </dependency>
   </dependencies>
 </project>

@@ -1,7 +1,7 @@
 package com.htam.agent.runtime.agentscope.agui;
 
-import com.htam.agent.profile.agent.service.AgentDefinitionService;
 import com.htam.agent.common.entity.AgentDefinition;
+import com.htam.agent.repo.agent.AgentDefinitionRepository;
 import com.htam.agent.runtime.agentscope.agent.IAgentFactory;
 import io.agentscope.core.agui.registry.AguiAgentRegistry;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @RequiredArgsConstructor
 public class AguiAgentConfiguration implements ApplicationRunner {
-    private final AgentDefinitionService agentDefinitionService;
+    private final AgentDefinitionRepository agentDefinitionRepository;
     private final IAgentFactory iAgentFactory;
     private final AguiAgentRegistry registry;
 
@@ -29,7 +29,7 @@ public class AguiAgentConfiguration implements ApplicationRunner {
     }
     public void configureAgents(AguiAgentRegistry registry) {
         try {
-            agentDefinitionService.list()
+            agentDefinitionRepository.list()
                     .stream()
                     .filter(item -> item.getEnabled() == true)
                     .forEach(agentDefinition ->

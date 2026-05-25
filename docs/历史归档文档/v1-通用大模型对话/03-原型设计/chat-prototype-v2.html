@@ -1,0 +1,1732 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>通用大模型对话 - 原型设计 V2</title>
+<style>
+  :root {
+    --sidebar-bg: #1b1c1e;
+    --sidebar-hover: #2a2b2e;
+    --sidebar-active: #35373a;
+    --sidebar-text: #e8eaed;
+    --sidebar-text-dim: #9aa0a6;
+    --main-bg: #1f2023;
+    --chat-bg: #1f2023;
+    --user-bubble: #2d2f33;
+    --assistant-bubble: transparent;
+    --input-bg: #2d2f33;
+    --input-border: #404348;
+    --text-primary: #e8eaed;
+    --text-secondary: #bdc1c6;
+    --text-dim: #9aa0a6;
+    --accent: #8ab4f8;
+    --accent-hover: #aecbfa;
+    --accent-subtle: rgba(138, 180, 248, 0.12);
+    --thinking-bg: #1e1f2e;
+    --thinking-border: #5b6d9a;
+    --thinking-text: #b0b8d0;
+    --queue-bg: #2a2b1e;
+    --queue-border: #7a7a3a;
+    --queue-text: #c8c8a0;
+    --divider: #3c4043;
+    --scrollbar-bg: transparent;
+    --scrollbar-thumb: #5f6368;
+    --danger: #f28b82;
+    --danger-hover: #ea4335;
+    --success: #81c995;
+    --warn: #fdd663;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", Helvetica, Arial, sans-serif;
+    background: var(--main-bg);
+    color: var(--text-primary);
+    height: 100vh;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* === Layout === */
+  .app {
+    display: flex;
+    height: 100vh;
+  }
+
+  /* === Sidebar === */
+  .sidebar {
+    width: 280px;
+    min-width: 280px;
+    background: var(--sidebar-bg);
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--divider);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 50;
+  }
+
+  .sidebar-header {
+    padding: 14px 12px 8px;
+  }
+
+  .btn-new-chat {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--sidebar-hover);
+    border: 1px solid var(--divider);
+    border-radius: 12px;
+    color: var(--sidebar-text);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-new-chat:hover {
+    background: #383a3d;
+    border-color: var(--accent);
+    color: var(--accent-hover);
+  }
+
+  .btn-new-chat svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  .btn-sidebar-close {
+    display: none;
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: none;
+    color: var(--sidebar-text-dim);
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 18px;
+  }
+
+  .btn-sidebar-close:hover {
+    background: var(--sidebar-hover);
+  }
+
+  .sidebar-section {
+    padding: 0 12px;
+  }
+
+  .sidebar-label {
+    padding: 16px 12px 6px;
+    font-size: 11px;
+    color: var(--sidebar-text-dim);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .session-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 8px;
+  }
+
+  .session-list::-webkit-scrollbar { width: 4px; }
+  .session-list::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 2px; }
+
+  .session-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+    position: relative;
+    gap: 10px;
+    margin-bottom: 2px;
+  }
+
+  .session-item:hover {
+    background: var(--sidebar-hover);
+  }
+
+  .session-item.active {
+    background: var(--sidebar-active);
+  }
+
+  .session-item-title {
+    flex: 1;
+    font-size: 13px;
+    color: var(--sidebar-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4;
+  }
+
+  .session-item .btn-delete {
+    display: none;
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    border: none;
+    color: var(--sidebar-text-dim);
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 15px;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+
+  .session-item:hover .btn-delete {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .session-item .btn-delete:hover {
+    color: var(--danger);
+    background: rgba(242, 139, 130, 0.12);
+  }
+
+  .sidebar-footer {
+    padding: 10px 12px;
+    border-top: 1px solid var(--divider);
+  }
+
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    border-radius: 10px;
+    font-size: 13px;
+    color: var(--sidebar-text-dim);
+    cursor: default;
+  }
+
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #5b6abf, #8ab4f8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  /* === Main Area === */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: var(--main-bg);
+  }
+
+  .main-topbar {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--divider);
+    background: var(--main-bg);
+    min-height: 52px;
+    gap: 12px;
+  }
+
+  .btn-sidebar-toggle {
+    display: none;
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 8px;
+    font-size: 20px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-sidebar-toggle:hover {
+    background: var(--sidebar-hover);
+  }
+
+  .main-topbar-title {
+    flex: 1;
+    font-size: 16px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-primary);
+  }
+
+  .model-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-dim);
+    background: var(--sidebar-hover);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+
+  .model-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--success);
+    flex-shrink: 0;
+  }
+
+  /* Chat area */
+  .chat-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0;
+  }
+
+  .chat-area::-webkit-scrollbar { width: 6px; }
+  .chat-area::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+
+  .chat-messages {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 24px 24px 0;
+  }
+
+  /* Empty state */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 12px;
+    padding-bottom: 80px;
+  }
+
+  .empty-state-logo {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #5b6abf, #8ab4f8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+    box-shadow: 0 4px 24px rgba(91, 106, 191, 0.3);
+  }
+
+  .empty-state-logo svg {
+    width: 32px;
+    height: 32px;
+    color: #fff;
+  }
+
+  .empty-state h2 {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-top: 8px;
+  }
+
+  .empty-state p {
+    font-size: 14px;
+    color: var(--text-dim);
+    max-width: 420px;
+    text-align: center;
+    line-height: 1.7;
+  }
+
+  .empty-state-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+    justify-content: center;
+    max-width: 460px;
+  }
+
+  .suggestion-chip {
+    padding: 8px 16px;
+    background: var(--sidebar-hover);
+    border: 1px solid var(--divider);
+    border-radius: 20px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .suggestion-chip:hover {
+    border-color: var(--accent);
+    color: var(--accent-hover);
+    background: var(--accent-subtle);
+  }
+
+  /* Message */
+  .message-block {
+    padding: 20px 0;
+    position: relative;
+  }
+
+  .message-block + .message-block {
+    border-top: 1px solid transparent;
+  }
+
+  .message-row {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  .message-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .message-avatar.user {
+    background: linear-gradient(135deg, #6c5ce7, #a48cf5);
+    color: #fff;
+  }
+
+  .message-avatar.assistant {
+    background: linear-gradient(135deg, #4a8df8, #8ab4f8);
+    color: #fff;
+  }
+
+  .message-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .message-role {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text-secondary);
+  }
+
+  .message-text {
+    line-height: 1.75;
+    font-size: 15px;
+    color: var(--text-primary);
+  }
+
+  .message-text p {
+    margin-bottom: 10px;
+  }
+
+  .message-text p:last-child {
+    margin-bottom: 0;
+  }
+
+  .message-text code {
+    background: var(--user-bubble);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: "SF Mono", "Fira Code", monospace;
+    font-size: 13px;
+    color: var(--accent-hover);
+  }
+
+  .message-text pre {
+    background: #111;
+    border: 1px solid var(--divider);
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    margin: 10px 0;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .message-text pre code {
+    background: none;
+    padding: 0;
+    color: var(--text-secondary);
+  }
+
+  /* Thinking block */
+  .thinking-block {
+    margin-bottom: 14px;
+    border: 1px solid var(--thinking-border);
+    background: var(--thinking-bg);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: all 0.2s;
+  }
+
+  .thinking-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--thinking-text);
+    user-select: none;
+    background: rgba(91, 109, 154, 0.08);
+    transition: background 0.15s;
+  }
+
+  .thinking-header:hover {
+    background: rgba(91, 109, 154, 0.15);
+  }
+
+  .thinking-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    transition: transform 0.2s;
+  }
+
+  .thinking-block.collapsed .thinking-icon {
+    transform: rotate(-90deg);
+  }
+
+  .thinking-label {
+    flex: 1;
+    font-weight: 500;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .thinking-status {
+    font-size: 11px;
+    color: var(--thinking-text);
+    opacity: 0.6;
+  }
+
+  .thinking-block.streaming .thinking-status::after {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 2px;
+    background: var(--thinking-text);
+    margin-left: 3px;
+    vertical-align: middle;
+    animation: pulse-dot 1s ease-in-out infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 1; }
+  }
+
+  .thinking-content {
+    padding: 10px 14px 14px;
+    font-size: 14px;
+    color: var(--thinking-text);
+    line-height: 1.65;
+    white-space: pre-wrap;
+    border-top: 1px solid rgba(91, 109, 154, 0.15);
+  }
+
+  .thinking-block.collapsed .thinking-content {
+    display: none;
+  }
+
+  /* Streaming cursor */
+  .streaming-cursor::after {
+    content: "";
+    display: inline-block;
+    width: 2px;
+    height: 1.1em;
+    background: var(--accent);
+    margin-left: 2px;
+    vertical-align: text-bottom;
+    animation: blink-anim 0.8s step-end infinite;
+  }
+
+  @keyframes blink-anim {
+    50% { opacity: 0; }
+  }
+
+  /* Loading dots */
+  .loading-indicator {
+    display: inline-flex;
+    gap: 5px;
+    padding: 6px 0;
+    align-items: center;
+    color: var(--text-dim);
+    font-size: 13px;
+  }
+
+  .loading-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    animation: dot-bounce 1.4s infinite ease-in-out;
+  }
+
+  .loading-dot:nth-child(1) { animation-delay: 0s; }
+  .loading-dot:nth-child(2) { animation-delay: 0.16s; }
+  .loading-dot:nth-child(3) { animation-delay: 0.32s; }
+
+  @keyframes dot-bounce {
+    0%, 80%, 100% { opacity: 0.3; transform: scale(0.75); }
+    40% { opacity: 1; transform: scale(1); }
+  }
+
+  /* Message error */
+  .message-error {
+    margin-top: 10px;
+    padding: 12px 14px;
+    border: 1px solid rgba(242, 139, 130, 0.3);
+    border-radius: 8px;
+    background: rgba(242, 139, 130, 0.08);
+    color: var(--danger);
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .message-error button {
+    margin-left: auto;
+    padding: 5px 12px;
+    border: 1px solid rgba(242, 139, 130, 0.3);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--danger);
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .message-error button:hover {
+    background: rgba(242, 139, 130, 0.12);
+  }
+
+  /* Message actions */
+  .message-actions {
+    display: flex;
+    gap: 4px;
+    margin-top: 8px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .message-block:hover .message-actions {
+    opacity: 1;
+  }
+
+  .message-action-btn {
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.15s;
+  }
+
+  .message-action-btn:hover {
+    background: var(--sidebar-hover);
+    color: var(--text-secondary);
+  }
+
+  /* === Input area === */
+  .input-area {
+    padding: 0 24px 20px;
+    max-width: 800px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  /* Queue zone */
+  .queue-zone {
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .queue-header {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0 4px;
+  }
+
+  .queue-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--queue-bg);
+    border: 1px solid var(--queue-border);
+    border-radius: 10px;
+    font-size: 14px;
+    color: var(--queue-text);
+    transition: all 0.15s;
+  }
+
+  .queue-item:hover {
+    background: rgba(42, 43, 30, 0.9);
+  }
+
+  .queue-number {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(200, 200, 160, 0.15);
+    border: 1px solid var(--queue-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: var(--queue-text);
+    flex-shrink: 0;
+  }
+
+  .queue-badge {
+    font-size: 10px;
+    padding: 3px 8px;
+    background: rgba(200, 200, 160, 0.12);
+    border: 1px solid rgba(200, 200, 160, 0.2);
+    border-radius: 10px;
+    color: var(--queue-text);
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-weight: 500;
+  }
+
+  .queue-text {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 13px;
+  }
+
+  .queue-remove {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px;
+    border-radius: 4px;
+    line-height: 1;
+    transition: all 0.15s;
+  }
+
+  .queue-remove:hover {
+    color: var(--danger);
+    background: rgba(242, 139, 130, 0.08);
+  }
+
+  /* Input box */
+  .input-wrapper {
+    display: flex;
+    flex-direction: column;
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 16px;
+    transition: all 0.2s;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .input-wrapper:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-subtle);
+  }
+
+  .input-row {
+    display: flex;
+    align-items: flex-end;
+    padding: 10px 12px 10px 18px;
+    gap: 10px;
+  }
+
+  .input-row textarea {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: 15px;
+    line-height: 1.55;
+    resize: none;
+    outline: none;
+    max-height: 200px;
+    min-height: 24px;
+    font-family: inherit;
+  }
+
+  .input-row textarea::placeholder {
+    color: var(--text-dim);
+  }
+
+  .btn-send {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    border: none;
+    background: var(--accent);
+    color: #1f2023;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+
+  .btn-send:hover {
+    background: var(--accent-hover);
+    transform: scale(1.05);
+  }
+
+  .btn-send:disabled {
+    background: var(--input-border);
+    color: var(--text-dim);
+    cursor: default;
+    transform: none;
+  }
+
+  .btn-send svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .input-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px 8px;
+  }
+
+  .input-hint {
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .input-charcount {
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  /* === Prototype navigation === */
+  .proto-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #0d0d1a;
+    border-top: 1px solid #2a2a4e;
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 16px;
+    z-index: 100;
+  }
+
+  .proto-nav button {
+    padding: 8px 22px;
+    border: 1px solid rgba(138, 180, 248, 0.2);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+  }
+
+  .proto-nav button:hover {
+    background: rgba(138, 180, 248, 0.08);
+    border-color: var(--accent);
+    color: var(--accent-hover);
+  }
+
+  .proto-nav button.active {
+    background: rgba(138, 180, 248, 0.12);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .proto-page {
+    display: none;
+    height: 100%;
+  }
+
+  .proto-page.active {
+    display: flex;
+  }
+
+  /* === System message === */
+  .system-message {
+    text-align: center;
+    padding: 12px 0;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  .system-message span {
+    background: var(--sidebar-hover);
+    padding: 4px 16px;
+    border-radius: 12px;
+  }
+
+  /* === Mobile responsive === */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 49;
+    backdrop-filter: blur(2px);
+  }
+
+  @media (max-width: 768px) {
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      transform: translateX(-100%);
+    }
+
+    .sidebar.open {
+      transform: translateX(0);
+    }
+
+    .sidebar-overlay.open {
+      display: block;
+    }
+
+    .btn-sidebar-toggle {
+      display: flex;
+    }
+
+    .btn-sidebar-close {
+      display: flex;
+    }
+
+    .chat-messages {
+      padding: 12px 16px 0;
+    }
+
+    .input-area {
+      padding: 0 12px 16px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== PAGE 1: Empty State ===================== -->
+<div class="proto-page active" id="page-empty">
+  <div class="app">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <button class="btn-new-chat" onclick="switchPage('page-empty')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          新对话
+        </button>
+      </div>
+      <div class="sidebar-label">历史对话</div>
+      <div class="session-list">
+        <div class="session-item" onclick="switchPage('page-normal')">
+          <span class="session-item-title">关于 Spring WebFlux 的疑问</span>
+          <button class="btn-delete" title="删除">&times;</button>
+        </div>
+        <div class="session-item" onclick="switchPage('page-normal')">
+          <span class="session-item-title">Vue3 组合式 API 使用方法</span>
+          <button class="btn-delete" title="删除">&times;</button>
+        </div>
+        <div class="session-item" onclick="switchPage('page-normal')">
+          <span class="session-item-title">PostgreSQL 索引优化建议</span>
+          <button class="btn-delete" title="删除">&times;</button>
+        </div>
+        <div class="session-item" onclick="switchPage('page-normal')">
+          <span class="session-item-title">MyBatis 动态 SQL 写法</span>
+          <button class="btn-delete" title="删除">&times;</button>
+        </div>
+        <div class="session-item" onclick="switchPage('page-normal')">
+          <span class="session-item-title">Flyway 迁移脚本编写规范</span>
+          <button class="btn-delete" title="删除">&times;</button>
+        </div>
+        <div class="session-item" onclick="switchPage('page-normal')">
+          <span class="session-item-title">JVM 内存调优实战经验</span>
+          <button class="btn-delete" title="删除">&times;</button>
+        </div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar">U</div>
+          <span>user@example.com</span>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar-overlay" id="overlay" onclick="closeSidebar()"></div>
+
+    <!-- Main -->
+    <div class="main">
+      <div class="main-topbar">
+        <button class="btn-sidebar-toggle" onclick="toggleSidebar()">☰</button>
+        <span class="main-topbar-title">通用大模型对话</span>
+        <div class="model-info">
+          <span class="model-dot"></span>
+          DeepSeek-V3
+        </div>
+      </div>
+      <div class="chat-area">
+        <div class="chat-messages">
+          <div class="empty-state">
+            <div class="empty-state-logo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+              </svg>
+            </div>
+            <h2>今天想聊什么？</h2>
+            <p>我可以帮助你编写代码、分析问题、解释概念，或者只是随便聊聊。</p>
+            <div class="empty-state-suggestions">
+              <span class="suggestion-chip" onclick="switchPage('page-normal')">📝 解释 WebFlux 的原理</span>
+              <span class="suggestion-chip" onclick="switchPage('page-normal')">💡 帮我优化 SQL 查询</span>
+              <span class="suggestion-chip" onclick="switchPage('page-normal')">🔧 Vue3 响应式原理</span>
+              <span class="suggestion-chip" onclick="switchPage('page-normal')">📊 如何设计数据库索引</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="input-area">
+        <div class="input-wrapper">
+          <div class="input-row">
+            <textarea rows="1" placeholder="输入消息，Enter 发送，Shift+Enter 换行" disabled></textarea>
+            <button class="btn-send" disabled>
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== PAGE 2: Normal Chat ===================== -->
+<div class="proto-page" id="page-normal">
+  <div class="app">
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <button class="btn-new-chat" onclick="switchPage('page-empty')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          新对话
+        </button>
+      </div>
+      <div class="sidebar-label">历史对话</div>
+      <div class="session-list">
+        <div class="session-item active">
+          <span class="session-item-title">关于 Spring WebFlux 的疑问</span>
+          <button class="btn-delete" title="删除">&times;</button>
+        </div>
+        <div class="session-item" onclick="switchPage('page-normal')">
+          <span class="session-item-title">Vue3 组合式 API 使用方法</span>
+          <button class="btn-delete" title="删除">&times;</button>
+        </div>
+        <div class="session-item" onclick="switchPage('page-normal')">
+          <span class="session-item-title">PostgreSQL 索引优化建议</span>
+          <button class="btn-delete" title="删除">&times;</button>
+        </div>
+        <div class="session-item" onclick="switchPage('page-normal')">
+          <span class="session-item-title">MyBatis 动态 SQL 写法</span>
+          <button class="btn-delete" title="删除">&times;</button>
+        </div>
+        <div class="session-item" onclick="switchPage('page-normal')">
+          <span class="session-item-title">Flyway 迁移脚本编写规范</span>
+          <button class="btn-delete" title="删除">&times;</button>
+        </div>
+        <div class="session-item" onclick="switchPage('page-normal')">
+          <span class="session-item-title">JVM 内存调优实战经验</span>
+          <button class="btn-delete" title="删除">&times;</button>
+        </div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar">U</div>
+          <span>user@example.com</span>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar-overlay" id="overlay2" onclick="closeSidebar()"></div>
+
+    <div class="main">
+      <div class="main-topbar">
+        <button class="btn-sidebar-toggle" onclick="toggleSidebar()">☰</button>
+        <span class="main-topbar-title">关于 Spring WebFlux 的疑问</span>
+        <div class="model-info">
+          <span class="model-dot"></span>
+          DeepSeek-V3
+        </div>
+      </div>
+      <div class="chat-area">
+        <div class="chat-messages">
+
+          <!-- User message -->
+          <div class="message-block">
+            <div class="message-row">
+              <div class="message-avatar user">U</div>
+              <div class="message-content">
+                <div class="message-role">你</div>
+                <div class="message-text">
+                  <p>Spring WebFlux 中的响应式流是如何处理背压（Backpressure）的？能否给我一个实际的例子？</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Assistant with thinking -->
+          <div class="message-block">
+            <div class="message-row">
+              <div class="message-avatar assistant">AI</div>
+              <div class="message-content">
+                <div class="message-role">助手</div>
+                <div class="thinking-block">
+                  <div class="thinking-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                    <svg class="thinking-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                      <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                    <span class="thinking-label">思考过程</span>
+                    <span class="thinking-status">已完成</span>
+                  </div>
+                  <div class="thinking-content">用户询问 Spring WebFlux 中背压机制的具体实现。
+
+我需要从以下几个角度解释：
+1. 背压的基本概念 —— 消费者控制生产者速度
+2. WebFlux 基于 Reactor，使用 request(n) 信号
+3. 结合 Spring WebFlux 的实际使用场景（如数据库查询 → 流式响应）
+4. 给出代码示例
+
+选择用 Repository 返回 Flux + SSE 端点作为例子，这样能清晰说明从数据库到 HTTP 响应的完整背压链路。</div>
+                </div>
+                <div class="message-text">
+                  <p>Spring WebFlux 基于 Project Reactor，背压（Backpressure）是通过 <strong>Reactive Streams 规范</strong>中的 <code>request(n)</code> 机制实现的。</p>
+                  <p><strong>核心原理</strong></p>
+                  <p>下游消费者通过 <code>Subscription.request(n)</code> 告诉上游生产者"我还能处理 n 个元素"，上游根据这个信号控制数据发送速率。如果下游处理慢，上游就少发或暂停。</p>
+                  <p><strong>实际例子</strong></p>
+                  <pre><code>@GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+public Flux&lt;DataItem&gt; streamData() {
+    return dataRepository.findAll()       // 返回 Flux
+        .limitRate(50)                    // 每次请求最多 50 个
+        .doOnRequest(n -&gt; log.info("客户端请求 {} 条", n))
+        .onBackpressureBuffer(256);       // 缓冲区 256
+}</code></pre>
+                  <p>在这个例子中：</p>
+                  <ul style="padding-left:20px; margin:8px 0; line-height:1.8;">
+                    <li><code>limitRate(50)</code> —— 上游每次最多推送 50 条</li>
+                    <li><code>onBackpressureBuffer(256)</code> —— 当消费者跟不上时缓冲最多 256 条</li>
+                    <li>SSE 协议层面，浏览器 TCP 接收窗口自动形成背压</li>
+                  </ul>
+                  <p>HTTP 层也天然支持背压：当客户端读取慢时，TCP 滑动窗口缩小，Netty 的写操作会感知到并暂停上游的 <code>request()</code> 调用。</p>
+                </div>
+                <div class="message-actions">
+                  <button class="message-action-btn">📋 复制</button>
+                  <button class="message-action-btn">👍</button>
+                  <button class="message-action-btn">👎</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- User follow-up -->
+          <div class="message-block">
+            <div class="message-row">
+              <div class="message-avatar user">U</div>
+              <div class="message-content">
+                <div class="message-role">你</div>
+                <div class="message-text">
+                  <p>如果不用 SSE，而是用普通的 JSON 响应，背压还有效吗？</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Assistant follow-up -->
+          <div class="message-block">
+            <div class="message-row">
+              <div class="message-avatar assistant">AI</div>
+              <div class="message-content">
+                <div class="message-role">助手</div>
+                <div class="thinking-block collapsed">
+                  <div class="thinking-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                    <svg class="thinking-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                      <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                    <span class="thinking-label">思考过程</span>
+                    <span class="thinking-status">已完成</span>
+                  </div>
+                  <div class="thinking-content">用户追问非 SSE 场景下的背压有效性，需要区分两种 JSON 响应模式。</div>
+                </div>
+                <div class="message-text">
+                  <p>好问题。需要区分两种情况：</p>
+                  <p><strong>1. 返回 Mono&lt;List&lt;T&gt;&gt;（一次性 JSON）</strong></p>
+                  <p>背压意义不大。数据一次性全部加载到内存再序列化，<code>request(n)</code> 在这里只请求了一次（数据全集）。</p>
+                  <p><strong>2. 返回 Flux&lt;T&gt; + JSON Stream</strong></p>
+                  <p>如果使用 <code>APPLICATION_NDJSON</code> 或 <code>APPLICATION_STREAM_JSON</code> 格式，背压依然有效——每条 JSON 对象之间用换行分隔，客户端可以逐条消费。</p>
+                  <p><strong>总结</strong>：背压的本质是流式消费场景才有意义。一次性 JSON 响应不涉及流控，真正的价值在于 <strong>Flux + SSE/NDJSON</strong> 这类流式协议。</p>
+                </div>
+                <div class="message-actions">
+                  <button class="message-action-btn">📋 复制</button>
+                  <button class="message-action-btn">👍</button>
+                  <button class="message-action-btn">👎</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <div class="input-area">
+        <div class="input-wrapper">
+          <div class="input-row">
+            <textarea rows="1" placeholder="输入消息，Enter 发送，Shift+Enter 换行"></textarea>
+            <button class="btn-send">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+              </svg>
+            </button>
+          </div>
+          <div class="input-footer">
+            <span class="input-hint">Enter 发送 · Shift+Enter 换行</span>
+            <span class="input-charcount"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== PAGE 3: Streaming + Queue ===================== -->
+<div class="proto-page" id="page-streaming">
+  <div class="app">
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <button class="btn-new-chat" onclick="switchPage('page-empty')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          新对话
+        </button>
+      </div>
+      <div class="sidebar-label">历史对话</div>
+      <div class="session-list">
+        <div class="session-item active">
+          <span class="session-item-title">PostgreSQL 索引优化建议</span>
+          <button class="btn-delete" title="删除">&times;</button>
+        </div>
+        <div class="session-item" onclick="switchPage('page-normal')">
+          <span class="session-item-title">关于 Spring WebFlux 的疑问</span>
+          <button class="btn-delete" title="删除">&times;</button>
+        </div>
+        <div class="session-item" onclick="switchPage('page-normal')">
+          <span class="session-item-title">Vue3 组合式 API 使用方法</span>
+          <button class="btn-delete" title="删除">&times;</button>
+        </div>
+        <div class="session-item" onclick="switchPage('page-normal')">
+          <span class="session-item-title">MyBatis 动态 SQL 写法</span>
+          <button class="btn-delete" title="删除">&times;</button>
+        </div>
+        <div class="session-item" onclick="switchPage('page-normal')">
+          <span class="session-item-title">Flyway 迁移脚本编写规范</span>
+          <button class="btn-delete" title="删除">&times;</button>
+        </div>
+        <div class="session-item" onclick="switchPage('page-normal')">
+          <span class="session-item-title">JVM 内存调优实战经验</span>
+          <button class="btn-delete" title="删除">&times;</button>
+        </div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar">U</div>
+          <span>user@example.com</span>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar-overlay" id="overlay3" onclick="closeSidebar()"></div>
+
+    <div class="main">
+      <div class="main-topbar">
+        <button class="btn-sidebar-toggle" onclick="toggleSidebar()">☰</button>
+        <span class="main-topbar-title">PostgreSQL 索引优化建议</span>
+        <div class="model-info">
+          <span class="model-dot"></span>
+          DeepSeek-V3
+        </div>
+      </div>
+      <div class="chat-area">
+        <div class="chat-messages">
+
+          <!-- User question -->
+          <div class="message-block">
+            <div class="message-row">
+              <div class="message-avatar user">U</div>
+              <div class="message-content">
+                <div class="message-role">你</div>
+                <div class="message-text">
+                  <p>我们的查询中有一个大表（约 500 万行），经常需要根据多个条件组合查询，这些条件包括：<br>
+                  <code>status</code>（3 种取值）、<code>created_at</code>（时间范围）、<code>user_id</code>（外键）。<br>
+                  目前只用了一个单列索引在 <code>user_id</code> 上，查询很慢。应该如何设计索引？</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Assistant streaming -->
+          <div class="message-block">
+            <div class="message-row">
+              <div class="message-avatar assistant">AI</div>
+              <div class="message-content">
+                <div class="message-role">助手 <span style="font-weight:400;font-size:12px;color:var(--accent)">● 正在生成</span></div>
+                <div class="thinking-block streaming">
+                  <div class="thinking-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                    <svg class="thinking-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                      <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                    <span class="thinking-label">思考过程</span>
+                    <span class="thinking-status">生成中</span>
+                  </div>
+                  <div class="thinking-content">分析用户场景：
+- 表 500 万行，大表
+- 查询条件：status（3种值，低基数）+ created_at（时间范围）+ user_id（外键，选择性高）
+- 目前只有 user_id 单列索引
+
+索引设计思路：
+1. 复合索引需要考虑最左前缀原则
+2. user_id 选择性高，放在前面不合适——等值查询 + 范围查询的场景
+3. 如果查询模式主要是 user_id = ? AND status = ? AND created_at BETWEEN，则应创建 (user_id, status, created_at)
+4. 如果经常按时间范围过滤无 user_id，则需要 (created_at) 或 (status, created_at)
+
+最终建议：创建 (user_id, status, created_at) 复合索引覆盖最常见查询，同时根据实际查询模式补充索引。</div>
+                </div>
+                <div class="message-text streaming-cursor">
+                  <p>对于 500 万行级别的大表，单列索引确实不够。以下是针对你查询模式的分析和优化建议：</p>
+                  <p><strong>1. 分析查询模式</strong></p>
+                  <p>假设最常见的查询是：<code>WHERE user_id = ? AND status = ? AND created_at BETWEEN ? AND ?</code></p>
+                  <p><strong>2. 推荐索引方案</strong></p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- System message for queue -->
+          <div class="system-message">
+            <span>📍 当前回复生成中，新消息将进入排队</span>
+          </div>
+
+        </div>
+      </div>
+      <div class="input-area">
+        <div class="queue-zone">
+          <div class="queue-header">排队消息 · 将在当前回复完成后自动发送</div>
+          <div class="queue-item">
+            <span class="queue-number">1</span>
+            <span class="queue-badge">排队中</span>
+            <span class="queue-text">那覆盖索引（Covering Index）在这个场景下有用吗？</span>
+            <button class="queue-remove" title="移除">✕</button>
+          </div>
+          <div class="queue-item">
+            <span class="queue-number">2</span>
+            <span class="queue-badge">排队中</span>
+            <span class="queue-text">除了 B+Tree，GIN 或 GiST 索引在这个场景适用吗？</span>
+            <button class="queue-remove" title="移除">✕</button>
+          </div>
+        </div>
+        <div class="input-wrapper">
+          <div class="input-row">
+            <textarea rows="1" placeholder="输入消息，Enter 发送，Shift+Enter 换行"></textarea>
+            <button class="btn-send">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+              </svg>
+            </button>
+          </div>
+          <div class="input-footer">
+            <span class="input-hint">Enter 发送 · Shift+Enter 换行</span>
+            <span class="input-charcount"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== PAGE 4: Error State ===================== -->
+<div class="proto-page" id="page-error">
+  <div class="app">
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <button class="btn-new-chat" onclick="switchPage('page-empty')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          新对话
+        </button>
+      </div>
+      <div class="sidebar-label">历史对话</div>
+      <div class="session-list">
+        <div class="session-item active">
+          <span class="session-item-title">关于 Spring WebFlux 的疑问</span>
+          <button class="btn-delete" title="删除">&times;</button>
+        </div>
+        <div class="session-item" onclick="switchPage('page-normal')">
+          <span class="session-item-title">Vue3 组合式 API 使用方法</span>
+          <button class="btn-delete" title="删除">&times;</button>
+        </div>
+        <div class="session-item" onclick="switchPage('page-normal')">
+          <span class="session-item-title">PostgreSQL 索引优化建议</span>
+          <button class="btn-delete" title="删除">&times;</button>
+        </div>
+        <div class="session-item" onclick="switchPage('page-normal')">
+          <span class="session-item-title">MyBatis 动态 SQL 写法</span>
+          <button class="btn-delete" title="删除">&times;</button>
+        </div>
+        <div class="session-item" onclick="switchPage('page-normal')">
+          <span class="session-item-title">Flyway 迁移脚本编写规范</span>
+          <button class="btn-delete" title="删除">&times;</button>
+        </div>
+        <div class="session-item" onclick="switchPage('page-normal')">
+          <span class="session-item-title">JVM 内存调优实战经验</span>
+          <button class="btn-delete" title="删除">&times;</button>
+        </div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar">U</div>
+          <span>user@example.com</span>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar-overlay" id="overlay4" onclick="closeSidebar()"></div>
+
+    <div class="main">
+      <div class="main-topbar">
+        <button class="btn-sidebar-toggle" onclick="toggleSidebar()">☰</button>
+        <span class="main-topbar-title">关于 Spring WebFlux 的疑问</span>
+        <div class="model-info">
+          <span class="model-dot" style="background:var(--danger)"></span>
+          DeepSeek-V3
+        </div>
+      </div>
+      <div class="chat-area">
+        <div class="chat-messages">
+
+          <div class="message-block">
+            <div class="message-row">
+              <div class="message-avatar user">U</div>
+              <div class="message-content">
+                <div class="message-role">你</div>
+                <div class="message-text">
+                  <p>Spring WebFlux 中的响应式流是如何处理背压的？</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="message-block">
+            <div class="message-row">
+              <div class="message-avatar assistant">AI</div>
+              <div class="message-content">
+                <div class="message-role">助手</div>
+                <div class="message-text">
+                  <p>正在连接模型服务...</p>
+                </div>
+                <div class="message-error">
+                  <span>⚠️</span>
+                  <span>模型服务暂时不可用：连接超时</span>
+                  <button onclick="switchPage('page-normal')">🔄 重试</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="message-block">
+            <div class="message-row">
+              <div class="message-avatar user">U</div>
+              <div class="message-content">
+                <div class="message-role">你</div>
+                <div class="message-text">
+                  <p>可以换一种方式解释吗？</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="message-block">
+            <div class="message-row">
+              <div class="message-avatar assistant">AI</div>
+              <div class="message-content">
+                <div class="message-role">助手</div>
+                <div class="thinking-block">
+                  <div class="thinking-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                    <svg class="thinking-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                      <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                    <span class="thinking-label">思考过程</span>
+                    <span class="thinking-status">已完成</span>
+                  </div>
+                  <div class="thinking-content">用户再次提问，这次用更通俗的类比来解释背压概念。</div>
+                </div>
+                <div class="message-text">
+                  <p>当然，可以这样理解：</p>
+                  <p>想象一个餐厅 — 厨房是"生产者"，顾客是"消费者"，服务员是"背压机制"。如果顾客吃得慢，服务员会告诉厨房"先别做那么多"，而不是让菜堆满桌子。</p>
+                  <p>在 WebFlux 中，<code>request(n)</code> 就是这个"信号"——告诉生产者我还能消费多少数据，避免内存被撑爆。</p>
+                </div>
+                <div class="message-actions">
+                  <button class="message-action-btn">📋 复制</button>
+                  <button class="message-action-btn">👍</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <div class="input-area">
+        <div class="input-wrapper">
+          <div class="input-row">
+            <textarea rows="1" placeholder="输入消息，Enter 发送，Shift+Enter 换行"></textarea>
+            <button class="btn-send">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+              </svg>
+            </button>
+          </div>
+          <div class="input-footer">
+            <span class="input-hint">Enter 发送 · Shift+Enter 换行</span>
+            <span class="input-charcount"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== PAGE 5: First Message + Loading ===================== -->
+<div class="proto-page" id="page-loading">
+  <div class="app">
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <button class="btn-new-chat" onclick="switchPage('page-empty')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          新对话
+        </button>
+      </div>
+      <div class="sidebar-label">历史对话</div>
+      <div class="session-list">
+        <div class="session-item active" style="font-style:italic; opacity:0.7;">
+          <span class="session-item-title">（新对话 · 尚未保存）</span>
+        </div>
+        <div class="session-item" onclick="switchPage('page-normal')">
+          <span class="session-item-title">关于 Spring WebFlux 的疑问</span>
+          <button class="btn-delete" title="删除">&times;</button>
+        </div>
+        <div class="session-item" onclick="switchPage('page-normal')">
+          <span class="session-item-title">Vue3 组合式 API 使用方法</span>
+          <button class="btn-delete" title="删除">&times;</button>
+        </div>
+        <div class="session-item" onclick="switchPage('page-normal')">
+          <span class="session-item-title">PostgreSQL 索引优化建议</span>
+          <button class="btn-delete" title="删除">&times;</button>
+        </div>
+        <div class="session-item" onclick="switchPage('page-normal')">
+          <span class="session-item-title">MyBatis 动态 SQL 写法</span>
+          <button class="btn-delete" title="删除">&times;</button>
+        </div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar">U</div>
+          <span>user@example.com</span>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar-overlay" id="overlay5" onclick="closeSidebar()"></div>
+
+    <div class="main">
+      <div class="main-topbar">
+        <button class="btn-sidebar-toggle" onclick="toggleSidebar()">☰</button>
+        <span class="main-topbar-title">新对话</span>
+        <div class="model-info">
+          <span class="model-dot"></span>
+          DeepSeek-V3
+        </div>
+      </div>
+      <div class="chat-area">
+        <div class="chat-messages">
+
+          <div class="message-block">
+            <div class="message-row">
+              <div class="message-avatar user">U</div>
+              <div class="message-content">
+                <div class="message-role">你</div>
+                <div class="message-text">
+                  <p>请帮我分析一下 JVM GC 日志，看看有没有内存泄漏的迹象</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="message-block">
+            <div class="message-row">
+              <div class="message-avatar assistant">AI</div>
+              <div class="message-content">
+                <div class="message-role">助手 <span style="font-weight:400;font-size:12px;color:var(--accent)">● 正在思考</span></div>
+                <div class="thinking-block streaming">
+                  <div class="thinking-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                    <svg class="thinking-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                      <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                    <span class="thinking-label">思考过程</span>
+                    <span class="thinking-status">生成中</span>
+                  </div>
+                  <div class="thinking-content">用户想让我分析 GC 日志中的内存泄漏迹象。这里需要先确认：
+- 用户还没提供具体的 GC 日志内容
+- 我应该先解释 JVM 内存泄漏的典型特征
+- 然后请用户提供具体日志
+- 最后给出分析方法</div>
+                </div>
+                <div class="message-text">
+                  <span class="loading-indicator">
+                    <span class="loading-dot"></span>
+                    <span class="loading-dot"></span>
+                    <span class="loading-dot"></span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <div class="input-area">
+        <div class="input-wrapper">
+          <div class="input-row">
+            <textarea rows="1" placeholder="输入消息，Enter 发送，Shift+Enter 换行" disabled></textarea>
+            <button class="btn-send" disabled>
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+              </svg>
+            </button>
+          </div>
+          <div class="input-footer">
+            <span class="input-hint" style="color:var(--warn)">⏳ 模型正在响应中，请稍候...</span>
+            <span class="input-charcount"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== Prototype Navigation ===================== -->
+<div class="proto-nav">
+  <button class="active" onclick="switchPage('page-empty')">① 空状态</button>
+  <button onclick="switchPage('page-normal')">② 正常对话</button>
+  <button onclick="switchPage('page-streaming')">③ 流式生成+排队</button>
+  <button onclick="switchPage('page-error')">④ 错误重试</button>
+  <button onclick="switchPage('page-loading')">⑤ 首条消息加载</button>
+</div>
+
+<script>
+  function switchPage(pageId) {
+    // Hide all pages
+    document.querySelectorAll('.proto-page').forEach(p => p.classList.remove('active'));
+    // Show target page
+    const target = document.getElementById(pageId);
+    if (target) target.classList.add('active');
+    // Update nav
+    document.querySelectorAll('.proto-nav button').forEach(b => b.classList.remove('active'));
+    // Find the button that references this page
+    document.querySelectorAll('.proto-nav button').forEach(b => {
+      if (b.textContent.includes(getPageNumber(pageId))) {
+        b.classList.add('active');
+      }
+    });
+    // Scroll chat to bottom
+    setTimeout(() => {
+      const chatArea = target.querySelector('.chat-area');
+      if (chatArea) chatArea.scrollTop = chatArea.scrollHeight;
+    }, 50);
+  }
+
+  function getPageNumber(pageId) {
+    const map = {
+      'page-empty': '①',
+      'page-normal': '②',
+      'page-streaming': '③',
+      'page-error': '④',
+      'page-loading': '⑤'
+    };
+    return map[pageId] || '';
+  }
+
+  function toggleSidebar() {
+    const page = document.querySelector('.proto-page.active');
+    if (!page) return;
+    const sidebar = page.querySelector('.sidebar');
+    const overlay = page.querySelector('.sidebar-overlay');
+    if (sidebar) sidebar.classList.toggle('open');
+    if (overlay) overlay.classList.toggle('open');
+  }
+
+  function closeSidebar() {
+    document.querySelectorAll('.sidebar.open').forEach(s => s.classList.remove('open'));
+    document.querySelectorAll('.sidebar-overlay.open').forEach(o => o.classList.remove('open'));
+  }
+
+  // Initialize: scroll to bottom on active page
+  document.addEventListener('DOMContentLoaded', () => {
+    const activePage = document.querySelector('.proto-page.active');
+    if (activePage) {
+      const chatArea = activePage.querySelector('.chat-area');
+      if (chatArea) chatArea.scrollTop = chatArea.scrollHeight;
+    }
+  });
+</script>
+
+</body>
+</html>

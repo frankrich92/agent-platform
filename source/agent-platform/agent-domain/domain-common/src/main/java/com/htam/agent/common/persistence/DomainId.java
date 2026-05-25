@@ -1,0 +1,14 @@
+package com.htam.agent.common.persistence;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+public @interface DomainId {
+    String value() default "";
+
+    DomainIdType type() default DomainIdType.NONE;
+}

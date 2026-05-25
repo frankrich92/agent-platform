@@ -15,5 +15,18 @@
       <groupId>com.htam.agent</groupId>
       <artifactId>capability-core</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>governance-approval</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>governance-audit</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 </project>

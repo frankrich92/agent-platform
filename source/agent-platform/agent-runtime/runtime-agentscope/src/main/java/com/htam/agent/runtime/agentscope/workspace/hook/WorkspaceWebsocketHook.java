@@ -1,19 +1,17 @@
 package com.htam.agent.runtime.agentscope.workspace.hook;
 
-import com.htam.agent.common.enums.WsMessageType;
 import com.htam.agent.common.util.AgentMetadataStore;
-import com.htam.agent.adapter.websocket.model.WsServerMessage;
-import com.htam.agent.adapter.websocket.service.WebSocketPushService;
+import com.htam.agent.runtime.WorkspaceEventPublisher;
 import io.agentscope.core.agent.AgentBase;
 import io.agentscope.core.hook.Hook;
 import io.agentscope.core.hook.HookEvent;
 import io.agentscope.core.hook.PostActingEvent;
 import io.agentscope.core.message.ToolUseBlock;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -26,7 +24,7 @@ import java.util.Map;
 @Component
 @RequiredArgsConstructor
 public class WorkspaceWebsocketHook implements Hook {
-    private final WebSocketPushService webSocketPushService;
+    private final ObjectProvider<WorkspaceEventPublisher> workspaceEventPublisher;
 
     @Override
     public <T extends HookEvent> Mono<T> onEvent(T event) {
@@ -60,15 +58,10 @@ public class WorkspaceWebsocketHook implements Hook {
     }
 
     private void sendFileChangeWs(String threadId, String fileName) {
-        try {
-            webSocketPushService.broadcastCluster(
-                    WsServerMessage.build(
-                            WsMessageType.WORKSPACE_FILE_CHANGE.name(),
-                            new HashMap<String, Object>() {{
-                                put("fileName", fileName);
-                                put("sessionId", threadId);
-                            }}));
-        } catch (Exception ignored) {}
+        WorkspaceEventPublisher publisher = workspaceEventPublisher.getIfAvailable();
+        if (publisher != null) {
+            publisher.publishFileChanged(threadId, fileName);
+        }
     }
 
     private String extractThreadId(HookEvent event) {

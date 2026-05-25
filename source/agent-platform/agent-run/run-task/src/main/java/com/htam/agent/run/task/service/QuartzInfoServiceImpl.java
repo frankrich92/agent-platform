@@ -1,9 +1,9 @@
 package com.htam.agent.run.task.service;
 
-import com.htam.agent.profile.agent.service.AgentDefinitionService;
 import com.htam.agent.common.entity.AgentDefinition;
 import com.htam.agent.common.entity.JobInfo;
 import com.htam.agent.common.util.CryptoUtils;
+import com.htam.agent.repo.agent.AgentDefinitionRepository;
 import com.htam.agent.run.task.core.client.QuartzClient;
 import com.htam.agent.run.task.init.JobInit;
 import com.htam.agent.repo.agent.JobInfoRepository;
@@ -22,7 +22,7 @@ import java.util.List;
 public class QuartzInfoServiceImpl implements QuartzInfoService {
 
     private final QuartzClient quartzClient;
-    private final AgentDefinitionService agentDefinitionService;
+    private final AgentDefinitionRepository agentDefinitionRepository;
     private final JobInfoRepository jobInfoRepository;
 
     @Override
@@ -138,7 +138,7 @@ public class QuartzInfoServiceImpl implements QuartzInfoService {
         if (agentId == null) {
             return;
         }
-        AgentDefinition agentDefinition = agentDefinitionService.getById(Long.valueOf(agentId));
+        AgentDefinition agentDefinition = agentDefinitionRepository.getById(Long.valueOf(agentId));
         if (agentDefinition != null && !agentDefinition.getEnabled()) {
             throw new RuntimeException("智能体无效，不可设置定时");
         }

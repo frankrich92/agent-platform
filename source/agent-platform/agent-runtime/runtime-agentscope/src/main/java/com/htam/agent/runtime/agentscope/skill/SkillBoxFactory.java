@@ -1,11 +1,12 @@
 package com.htam.agent.runtime.agentscope.skill;
 
-import com.htam.agent.profile.agent.service.AgentCodeExecutionService;
-import com.htam.agent.profile.agent.service.CodeExecutionConfigService;
 import com.htam.agent.common.consts.SysConst;
+import com.htam.agent.common.entity.AgentCodeExecution;
 import com.htam.agent.common.entity.AgentDefinition;
+import com.htam.agent.common.entity.AgentSkillPackage;
 import com.htam.agent.common.entity.CodeExecutionConfig;
 import com.htam.agent.common.entity.SkillPackage;
+import com.htam.agent.common.entity.SkillTool;
 import com.htam.agent.common.key.SkillExampleKey;
 import com.htam.agent.common.key.SkillReferencesKey;
 import com.htam.agent.common.key.SkillScriptKey;
@@ -13,10 +14,12 @@ import com.htam.agent.runtime.agentscope.agui.AgentContext;
 import com.htam.agent.runtime.agentscope.tool.ToolkitFactory;
 import com.htam.agent.runtime.agentscope.workspace.skills.SearchReplaceSkill;
 import com.htam.agent.runtime.agentscope.workspace.skills.WorkspaceSkill;
-import com.htam.agent.capability.skill.service.AgentSkillPackageService;
-import com.htam.agent.capability.skill.service.SkillPackageService;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.htam.agent.capability.skill.service.SkillToolService;
+import com.htam.agent.repo.agent.AgentCodeExecutionRepository;
+import com.htam.agent.repo.agent.CodeExecutionConfigRepository;
+import com.htam.agent.repo.capability.AgentSkillPackageRepository;
+import com.htam.agent.repo.capability.SkillPackageRepository;
+import com.htam.agent.repo.capability.SkillToolRepository;
 import com.htam.agent.runtime.core.RuntimeInteractionRecorder;
 import io.agentscope.core.skill.AgentSkill;
 import io.agentscope.core.skill.SkillBox;
@@ -38,11 +41,11 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class SkillBoxFactory {
     private final ToolkitFactory toolkitFactory;
-    private final SkillToolService skillToolService;
-    private final SkillPackageService skillPackageService;
-    private final AgentSkillPackageService agentSkillPackageService;
-    private final AgentCodeExecutionService agentCodeExecutionService;
-    private final CodeExecutionConfigService codeExecutionConfigService;
+    private final SkillToolRepository skillToolRepository;
+    private final SkillPackageRepository skillPackageRepository;
+    private final AgentSkillPackageRepository agentSkillPackageRepository;
+    private final AgentCodeExecutionRepository agentCodeExecutionRepository;
+    private final CodeExecutionConfigRepository codeExecutionConfigRepository;
 
     /**
      * 获取SkillBox
@@ -54,7 +57,10 @@ public class SkillBoxFactory {
         SkillBox skillBox = new SkillBox(new Toolkit());
 
         // 注册技能包
-        List<Long> skillPackageIds = agentSkillPackageService.getSkillPackageIds(agentDefinition.getId());
+        List<Long> skillPackageIds = agentSkillPackageRepository.listByAgentDefinitionId(agentDefinition.getId())
+                .stream()
+                .map(AgentSkillPackage::getSkillPackageId)
+                .toList();
         if (skillPackageIds.isEmpty()) {
             return skillBox;
         }
@@ -71,7 +77,7 @@ public class SkillBoxFactory {
      * @param skillPackageIds 技能包ID列表
      */
     private void registerSkills(SkillBox skillBox, List<Long> skillPackageIds) {
-        List<SkillPackage> skillPackages = skillPackageService.listByIds(skillPackageIds);
+        List<SkillPackage> skillPackages = skillPackageRepository.listByIds(skillPackageIds);
 
         skillPackages.stream()
                 .filter(SkillPackage::getEnabled)
@@ -104,7 +110,7 @@ public class SkillBoxFactory {
                 SkillScriptKey.name, SkillScriptKey.content);
 
         // 获取关联的工具
-        Toolkit toolkit = toolkitFactory.getToolkit(skillToolService.getToolIds(skillPackage.getId()));
+        Toolkit toolkit = toolkitFactory.getToolkit(getSkillToolIds(skillPackage.getId()));
 
         skillBox.registration().skill(skillBuilder.build()).tool(toolkit).apply();
     }
@@ -185,11 +191,19 @@ public class SkillBoxFactory {
      * @return 代码执行配置
      */
     private CodeExecutionConfig getCodeExecutionConfig(Long agentDefinitionId) {
-        Long codeExecutionId = agentCodeExecutionService.getCodeExecutionIdByAgentId(agentDefinitionId);
+        AgentCodeExecution agentCodeExecution = agentCodeExecutionRepository.getByAgentId(agentDefinitionId);
+        Long codeExecutionId = agentCodeExecution == null ? null : agentCodeExecution.getCodeExecutionId();
         if (codeExecutionId == null) {
             return null;
         }
-        return codeExecutionConfigService.getById(codeExecutionId);
+        return codeExecutionConfigRepository.getById(codeExecutionId);
+    }
+
+    private List<Long> getSkillToolIds(Long skillId) {
+        return skillToolRepository.listBySkillId(skillId)
+                .stream()
+                .map(SkillTool::getToolId)
+                .toList();
     }
 
     /**

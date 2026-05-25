@@ -1,9 +1,10 @@
 package com.htam.agent.runtime.agentscope.studio;
 
 import com.htam.agent.common.entity.AgentDefinition;
+import com.htam.agent.common.entity.AgentStudio;
 import com.htam.agent.common.entity.StudioConfig;
-import com.htam.agent.profile.studio.service.AgentStudioService;
-import com.htam.agent.profile.studio.service.StudioConfigService;
+import com.htam.agent.repo.agent.AgentStudioRepository;
+import com.htam.agent.repo.agent.StudioConfigRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,13 +18,13 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class StudioService {
-    private final AgentStudioService agentStudioService;
-    private final StudioConfigService studioConfigService;
+    private final AgentStudioRepository agentStudioRepository;
+    private final StudioConfigRepository studioConfigRepository;
 
     public boolean init(AgentDefinition definition) {
-        Long studioIdByAgentId = agentStudioService.getStudioIdByAgentId(definition.getId());
-        if (studioIdByAgentId != null) {
-            StudioConfig studioConfig = studioConfigService.getById(studioIdByAgentId);
+        AgentStudio agentStudio = agentStudioRepository.getFirstByAgentId(definition.getId());
+        if (agentStudio != null) {
+            StudioConfig studioConfig = studioConfigRepository.getById(agentStudio.getStudioId());
             if (studioConfig != null) {
                 try {
                     StudioManagerUtils.initOnce(studioConfig.getUrl(), studioConfig.getProject(), definition.getAgentCode());

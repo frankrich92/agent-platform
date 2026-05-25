@@ -2,8 +2,8 @@ package com.htam.agent.runtime.agentscope.prompt.impl;
 
 import com.htam.agent.common.entity.AgentDefinition;
 import com.htam.agent.common.entity.SystemPromptTemplate;
+import com.htam.agent.repo.capability.SystemPromptTemplateRepository;
 import com.htam.agent.runtime.agentscope.prompt.AgentSysPrompt;
-import com.htam.agent.profile.prompt.service.SystemPromptTemplateService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,12 +15,12 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class DefaultAgentSysPrompt implements AgentSysPrompt {
-    private final SystemPromptTemplateService systemPromptTemplateService;
+    private final SystemPromptTemplateRepository systemPromptTemplateRepository;
 
     @Override
     public String getPrompt(AgentDefinition agentDefinition) {
         if (agentDefinition.getFollowTemplate() != null && agentDefinition.getFollowTemplate()) {
-            SystemPromptTemplate promptTemplate = systemPromptTemplateService.getById(agentDefinition.getSystemPromptTemplateId());
+            SystemPromptTemplate promptTemplate = systemPromptTemplateRepository.getById(agentDefinition.getSystemPromptTemplateId());
             if (promptTemplate == null) {
                 throw new RuntimeException("System prompt template not found");
             }

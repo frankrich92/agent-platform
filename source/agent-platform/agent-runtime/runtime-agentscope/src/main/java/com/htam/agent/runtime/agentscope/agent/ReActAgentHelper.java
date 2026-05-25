@@ -1,11 +1,11 @@
 package com.htam.agent.runtime.agentscope.agent;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.htam.agent.profile.agent.service.AgentDefinitionService;
 import com.htam.agent.common.entity.AgentDefinition;
 import com.htam.agent.common.enums.AgentType;
 import com.htam.agent.common.util.FuncUtils;
 import com.htam.agent.common.util.JsonUtils;
+import com.htam.agent.repo.agent.AgentDefinitionRepository;
 import com.htam.agent.runtime.agentscope.knowledge.KnowledgeWrapper;
 import com.htam.agent.runtime.agentscope.agui.AgentContext;
 import com.htam.agent.runtime.agentscope.hook.HooksFactory;
@@ -46,7 +46,7 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class ReActAgentHelper {
-    private final AgentDefinitionService agentDefinitionService;
+    private final AgentDefinitionRepository agentDefinitionRepository;
     private final HooksFactory hooksFactory;
     private final ChatModelFactory chatModelFactory;
     private final AgentSysPromptFactory agentSysPromptFactory;
@@ -60,7 +60,7 @@ public class ReActAgentHelper {
      * @param agentId agentId
      */
     public ReActAgent getReActAgent(Long agentId) {
-        AgentDefinition definition = agentDefinitionService.getById(agentId);
+        AgentDefinition definition = agentDefinitionRepository.getById(agentId);
         if (definition == null) {
             throw new RuntimeException("Agent not found, agentId: " + agentId);
         }

@@ -7,6 +7,7 @@ import com.htam.agent.common.entity.KnowledgeBaseConfig;
 import com.htam.agent.common.entity.RagDocument;
 import com.htam.agent.common.entity.RagDocumentChunk;
 import com.htam.agent.common.enums.RagDocumentStatus;
+import com.htam.agent.common.knowledge.KnowledgeRetrievalService;
 import com.htam.agent.common.util.JsonUtils;
 import com.htam.agent.common.vo.RagDocumentChunkVO;
 import com.htam.agent.capability.knowledge.rag.DocumentParser;
@@ -37,7 +38,7 @@ import java.util.List;
  * @author huxuehao
  */
 @Component
-public class LocalRagService {
+public class LocalRagService implements KnowledgeRetrievalService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalRagService.class);
 
@@ -158,8 +159,9 @@ public class LocalRagService {
      * @param scoreThreshold 分数阈值
      * @return 相关文档分块列表
      */
+    @Override
     public List<RagDocumentChunkVO> retrieve(String query, KnowledgeBaseConfig config,
-                                           int limit, double scoreThreshold) {
+                                             int limit, double scoreThreshold) {
         float[] queryEmbedding = embeddingService.embed(query, config);
 
         List<RetrievalResult> results = vectorStore.search(

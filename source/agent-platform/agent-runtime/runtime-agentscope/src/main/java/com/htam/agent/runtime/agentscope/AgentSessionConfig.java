@@ -6,7 +6,7 @@ import io.agentscope.core.agui.registry.AguiAgentRegistry;
 import io.agentscope.core.session.Session;
 import io.agentscope.spring.boot.agui.common.AguiProperties;
 import io.agentscope.spring.boot.agui.common.ThreadSessionManager;
-import io.agentscope.spring.boot.agui.mvc.AguiMvcController;
+import io.agentscope.spring.boot.agui.mvc.AguiMvcEndpoint;
 import io.agentscope.spring.boot.agui.webflux.AguiWebFluxHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,13 +47,13 @@ public class AgentSessionConfig {
     }
 
     /**
-     * 配置 AguiMvcController
+     * 配置 AguiMvcEndpoint
      * 覆盖 agentscope-agui-spring-boot-starter 的默认配置
      */
     @Bean
     @Primary
-    @ConditionalOnClass(name = "io.agentscope.spring.boot.agui.mvc.AguiMvcController")
-    public AguiMvcController aguiMvcController(
+    @ConditionalOnClass(name = "io.agentscope.spring.boot.agui.mvc.AguiMvcEndpoint")
+    public AguiMvcEndpoint aguiMvcEndpoint(
             @Autowired JdbcTemplate jdbcTemplate,
             @Qualifier("conversationJdbcTemplate") ObjectProvider<JdbcTemplate> conversationJdbcTemplate,
             @Autowired(required = false) AguiAgentRegistry registry,
@@ -69,7 +69,7 @@ public class AgentSessionConfig {
             registry.setSessionManager(sessionManager);
         }
 
-        return AguiMvcController.builder()
+        return AguiMvcEndpoint.builder()
                 .agentRegistry(registry)
                 .sessionManager(sessionManager)
                 .serverSideMemory(props.isServerSideMemory())
