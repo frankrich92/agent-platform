@@ -11,7 +11,6 @@
   <modules>
     <module>agent-domain</module>
     <module>agent-api</module>
-    <module>agent-common</module>
     <module>agent-repo</module>
     <module>agent-profile</module>
     <module>agent-run</module>
@@ -196,17 +195,72 @@
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>agent-domain</artifactId>
+        <artifactId>domain-common</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>agent-api</artifactId>
+        <artifactId>domain-profile</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>common-core</artifactId>
+        <artifactId>domain-run</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
+        <artifactId>domain-capability</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
+        <artifactId>domain-workflow</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
+        <artifactId>domain-worker</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
+        <artifactId>domain-governance</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
+        <artifactId>api-common</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
+        <artifactId>api-profile</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
+        <artifactId>api-run</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
+        <artifactId>api-capability</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
+        <artifactId>api-workflow</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
+        <artifactId>api-worker</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
+        <artifactId>api-governance</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -256,7 +310,17 @@
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
+        <artifactId>worker-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
         <artifactId>worker-file</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
+        <artifactId>worker-workspace</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -291,6 +355,31 @@
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
+        <artifactId>workflow-definition</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
+        <artifactId>workflow-node</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
+        <artifactId>workflow-human-task</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
+        <artifactId>workflow-event</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
+        <artifactId>workflow-runtime</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
         <artifactId>repo-spi</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -302,6 +391,16 @@
       <dependency>
         <groupId>com.htam.agent</groupId>
         <artifactId>repo-vector</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
+        <artifactId>repo-cache</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
+        <artifactId>repo-migration</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -426,7 +525,17 @@
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
-        <artifactId>agent-boot</artifactId>
+        <artifactId>boot-autoconfigure</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
+        <artifactId>boot-starter</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
+        <artifactId>boot-app</artifactId>
         <version>${project.version}</version>
       </dependency>
     </dependencies>

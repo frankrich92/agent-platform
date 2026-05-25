@@ -16,10 +16,10 @@
 package io.agentscope.core.agui.converter;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.htam.agent.common.file.AttachmentContentReader;
 import com.htam.agent.common.util.BeanUtils;
 import com.htam.agent.common.wrapper.FileBase64Wrapper;
 import com.htam.agent.runtime.agentscope.agui.AgentContext;
-import com.htam.agent.worker.file.service.AttachService;
 import io.agentscope.core.agui.model.AguiFunctionCall;
 import io.agentscope.core.agui.model.AguiMessage;
 import io.agentscope.core.agui.model.AguiToolCall;
@@ -46,10 +46,10 @@ public class AguiMessageConverter {
     /**
      * Creates a new AguiMessageConverter
      */
-    private AttachService attachService;
+    private AttachmentContentReader attachmentContentReader;
     public AguiMessageConverter() {
         try {
-            attachService = BeanUtils.getBean(AttachService.class);
+            attachmentContentReader = BeanUtils.getBean(AttachmentContentReader.class);
         } catch (BeansException e) {
             log.error(e.getMessage(), e);
         }
@@ -154,9 +154,9 @@ public class AguiMessageConverter {
      */
     private void fullMultimodalMsg(List<Msg> message) {
         // 获取服务
-        if (attachService == null) {
+        if (attachmentContentReader == null) {
             try {
-                attachService = BeanUtils.getBean(AttachService.class);
+                attachmentContentReader = BeanUtils.getBean(AttachmentContentReader.class);
             } catch (BeansException e) {
                 log.error(e.getMessage(), e);
             }
@@ -172,7 +172,7 @@ public class AguiMessageConverter {
             // 基于 附件 构建 多模态 ContentBlock
             List<ContentBlock> blocks = new LinkedList<>();
             fileIds.forEach(fileId -> {
-                FileBase64Wrapper wrapper = attachService.getFileBase64(Long.valueOf(fileId));
+                FileBase64Wrapper wrapper = attachmentContentReader.getFileBase64(Long.valueOf(fileId));
                 if (wrapper != null) {
                     ContentBlock block = switch (wrapper.getModelType()) {
                         case IMAGE -> ImageBlock.builder()

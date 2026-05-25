@@ -12,9 +12,9 @@
   <packaging>pom</packaging>
   <modules>
     <module>run-event</module>
+    <module>run-message</module>
     <module>run-session</module>
     <module>run-core</module>
-    <module>run-message</module>
     <module>run-step</module>
     <module>run-tool-call</module>
     <module>run-history</module>

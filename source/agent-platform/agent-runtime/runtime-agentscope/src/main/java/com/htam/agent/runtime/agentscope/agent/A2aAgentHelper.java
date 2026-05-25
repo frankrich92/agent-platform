@@ -4,14 +4,14 @@ import com.alibaba.nacos.api.ai.AiFactory;
 import com.alibaba.nacos.api.ai.AiService;
 import com.alibaba.nacos.api.exception.NacosException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.htam.agent.profile.a2a.config.NacosAgentConfig;
-import com.htam.agent.profile.a2a.config.WellKnownAgentConfig;
-import com.htam.agent.profile.a2a.service.AgentA2aService;
-import com.htam.agent.profile.agent.service.AgentDefinitionService;
 import com.htam.agent.common.entity.AgentA2A;
 import com.htam.agent.common.entity.AgentDefinition;
 import com.htam.agent.common.enums.AgentType;
 import com.htam.agent.common.util.JsonUtils;
+import com.htam.agent.repo.agent.AgentA2aRepository;
+import com.htam.agent.repo.agent.AgentDefinitionRepository;
+import com.htam.agent.runtime.agentscope.agent.config.NacosAgentConfig;
+import com.htam.agent.runtime.agentscope.agent.config.WellKnownAgentConfig;
 import com.htam.agent.runtime.agentscope.agui.AgentContext;
 import com.htam.agent.runtime.agentscope.hook.HooksFactory;
 import io.agentscope.core.a2a.agent.A2aAgent;
@@ -34,14 +34,14 @@ import java.util.Properties;
 @RequiredArgsConstructor
 public class A2aAgentHelper {
     private final HooksFactory hooksFactory;
-    private final AgentA2aService agentA2aService;
-    private final AgentDefinitionService agentDefinitionService;
+    private final AgentA2aRepository agentA2aRepository;
+    private final AgentDefinitionRepository agentDefinitionRepository;
     /**
      * 获取 A2aAgent
      * @param agentId agentId
      */
     public A2aAgent getA2aAgent(Long agentId) {
-        AgentDefinition definition = agentDefinitionService.getById(agentId);
+        AgentDefinition definition = agentDefinitionRepository.getById(agentId);
         if (definition == null) {
             throw new RuntimeException("Agent not found, agentId: " + agentId);
         }
@@ -62,7 +62,7 @@ public class A2aAgentHelper {
      * @param definition agent 定义
      */
     public A2aAgent getA2aAgent(AgentDefinition definition) {
-        AgentA2A agentA2A = agentA2aService.getA2aConfigByAgentId(definition.getId());
+        AgentA2A agentA2A = agentA2aRepository.getByAgentId(definition.getId());
         if (agentA2A == null)
             throw new RuntimeException("Agent A2A config not found, agentId: " + definition.getId());
 

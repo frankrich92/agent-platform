@@ -1,7 +1,7 @@
 package com.htam.agent.runtime.agentscope.agent;
 
-import com.htam.agent.profile.agent.service.AgentDefinitionService;
 import com.htam.agent.common.entity.AgentDefinition;
+import com.htam.agent.repo.agent.AgentDefinitionRepository;
 import com.htam.agent.runtime.agentscope.agui.AgentContext;
 import io.agentscope.core.ReActAgent;
 import io.agentscope.core.a2a.agent.A2aAgent;
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 public class IAgentFactory {
     private final A2aAgentHelper a2aAgentHelper;
     private final ReActAgentHelper reActAgentHelper;
-    private final AgentDefinitionService agentDefinitionService;
+    private final AgentDefinitionRepository agentDefinitionRepository;
 
     /**
      * 根据Agent定义ID获取Agent
@@ -27,7 +27,7 @@ public class IAgentFactory {
      */
     public Agent getAgent(Long agentId) {
         try {
-            AgentDefinition definition = agentDefinitionService.getById(agentId);
+            AgentDefinition definition = agentDefinitionRepository.getById(agentId);
             validAgentDefinition(definition);
 
             return switch (definition.getAgentType()) {
@@ -64,7 +64,7 @@ public class IAgentFactory {
      */
     public A2aAgent getA2aAgent(Long agentId) {
         try {
-            AgentDefinition definition = agentDefinitionService.getById(agentId);
+            AgentDefinition definition = agentDefinitionRepository.getById(agentId);
             validAgentDefinition(definition);
 
             return a2aAgentHelper.getA2aAgent(definition);
@@ -94,7 +94,7 @@ public class IAgentFactory {
      */
     public ReActAgent getReActAgent(Long agentId) {
         try {
-            AgentDefinition definition = agentDefinitionService.getById(agentId);
+            AgentDefinition definition = agentDefinitionRepository.getById(agentId);
             validAgentDefinition(definition);
 
             return reActAgentHelper.getReActAgent(definition);

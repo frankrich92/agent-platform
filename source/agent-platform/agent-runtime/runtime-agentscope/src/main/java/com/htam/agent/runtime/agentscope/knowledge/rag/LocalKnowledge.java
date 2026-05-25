@@ -1,9 +1,9 @@
 package com.htam.agent.runtime.agentscope.knowledge.rag;
 
 import com.htam.agent.common.entity.KnowledgeBaseConfig;
+import com.htam.agent.common.knowledge.KnowledgeRetrievalService;
 import com.htam.agent.common.vo.RagDocumentChunkVO;
-import com.htam.agent.capability.knowledge.service.KnowledgeBaseConfigService;
-import com.htam.agent.capability.knowledge.rag.service.LocalRagService;
+import com.htam.agent.repo.knowledge.KnowledgeBaseConfigRepository;
 import io.agentscope.core.message.TextBlock;
 import io.agentscope.core.rag.Knowledge;
 import io.agentscope.core.rag.model.Document;
@@ -28,15 +28,15 @@ public class LocalKnowledge implements Knowledge {
     private static final Logger log = LoggerFactory.getLogger(LocalKnowledge.class);
 
     private final Long knowledgeBaseConfigId;
-    private final LocalRagService localRagService;
-    private final KnowledgeBaseConfigService knowledgeBaseConfigService;
+    private final KnowledgeRetrievalService knowledgeRetrievalService;
+    private final KnowledgeBaseConfigRepository knowledgeBaseConfigRepository;
 
     public LocalKnowledge(Long knowledgeBaseConfigId,
-                          LocalRagService localRagService,
-                          KnowledgeBaseConfigService knowledgeBaseConfigService) {
+                          KnowledgeRetrievalService knowledgeRetrievalService,
+                          KnowledgeBaseConfigRepository knowledgeBaseConfigRepository) {
         this.knowledgeBaseConfigId = knowledgeBaseConfigId;
-        this.localRagService = localRagService;
-        this.knowledgeBaseConfigService = knowledgeBaseConfigService;
+        this.knowledgeRetrievalService = knowledgeRetrievalService;
+        this.knowledgeBaseConfigRepository = knowledgeBaseConfigRepository;
     }
 
     @Override
@@ -50,7 +50,7 @@ public class LocalKnowledge implements Knowledge {
     public Mono<List<Document>> retrieve(String query, RetrieveConfig config) {
         return Mono.fromSupplier(() -> {
             try {
-                KnowledgeBaseConfig kbConfig = knowledgeBaseConfigService.getById(knowledgeBaseConfigId);
+                KnowledgeBaseConfig kbConfig = knowledgeBaseConfigRepository.getById(knowledgeBaseConfigId);
                 if (kbConfig == null || !kbConfig.getEnabled()) {
                     log.warn("知识库配置不存在或已禁用, id={}", knowledgeBaseConfigId);
                     return new ArrayList<>();
@@ -59,7 +59,7 @@ public class LocalKnowledge implements Knowledge {
                 int limit = config != null ? config.getLimit() : 5;
                 double scoreThreshold = config != null ? config.getScoreThreshold() : 0.5;
 
-                List<RagDocumentChunkVO> chunks = localRagService.retrieve(
+                List<RagDocumentChunkVO> chunks = knowledgeRetrievalService.retrieve(
                         query, kbConfig, limit, scoreThreshold);
 
                 List<Document> documents = new ArrayList<>();

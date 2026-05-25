@@ -1,6 +1,6 @@
 package com.htam.agent.runtime.agentscope.mcp;
 
-import com.htam.agent.capability.mcp.service.McpRuntimeDegradeService;
+import com.htam.agent.common.mcp.McpRuntimeDegradeRecorder;
 import com.htam.agent.common.util.JsonUtils;
 import com.htam.agent.runtime.core.RuntimeInteractionRecorder;
 import io.agentscope.core.message.ToolResultBlock;
@@ -29,18 +29,18 @@ public class LazyMcpAgentTool implements AgentTool {
     private final RuntimeDegradeContext degradeContext;
     private final McpSchema.Tool toolSchema;
     private final Supplier<Mono<McpClientWrapper>> initializedClientSupplier;
-    private final McpRuntimeDegradeService mcpRuntimeDegradeService;
+    private final McpRuntimeDegradeRecorder mcpRuntimeDegradeRecorder;
     private final Map<String, Object> parameters;
     private final Map<String, Object> outputSchema;
 
     public LazyMcpAgentTool(RuntimeDegradeContext degradeContext,
                             McpSchema.Tool toolSchema,
                             Supplier<Mono<McpClientWrapper>> initializedClientSupplier,
-                            McpRuntimeDegradeService mcpRuntimeDegradeService) {
+                            McpRuntimeDegradeRecorder mcpRuntimeDegradeRecorder) {
         this.degradeContext = degradeContext;
         this.toolSchema = toolSchema;
         this.initializedClientSupplier = initializedClientSupplier;
-        this.mcpRuntimeDegradeService = mcpRuntimeDegradeService;
+        this.mcpRuntimeDegradeRecorder = mcpRuntimeDegradeRecorder;
         this.parameters = McpTool.convertMcpSchemaToParameters(toolSchema.inputSchema(), Set.of());
         this.outputSchema = toolSchema.outputSchema() != null
                 ? new HashMap<>(toolSchema.outputSchema())
@@ -73,7 +73,7 @@ public class LazyMcpAgentTool implements AgentTool {
         String parameterSummary = JsonUtils.toJsonStr(param.getInput());
         return initializedClientSupplier.get()
                 .flatMap(client -> client.callTool(getName(), param.getInput()))
-                .doOnSuccess(result -> mcpRuntimeDegradeService.recordSuccess(
+                .doOnSuccess(result -> mcpRuntimeDegradeRecorder.recordSuccess(
                         degradeContext.serverId(),
                         degradeContext.activationRevision(),
                         degradeContext.configHash(),
@@ -91,7 +91,7 @@ public class LazyMcpAgentTool implements AgentTool {
                     return block;
                 })
                 .onErrorResume(e -> {
-                    mcpRuntimeDegradeService.recordFailure(
+                    mcpRuntimeDegradeRecorder.recordFailure(
                             degradeContext.serverId(),
                             degradeContext.activationRevision(),
                             degradeContext.configHash(),

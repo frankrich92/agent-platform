@@ -27,7 +27,7 @@ import com.htam.agent.capability.skill.service.AgentSkillPackageService;
 import com.htam.agent.capability.skill.service.SkillPackageService;
 import com.htam.agent.profile.studio.service.AgentStudioService;
 import com.htam.agent.capability.tool.service.AgentToolService;
-import com.htam.agent.profile.agent.service.AgentCodeExecutionService;
+import com.htam.agent.worker.code.service.AgentCodeExecutionService;
 import com.htam.agent.capability.tool.service.ToolService;
 import com.htam.agent.repo.agent.AgentDefinitionRepository;
 import com.htam.agent.repo.agent.JobInfoRepository;

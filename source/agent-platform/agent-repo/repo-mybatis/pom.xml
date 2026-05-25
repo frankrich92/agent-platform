@@ -13,11 +13,35 @@
   <dependencies>
     <dependency>
       <groupId>com.htam.agent</groupId>
+      <artifactId>governance-auth</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
       <artifactId>repo-spi</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>agent-domain</artifactId>
+      <artifactId>domain-common</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>domain-profile</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>domain-run</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>domain-capability</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>domain-worker</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>domain-governance</artifactId>
     </dependency>
     <dependency>
       <groupId>com.baomidou</groupId>
@@ -28,8 +52,25 @@
       <artifactId>dynamic-datasource-spring-boot3-starter</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.alibaba</groupId>
+      <artifactId>druid-spring-boot-starter</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-jdbc</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>

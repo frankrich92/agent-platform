@@ -1,0 +1,1841 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>通用大模型对话 - 原型设计</title>
+<style>
+  :root {
+    --sidebar-bg: #171717;
+    --sidebar-hover: #2a2a2a;
+    --sidebar-active: #343434;
+    --sidebar-text: #e3e3e3;
+    --sidebar-text-dim: #8e8e8e;
+    --main-bg: #212121;
+    --chat-bg: #212121;
+    --user-bubble: #2f2f2f;
+    --assistant-bubble: transparent;
+    --input-bg: #2f2f2f;
+    --input-border: #424242;
+    --text-primary: #ececec;
+    --text-secondary: #b4b4b4;
+    --text-dim: #8e8e8e;
+    --accent: #10a37f;
+    --accent-hover: #0d8c6d;
+    --thinking-bg: #1a1a2e;
+    --thinking-border: #3a3a5e;
+    --thinking-text: #a0a0d0;
+    --queue-bg: #2a2a1a;
+    --queue-border: #5e5e2a;
+    --queue-text: #d0d0a0;
+    --divider: #383838;
+    --scrollbar-bg: transparent;
+    --scrollbar-thumb: #424242;
+    --danger: #ef4444;
+    --danger-hover: #dc2626;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", Helvetica, Arial, sans-serif;
+    background: var(--main-bg);
+    color: var(--text-primary);
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* === Layout === */
+  .app {
+    display: flex;
+    height: 100vh;
+  }
+
+  /* === Sidebar === */
+  .sidebar {
+    width: 260px;
+    min-width: 260px;
+    background: var(--sidebar-bg);
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--divider);
+    transition: transform 0.2s;
+  }
+
+  .sidebar-header {
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-new-chat {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: transparent;
+    border: 1px solid var(--divider);
+    border-radius: 8px;
+    color: var(--sidebar-text);
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .btn-new-chat:hover {
+    background: var(--sidebar-hover);
+  }
+
+  .btn-new-chat svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .btn-sidebar-close {
+    display: none;
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: none;
+    color: var(--sidebar-text-dim);
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 18px;
+  }
+
+  .btn-sidebar-close:hover {
+    background: var(--sidebar-hover);
+    color: var(--sidebar-text);
+  }
+
+  .sidebar-search {
+    padding: 0 12px 8px;
+  }
+
+  .sidebar-search input {
+    width: 100%;
+    padding: 8px 12px;
+    background: var(--sidebar-hover);
+    border: 1px solid var(--divider);
+    border-radius: 6px;
+    color: var(--sidebar-text);
+    font-size: 13px;
+    outline: none;
+  }
+
+  .sidebar-search input::placeholder {
+    color: var(--sidebar-text-dim);
+  }
+
+  .sidebar-search input:focus {
+    border-color: var(--accent);
+  }
+
+  .sidebar-search input:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+
+  .session-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 8px;
+  }
+
+  .session-list::-webkit-scrollbar { width: 4px; }
+  .session-list::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 2px; }
+
+  .session-group-label {
+    padding: 8px 8px 4px;
+    font-size: 12px;
+    color: var(--sidebar-text-dim);
+    font-weight: 500;
+  }
+
+  .session-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+    position: relative;
+    gap: 8px;
+  }
+
+  .session-item:hover {
+    background: var(--sidebar-hover);
+  }
+
+  .session-item.active {
+    background: var(--sidebar-active);
+  }
+
+  .session-item-title {
+    flex: 1;
+    font-size: 14px;
+    color: var(--sidebar-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .session-item .btn-delete {
+    display: none;
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    border: none;
+    color: var(--sidebar-text-dim);
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .session-item:hover .btn-delete {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .session-item .btn-delete:hover {
+    color: var(--danger);
+    background: rgba(239, 68, 68, 0.1);
+  }
+
+  .sidebar-footer {
+    padding: 12px;
+    border-top: 1px solid var(--divider);
+  }
+
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--sidebar-text-dim);
+  }
+
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  /* === Main Area === */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  /* Top bar */
+  .main-topbar {
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--divider);
+    background: var(--main-bg);
+    min-height: 48px;
+    gap: 12px;
+  }
+
+  .btn-sidebar-toggle {
+    display: none;
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 18px;
+  }
+
+  .btn-sidebar-toggle:hover {
+    background: var(--sidebar-hover);
+  }
+
+  .main-topbar-title {
+    flex: 1;
+    font-size: 15px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .model-badge {
+    font-size: 12px;
+    color: var(--text-dim);
+    background: var(--sidebar-hover);
+    padding: 4px 10px;
+    border-radius: 12px;
+  }
+
+  /* Chat area */
+  .chat-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 0 16px;
+  }
+
+  .chat-area::-webkit-scrollbar { width: 6px; }
+  .chat-area::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+
+  .chat-messages {
+    max-width: 768px;
+    margin: 0 auto;
+    padding: 16px 24px 0;
+  }
+
+  /* Empty state */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 16px;
+    color: var(--text-dim);
+  }
+
+  .empty-state-icon {
+    width: 48px;
+    height: 48px;
+    opacity: 0.4;
+  }
+
+  .empty-state h2 {
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+
+  .empty-state p {
+    font-size: 14px;
+    max-width: 400px;
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  /* Message */
+  .message {
+    padding: 16px 0;
+  }
+
+  .message + .message {
+    border-top: none;
+  }
+
+  .message-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .message-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .message-avatar.user {
+    background: #5b5fc7;
+    color: #fff;
+  }
+
+  .message-avatar.assistant {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .message-role {
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .message-body {
+    padding-left: 38px;
+    line-height: 1.7;
+    font-size: 15px;
+    color: var(--text-primary);
+  }
+
+  .message-body p {
+    margin-bottom: 8px;
+  }
+
+  .message-body p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Thinking block */
+  .thinking-block {
+    margin-bottom: 12px;
+    border-left: 3px solid var(--thinking-border);
+    background: var(--thinking-bg);
+    border-radius: 0 8px 8px 0;
+    overflow: hidden;
+  }
+
+  .thinking-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--thinking-text);
+    user-select: none;
+  }
+
+  .thinking-header svg {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.2s;
+  }
+
+  .thinking-block.collapsed .thinking-header svg {
+    transform: rotate(-90deg);
+  }
+
+  .thinking-block.collapsed .thinking-content {
+    display: none;
+  }
+
+  .thinking-content {
+    padding: 4px 12px 10px;
+    font-size: 14px;
+    color: var(--thinking-text);
+    line-height: 1.6;
+    white-space: pre-wrap;
+  }
+
+  .message-error {
+    margin-top: 8px;
+    padding: 10px 12px;
+    border: 1px solid #5a2a2a;
+    border-radius: 6px;
+    background: #2e1a1a;
+    color: #d0a0a0;
+    font-size: 14px;
+  }
+
+  .message-error button {
+    margin-left: 10px;
+    padding: 4px 8px;
+    border: 1px solid #7a3a3a;
+    border-radius: 4px;
+    background: transparent;
+    color: #f0b0b0;
+    cursor: pointer;
+  }
+
+  /* Streaming cursor */
+  .streaming-cursor::after {
+    content: "";
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    background: var(--accent);
+    margin-left: 2px;
+    vertical-align: text-bottom;
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  /* Loading dots */
+  .loading-dots {
+    display: inline-flex;
+    gap: 4px;
+    padding: 4px 0;
+  }
+
+  .loading-dots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    animation: dot-bounce 1.4s infinite ease-in-out;
+  }
+
+  .loading-dots span:nth-child(2) { animation-delay: 0.16s; }
+  .loading-dots span:nth-child(3) { animation-delay: 0.32s; }
+
+  @keyframes dot-bounce {
+    0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+    40% { opacity: 1; transform: scale(1); }
+  }
+
+  /* === Input area === */
+  .input-area {
+    padding: 0 24px 20px;
+    max-width: 768px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  /* Queue zone */
+  .queue-zone {
+    margin-bottom: 8px;
+  }
+
+  .queue-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: var(--queue-bg);
+    border: 1px solid var(--queue-border);
+    border-radius: 8px;
+    margin-bottom: 6px;
+    font-size: 14px;
+    color: var(--queue-text);
+  }
+
+  .queue-badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    background: rgba(160, 160, 80, 0.2);
+    border: 1px solid var(--queue-border);
+    border-radius: 10px;
+    color: var(--queue-text);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .queue-text {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .queue-remove {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 2px;
+    line-height: 1;
+  }
+
+  .queue-remove:hover {
+    color: var(--danger);
+  }
+
+  /* Input box */
+  .input-box {
+    display: flex;
+    align-items: flex-end;
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 16px;
+    padding: 8px 12px 8px 16px;
+    gap: 8px;
+    transition: border-color 0.15s;
+  }
+
+  .input-box:focus-within {
+    border-color: var(--accent);
+  }
+
+  .input-box textarea {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: 15px;
+    line-height: 1.5;
+    resize: none;
+    outline: none;
+    max-height: 200px;
+    min-height: 24px;
+    font-family: inherit;
+  }
+
+  .input-box textarea::placeholder {
+    color: var(--text-dim);
+  }
+
+  .btn-send {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+
+  .btn-send:hover {
+    background: var(--accent-hover);
+  }
+
+  .btn-send:disabled {
+    background: var(--input-border);
+    cursor: default;
+  }
+
+  .btn-send svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .input-hint {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 8px;
+  }
+
+  /* === Annotation labels === */
+  .annotation {
+    position: fixed;
+    background: #1a1a2e;
+    border: 1px solid #4a4aff;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    color: #a0a0ff;
+    white-space: nowrap;
+    z-index: 1000;
+    pointer-events: none;
+  }
+
+  .annotation::before {
+    content: "";
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #1a1a2e;
+    border-left: 1px solid #4a4aff;
+    border-top: 1px solid #4a4aff;
+    transform: rotate(45deg);
+  }
+
+  /* === Prototype page switcher === */
+  .proto-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #0d0d1a;
+    border-top: 1px solid #2a2a4a;
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    padding: 8px 16px;
+    z-index: 100;
+  }
+
+  .proto-nav button {
+    padding: 8px 20px;
+    border: 1px solid #2a2a4a;
+    border-radius: 8px;
+    background: transparent;
+    color: #8888cc;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .proto-nav button:hover {
+    background: #1a1a2e;
+    border-color: #4a4aff;
+  }
+
+  .proto-nav button.active {
+    background: #1a1a3e;
+    border-color: #6a6aff;
+    color: #a0a0ff;
+  }
+
+  .proto-page {
+    display: none;
+    height: 100%;
+  }
+
+  .proto-page.active {
+    display: flex;
+  }
+
+  /* === Mobile overlay === */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 49;
+  }
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      z-index: 50;
+      transform: translateX(-100%);
+    }
+
+    .sidebar.open {
+      transform: translateX(0);
+    }
+
+    .sidebar-overlay.open {
+      display: block;
+    }
+
+    .btn-sidebar-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-sidebar-close {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .chat-messages {
+      padding: 12px 16px 0;
+    }
+
+    .input-area {
+      padding: 0 16px 16px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== PAGE 1: Empty State ===================== -->
+<div class="proto-page active" id="page-empty">
+  <div class="app">
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar-1">
+      <div class="sidebar-header">
+        <button class="btn-new-chat" onclick="switchPage('page-empty')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          新建对话
+        </button>
+        <button class="btn-sidebar-close" onclick="closeSidebar()">&times;</button>
+      </div>
+      <div class="sidebar-search">
+        <input type="text" placeholder="搜索功能开发中..." disabled aria-label="会话搜索占位" />
+      </div>
+      <div class="session-list">
+        <div class="session-group-label">今天</div>
+        <div class="session-item" onclick="switchPage('page-chat')">
+          <span class="session-item-title">关于Spring WebFlux的疑问</span>
+          <button class="btn-delete" title="删除会话">&times;</button>
+        </div>
+        <div class="session-item" onclick="switchPage('page-chat')">
+          <span class="session-item-title">Vue3组合式API使用方法</span>
+          <button class="btn-delete" title="删除会话">&times;</button>
+        </div>
+        <div class="session-group-label">昨天</div>
+        <div class="session-item" onclick="switchPage('page-chat')">
+          <span class="session-item-title">PostgreSQL索引优化建议</span>
+          <button class="btn-delete" title="删除会话">&times;</button>
+        </div>
+        <div class="session-item" onclick="switchPage('page-chat')">
+          <span class="session-item-title">MyBatis动态SQL写法</span>
+          <button class="btn-delete" title="删除会话">&times;</button>
+        </div>
+        <div class="session-group-label">过去7天</div>
+        <div class="session-item" onclick="switchPage('page-chat')">
+          <span class="session-item-title">Flyway迁移脚本编写规范</span>
+          <button class="btn-delete" title="删除会话">&times;</button>
+        </div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar">U</div>
+          <span>用户: demo_app</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-overlay" id="overlay-1" onclick="closeSidebar()"></div>
+
+    <!-- Main -->
+    <div class="main">
+      <div class="main-topbar">
+        <button class="btn-sidebar-toggle" onclick="openSidebar()">&#9776;</button>
+        <span class="main-topbar-title">通用大模型对话</span>
+        <span class="model-badge">配置模型</span>
+      </div>
+      <div class="chat-area">
+        <div class="empty-state">
+          <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+          <h2>通用大模型对话</h2>
+          <p>开始一段新的对话，或从左侧选择历史会话继续聊天。</p>
+        </div>
+      </div>
+      <div class="input-area">
+        <div class="input-box">
+          <textarea rows="1" placeholder="输入消息..."></textarea>
+          <button class="btn-send" disabled>
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          </button>
+        </div>
+        <div class="input-hint">按 Enter 发送，Shift+Enter 换行</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== PAGE 2: Chat with Thinking ===================== -->
+<div class="proto-page" id="page-chat">
+  <div class="app">
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar-2">
+      <div class="sidebar-header">
+        <button class="btn-new-chat" onclick="switchPage('page-empty')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          新建对话
+        </button>
+        <button class="btn-sidebar-close" onclick="closeSidebar()">&times;</button>
+      </div>
+      <div class="sidebar-search">
+        <input type="text" placeholder="搜索功能开发中..." disabled aria-label="会话搜索占位" />
+      </div>
+      <div class="session-list">
+        <div class="session-group-label">今天</div>
+        <div class="session-item active">
+          <span class="session-item-title">关于Spring WebFlux的疑问</span>
+          <button class="btn-delete" title="删除会话">&times;</button>
+        </div>
+        <div class="session-item" onclick="switchPage('page-chat')">
+          <span class="session-item-title">Vue3组合式API使用方法</span>
+          <button class="btn-delete" title="删除会话">&times;</button>
+        </div>
+        <div class="session-group-label">昨天</div>
+        <div class="session-item" onclick="switchPage('page-chat')">
+          <span class="session-item-title">PostgreSQL索引优化建议</span>
+          <button class="btn-delete" title="删除会话">&times;</button>
+        </div>
+        <div class="session-item" onclick="switchPage('page-chat')">
+          <span class="session-item-title">MyBatis动态SQL写法</span>
+          <button class="btn-delete" title="删除会话">&times;</button>
+        </div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar">U</div>
+          <span>用户: demo_app</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-overlay" id="overlay-2" onclick="closeSidebar()"></div>
+
+    <!-- Main -->
+    <div class="main">
+      <div class="main-topbar">
+        <button class="btn-sidebar-toggle" onclick="openSidebar()">&#9776;</button>
+        <span class="main-topbar-title">关于Spring WebFlux的疑问</span>
+        <span class="model-badge">配置模型</span>
+      </div>
+      <div class="chat-area">
+        <div class="chat-messages">
+
+          <!-- User message 1 -->
+          <div class="message">
+            <div class="message-header">
+              <div class="message-avatar user">你</div>
+              <span class="message-role">你</span>
+            </div>
+            <div class="message-body">
+              <p>请解释一下Spring WebFlux和传统Spring MVC的主要区别是什么？在什么场景下应该选择WebFlux？</p>
+            </div>
+          </div>
+
+          <!-- Assistant message 1 -->
+          <div class="message">
+            <div class="message-header">
+              <div class="message-avatar assistant">AI</div>
+              <span class="message-role">助手</span>
+            </div>
+            <div class="message-body">
+              <!-- Thinking block (expanded) -->
+              <div class="thinking-block">
+                <div class="thinking-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                  Thinking 过程
+                </div>
+                <div class="thinking-content">用户问的是Spring WebFlux和Spring MVC的对比，我需要从编程模型、线程模型、适用场景几个维度来回答。先梳理核心差异，再给出选型建议。</div>
+              </div>
+
+              <p>Spring WebFlux 和 Spring MVC 的主要区别如下：</p>
+              <p><strong>1. 编程模型</strong></p>
+              <p>Spring MVC 基于同步阻塞模型，使用传统的 Servlet API，每个请求占用一个线程。Spring WebFlux 基于异步非阻塞模型，使用 Reactor 库，通过 Mono 和 Flux 进行响应式编程。</p>
+              <p><strong>2. 线程模型</strong></p>
+              <p>MVC 依赖线程池，高并发时线程资源可能成为瓶颈。WebFlux 使用事件循环（如 Netty），少量线程即可处理大量并发连接。</p>
+              <p><strong>3. 适用场景</strong></p>
+              <p>推荐使用 WebFlux 的场景：I/O 密集型（如调用远程 API、数据库查询）、需要处理大量长连接、对资源利用率要求高。推荐使用 MVC 的场景：CPU 密集型、团队对响应式编程不熟悉、已有大量 MVC 代码。</p>
+            </div>
+          </div>
+
+          <!-- User message 2 -->
+          <div class="message">
+            <div class="message-header">
+              <div class="message-avatar user">你</div>
+              <span class="message-role">你</span>
+            </div>
+            <div class="message-body">
+              <p>那WebFlux中如何处理流式响应？比如我想实现一个SSE接口，应该怎么做？</p>
+            </div>
+          </div>
+
+          <!-- Assistant message 2 (streaming) -->
+          <div class="message">
+            <div class="message-header">
+              <div class="message-avatar assistant">AI</div>
+              <span class="message-role">助手</span>
+            </div>
+            <div class="message-body">
+              <!-- Thinking block (collapsed) -->
+              <div class="thinking-block collapsed">
+                <div class="thinking-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                  Thinking 过程
+                </div>
+                <div class="thinking-content">用户追问了流式响应的实现，需要展示SSE在WebFlux中的具体写法。重点说明Flux.create和ServerResponse的配合方式，同时提到text/event-stream的MediaType设置。</div>
+              </div>
+
+              <p>在 Spring WebFlux 中实现 SSE 流式响应非常简洁，核心是返回 <code>Flux&lt;ServerSentEvent&gt;</code> 类型。</p>
+              <p>示例代码如下：</p>
+              <pre style="background:#1e1e2e;padding:12px;border-radius:8px;overflow-x:auto;font-size:13px;line-height:1.6;margin:8px 0"><code style="color:#e0e0e0">@GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+public Flux&lt;ServerSentEvent&lt;String&gt;&gt; stream() {
+    return Flux.interval(Duration.ofMillis(100))
+        .map(seq -&gt; ServerSentEvent.&lt;String&gt;builder()
+            .event("message")
+            .data("chunk " + seq)
+            .build());
+}</code></pre>
+              <p>前端使用 <code>fetch</code> 读取流式响应，按事件类型分别处理 <code>thinking</code>、<code>message</code>、<code>done</code> 等事件<span class="streaming-cursor"></span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="input-area">
+        <div class="input-box">
+          <textarea rows="1" placeholder="输入消息...">能再详细说明一下前端如何解析SSE流吗？</textarea>
+          <button class="btn-send">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          </button>
+        </div>
+        <div class="input-hint">按 Enter 发送，Shift+Enter 换行</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== PAGE 3: Queued Messages ===================== -->
+<div class="proto-page" id="page-queue">
+  <div class="app">
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar-3">
+      <div class="sidebar-header">
+        <button class="btn-new-chat" onclick="switchPage('page-empty')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          新建对话
+        </button>
+        <button class="btn-sidebar-close" onclick="closeSidebar()">&times;</button>
+      </div>
+      <div class="sidebar-search">
+        <input type="text" placeholder="搜索功能开发中..." disabled aria-label="会话搜索占位" />
+      </div>
+      <div class="session-list">
+        <div class="session-group-label">今天</div>
+        <div class="session-item active">
+          <span class="session-item-title">关于Spring WebFlux的疑问</span>
+          <button class="btn-delete" title="删除会话">&times;</button>
+        </div>
+        <div class="session-item" onclick="switchPage('page-chat')">
+          <span class="session-item-title">Vue3组合式API使用方法</span>
+          <button class="btn-delete" title="删除会话">&times;</button>
+        </div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar">U</div>
+          <span>用户: demo_app</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-overlay" id="overlay-3" onclick="closeSidebar()"></div>
+
+    <!-- Main -->
+    <div class="main">
+      <div class="main-topbar">
+        <button class="btn-sidebar-toggle" onclick="openSidebar()">&#9776;</button>
+        <span class="main-topbar-title">关于Spring WebFlux的疑问</span>
+        <span class="model-badge">配置模型</span>
+      </div>
+      <div class="chat-area">
+        <div class="chat-messages">
+
+          <!-- User message 1 -->
+          <div class="message">
+            <div class="message-header">
+              <div class="message-avatar user">你</div>
+              <span class="message-role">你</span>
+            </div>
+            <div class="message-body">
+              <p>请解释一下Spring WebFlux和传统Spring MVC的主要区别是什么？</p>
+            </div>
+          </div>
+
+          <!-- Assistant message 1 (completed) -->
+          <div class="message">
+            <div class="message-header">
+              <div class="message-avatar assistant">AI</div>
+              <span class="message-role">助手</span>
+            </div>
+            <div class="message-body">
+              <div class="thinking-block collapsed">
+                <div class="thinking-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                  Thinking 过程
+                </div>
+                <div class="thinking-content">从编程模型、线程模型、适用场景来回答。</div>
+              </div>
+              <p>Spring WebFlux 基于 Reactive Stack，使用异步非阻塞模型；Spring MVC 基于 Servlet Stack，使用同步阻塞模型。WebFlux 适合 I/O 密集型场景，MVC 适合 CRUD 类应用。</p>
+            </div>
+          </div>
+
+          <!-- User message 2 -->
+          <div class="message">
+            <div class="message-header">
+              <div class="message-avatar user">你</div>
+              <span class="message-role">你</span>
+            </div>
+            <div class="message-body">
+              <p>那WebFlux中如何处理流式响应？</p>
+            </div>
+          </div>
+
+          <!-- Assistant message 2 (streaming in progress) -->
+          <div class="message">
+            <div class="message-header">
+              <div class="message-avatar assistant">AI</div>
+              <span class="message-role">助手</span>
+            </div>
+            <div class="message-body">
+              <!-- Thinking streaming -->
+              <div class="thinking-block">
+                <div class="thinking-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                  Thinking 过程
+                </div>
+                <div class="thinking-content">用户问的是SSE流式响应实现，我需要给出WebFlux中的具体代码示例，同时说明前端用fetch解析的方式<span class="streaming-cursor"></span></div>
+              </div>
+
+              <p>在 Spring WebFlux 中实现 SSE 流式响应非常简洁，核心是返回 <code>Flux&lt;ServerSentEvent&gt;</code> 类型。<span class="streaming-cursor"></span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="input-area">
+        <!-- Queue zone: messages waiting while assistant is responding -->
+        <div class="queue-zone">
+          <div class="queue-item">
+            <span class="queue-badge">排队中</span>
+            <span class="queue-text">能再详细说明一下前端如何解析SSE流吗？</span>
+            <button class="queue-remove" title="移除排队消息">&times;</button>
+          </div>
+          <div class="queue-item">
+            <span class="queue-badge">排队中</span>
+            <span class="queue-text">还有，WebFlux中如何做全局异常处理？</span>
+            <button class="queue-remove" title="移除排队消息">&times;</button>
+          </div>
+        </div>
+
+        <div class="input-box">
+          <textarea rows="1" placeholder="输入消息..."></textarea>
+          <button class="btn-send" disabled>
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          </button>
+        </div>
+        <div class="input-hint">按 Enter 发送，Shift+Enter 换行</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== PAGE 4: History Session ===================== -->
+<div class="proto-page" id="page-history">
+  <div class="app">
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar-4">
+      <div class="sidebar-header">
+        <button class="btn-new-chat" onclick="switchPage('page-empty')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          新建对话
+        </button>
+        <button class="btn-sidebar-close" onclick="closeSidebar()">&times;</button>
+      </div>
+      <div class="sidebar-search">
+        <input type="text" placeholder="搜索功能开发中..." disabled aria-label="会话搜索占位" />
+      </div>
+      <div class="session-list">
+        <div class="session-group-label">今天</div>
+        <div class="session-item">
+          <span class="session-item-title">关于Spring WebFlux的疑问</span>
+          <button class="btn-delete" title="删除会话">&times;</button>
+        </div>
+        <div class="session-group-label">昨天</div>
+        <div class="session-item active">
+          <span class="session-item-title">PostgreSQL索引优化建议</span>
+          <button class="btn-delete" title="删除会话">&times;</button>
+        </div>
+        <div class="session-item">
+          <span class="session-item-title">MyBatis动态SQL写法</span>
+          <button class="btn-delete" title="删除会话">&times;</button>
+        </div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar">U</div>
+          <span>用户: demo_app</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-overlay" id="overlay-4" onclick="closeSidebar()"></div>
+
+    <!-- Main -->
+    <div class="main">
+      <div class="main-topbar">
+        <button class="btn-sidebar-toggle" onclick="openSidebar()">&#9776;</button>
+        <span class="main-topbar-title">PostgreSQL索引优化建议</span>
+        <span class="model-badge">配置模型</span>
+      </div>
+      <div class="chat-area">
+        <div class="chat-messages">
+
+          <!-- History: User message 1 -->
+          <div class="message">
+            <div class="message-header">
+              <div class="message-avatar user">你</div>
+              <span class="message-role">你</span>
+            </div>
+            <div class="message-body">
+              <p>我的PostgreSQL数据库中有一张订单表，数据量大概500万行，查询速度越来越慢，能帮忙看看怎么优化吗？</p>
+            </div>
+          </div>
+
+          <!-- History: Assistant message 1 -->
+          <div class="message">
+            <div class="message-header">
+              <div class="message-avatar assistant">AI</div>
+              <span class="message-role">助手</span>
+            </div>
+            <div class="message-body">
+              <div class="thinking-block collapsed">
+                <div class="thinking-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                  Thinking 过程
+                </div>
+                <div class="thinking-content">500万行的订单表查询变慢，需要从索引、查询模式、表结构几个方面分析。先给出通用的索引优化建议，再说明如何定位慢查询。</div>
+              </div>
+              <p>针对500万行的订单表，以下是一些索引优化建议：</p>
+              <p><strong>1. 为常用查询条件创建索引</strong></p>
+              <p>根据你的查询模式，优先为 WHERE 子句中的高频列创建索引。例如如果经常按 <code>user_id</code> 和 <code>created_at</code> 查询：</p>
+              <pre style="background:#1e1e2e;padding:12px;border-radius:8px;overflow-x:auto;font-size:13px;line-height:1.6;margin:8px 0"><code style="color:#e0e0e0">CREATE INDEX idx_orders_user_created
+ON orders (user_id, created_at DESC);</code></pre>
+              <p><strong>2. 使用部分索引减少体积</strong></p>
+              <p>如果经常只查询特定状态的订单：</p>
+              <pre style="background:#1e1e2e;padding:12px;border-radius:8px;overflow-x:auto;font-size:13px;line-height:1.6;margin:8px 0"><code style="color:#e0e0e0">CREATE INDEX idx_orders_pending
+ON orders (user_id) WHERE status = 'pending';</code></pre>
+              <p><strong>3. 定期执行 VACUUM ANALYZE</strong></p>
+              <p>确保查询计划器有最新的统计信息来选择最优执行计划。</p>
+            </div>
+          </div>
+
+          <!-- History: User message 2 -->
+          <div class="message">
+            <div class="message-header">
+              <div class="message-avatar user">你</div>
+              <span class="message-role">你</span>
+            </div>
+            <div class="message-body">
+              <p>联合索引和单独建多个单列索引有什么区别？应该怎么选择？</p>
+            </div>
+          </div>
+
+          <!-- History: Assistant message 2 -->
+          <div class="message">
+            <div class="message-header">
+              <div class="message-avatar assistant">AI</div>
+              <span class="message-role">助手</span>
+            </div>
+            <div class="message-body">
+              <div class="thinking-block collapsed">
+                <div class="thinking-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                  Thinking 过程
+                </div>
+                <div class="thinking-content">联合索引 vs 单列索引是经典问题。需要说明最左前缀原则、覆盖索引、以及不同查询模式下的选择策略。</div>
+              </div>
+              <p>联合索引和单列索引的核心区别在于查询匹配规则和使用效率：</p>
+              <p><strong>联合索引遵循最左前缀原则</strong>：索引 <code>(a, b, c)</code> 可以覆盖查询 <code>WHERE a=1</code>、<code>WHERE a=1 AND b=2</code>、<code>WHERE a=1 AND b=2 AND c=3</code>，但不能覆盖 <code>WHERE b=2</code>。</p>
+              <p><strong>选择建议</strong>：如果多个列经常一起出现在查询条件中，优先使用联合索引；如果列之间查询组合不固定，可以考虑单列索引组合。</p>
+            </div>
+          </div>
+
+          <!-- Separator for "continue conversation" -->
+          <div style="text-align:center;padding:12px 0 4px;">
+            <span style="font-size:12px;color:var(--text-dim);border:1px solid var(--divider);padding:4px 14px;border-radius:12px;">以下可以继续追问</span>
+          </div>
+
+        </div>
+      </div>
+      <div class="input-area">
+        <div class="input-box">
+          <textarea rows="1" placeholder="继续追问..."></textarea>
+          <button class="btn-send" disabled>
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          </button>
+        </div>
+        <div class="input-hint">按 Enter 发送，Shift+Enter 换行</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== PAGE 5: Delete Confirmation ===================== -->
+<div class="proto-page" id="page-delete">
+  <div class="app">
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar-5">
+      <div class="sidebar-header">
+        <button class="btn-new-chat" onclick="switchPage('page-empty')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          新建对话
+        </button>
+        <button class="btn-sidebar-close" onclick="closeSidebar()">&times;</button>
+      </div>
+      <div class="sidebar-search">
+        <input type="text" placeholder="搜索功能开发中..." disabled aria-label="会话搜索占位" />
+      </div>
+      <div class="session-list">
+        <div class="session-group-label">今天</div>
+        <div class="session-item active" style="background:rgba(239,68,68,0.08);">
+          <span class="session-item-title" style="text-decoration:line-through;color:var(--text-dim);">关于Spring WebFlux的疑问</span>
+          <button class="btn-delete" style="color:var(--danger);display:flex;" title="确认删除">&check;</button>
+        </div>
+        <div class="session-item">
+          <span class="session-item-title">Vue3组合式API使用方法</span>
+          <button class="btn-delete" title="删除会话">&times;</button>
+        </div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar">U</div>
+          <span>用户: demo_app</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-overlay" id="overlay-5" onclick="closeSidebar()"></div>
+
+    <!-- Main - with delete modal -->
+    <div class="main">
+      <div class="main-topbar">
+        <button class="btn-sidebar-toggle" onclick="openSidebar()">&#9776;</button>
+        <span class="main-topbar-title">关于Spring WebFlux的疑问</span>
+        <span class="model-badge">配置模型</span>
+      </div>
+
+      <!-- Delete confirmation modal -->
+      <div style="position:absolute;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:40;">
+        <div style="background:#2f2f2f;border-radius:12px;padding:24px;max-width:400px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.4);">
+          <h3 style="font-size:16px;font-weight:600;margin-bottom:8px;">删除会话</h3>
+          <p style="font-size:14px;color:var(--text-secondary);line-height:1.6;margin-bottom:20px;">确定要删除会话「关于Spring WebFlux的疑问」吗？此操作不可恢复，会话中的所有消息将被永久删除。</p>
+          <div style="display:flex;gap:10px;justify-content:flex-end;">
+            <button style="padding:8px 20px;border:1px solid var(--divider);border-radius:8px;background:transparent;color:var(--text-secondary);cursor:pointer;font-size:14px;">取消</button>
+            <button style="padding:8px 20px;border:none;border-radius:8px;background:var(--danger);color:#fff;cursor:pointer;font-size:14px;font-weight:500;">删除</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="chat-area">
+        <div class="chat-messages">
+          <div class="message">
+            <div class="message-header">
+              <div class="message-avatar user">你</div>
+              <span class="message-role">你</span>
+            </div>
+            <div class="message-body">
+              <p>请解释一下Spring WebFlux和传统Spring MVC的主要区别是什么？</p>
+            </div>
+          </div>
+          <div class="message">
+            <div class="message-header">
+              <div class="message-avatar assistant">AI</div>
+              <span class="message-role">助手</span>
+            </div>
+            <div class="message-body">
+              <p>Spring WebFlux 基于 Reactive Stack，使用异步非阻塞模型；Spring MVC 基于 Servlet Stack，使用同步阻塞模型。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="input-area">
+        <div class="input-box">
+          <textarea rows="1" placeholder="输入消息..."></textarea>
+          <button class="btn-send" disabled>
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          </button>
+        </div>
+        <div class="input-hint">按 Enter 发送，Shift+Enter 换行</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== PAGE 6: Assistant Failed State ===================== -->
+<div class="proto-page" id="page-failed">
+  <div class="app">
+    <div class="main" style="width:100%;">
+      <div class="main-topbar">
+        <span class="main-topbar-title">关于 Spring WebFlux 的疑问</span>
+        <span class="model-badge">配置模型</span>
+      </div>
+      <div class="chat-area">
+        <div class="message-list">
+          <div class="message">
+            <div class="message-header">
+              <div class="message-avatar user">U</div>
+              <span class="message-role">你</span>
+            </div>
+            <div class="message-body">
+              <p>请继续说明 WebFlux SSE 流式响应怎么做异常处理。</p>
+            </div>
+          </div>
+          <div class="message">
+            <div class="message-header">
+              <div class="message-avatar assistant">AI</div>
+              <span class="message-role">助手</span>
+            </div>
+            <div class="message-body">
+              <div class="message-error">
+                模型响应失败：模型调用超时，请稍后重试。
+                <button type="button">重试</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="input-area">
+        <div class="input-box">
+          <textarea rows="1" placeholder="输入消息..."></textarea>
+          <button class="btn-send" disabled>
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          </button>
+        </div>
+        <div class="input-hint">失败消息保留在消息列表中，用户可显式重试</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== PAGE 7: Auth Error ===================== -->
+<div class="proto-page" id="page-error">
+  <div class="app">
+    <div class="main" style="width:100%;">
+      <div class="main-topbar">
+        <span class="main-topbar-title">通用大模型对话</span>
+      </div>
+      <div class="chat-area">
+        <div class="empty-state">
+          <svg style="width:48px;height:48px;opacity:0.5;" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="15" y1="9" x2="9" y2="15"/>
+            <line x1="9" y1="9" x2="15" y2="15"/>
+          </svg>
+          <h2>无法访问</h2>
+          <p>缺少有效的身份凭证。请通过正确的入口访问本服务，确保 URL 中包含 <code style="background:#2f2f2f;padding:2px 6px;border-radius:4px;font-size:13px;">token</code> 和 <code style="background:#2f2f2f;padding:2px 6px;border-radius:4px;font-size:13px;">appCode</code> 参数。</p>
+          <div style="margin-top:12px;padding:16px;background:#1e1e2e;border-radius:8px;max-width:500px;font-size:13px;line-height:1.8;color:var(--text-dim);">
+            <div>正确入口示例：</div>
+            <code style="color:var(--accent);">https://chat.example.com?token=xxx&appCode=yyy</code>
+            <div style="margin-top:8px;">请求头校验规则：</div>
+            <div><code>X-Token</code> — 非空</div>
+            <div><code>X-App-Code</code> — 非空，将作为用户标识</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== PAGE 8: Mobile View ===================== -->
+<div class="proto-page" id="page-mobile">
+  <div class="app">
+    <div class="sidebar" id="sidebar-7">
+      <div class="sidebar-header">
+        <button class="btn-new-chat" onclick="switchPage('page-empty')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          新建对话
+        </button>
+        <button class="btn-sidebar-close" onclick="closeSidebar()">&times;</button>
+      </div>
+      <div class="sidebar-search">
+        <input type="text" placeholder="搜索功能开发中..." disabled aria-label="会话搜索占位" />
+      </div>
+      <div class="session-list">
+        <div class="session-group-label">今天</div>
+        <div class="session-item active">
+          <span class="session-item-title">关于Spring WebFlux的疑问</span>
+          <button class="btn-delete" title="删除会话">&times;</button>
+        </div>
+        <div class="session-item">
+          <span class="session-item-title">Vue3组合式API使用方法</span>
+          <button class="btn-delete" title="删除会话">&times;</button>
+        </div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar">U</div>
+          <span>用户: demo_app</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-overlay" id="overlay-7" onclick="closeSidebar()"></div>
+
+    <!-- Main - mobile layout simulated -->
+    <div class="main" style="max-width:375px;margin:0 auto;border-left:1px solid var(--divider);border-right:1px solid var(--divider);position:relative;">
+      <div class="main-topbar">
+        <button class="btn-sidebar-toggle" onclick="openSidebar()" style="display:flex;align-items:center;justify-content:center;">&#9776;</button>
+        <span class="main-topbar-title">关于Spring WebFlux的疑问</span>
+        <span class="model-badge" style="font-size:11px;">配置模型</span>
+      </div>
+      <div class="chat-area">
+        <div class="chat-messages">
+          <div class="message">
+            <div class="message-header">
+              <div class="message-avatar user">你</div>
+              <span class="message-role">你</span>
+            </div>
+            <div class="message-body">
+              <p>请解释一下Spring WebFlux和传统Spring MVC的主要区别？</p>
+            </div>
+          </div>
+          <div class="message">
+            <div class="message-header">
+              <div class="message-avatar assistant">AI</div>
+              <span class="message-role">助手</span>
+            </div>
+            <div class="message-body">
+              <div class="thinking-block collapsed">
+                <div class="thinking-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                  Thinking 过程
+                </div>
+                <div class="thinking-content">从编程模型、线程模型、适用场景来回答。</div>
+              </div>
+              <p>Spring WebFlux 基于 Reactive Stack，使用异步非阻塞模型；MVC 基于 Servlet Stack，使用同步阻塞模型。WebFlux 适合 I/O 密集型，MVC 适合 CRUD 应用。</p>
+            </div>
+          </div>
+          <div class="message">
+            <div class="message-header">
+              <div class="message-avatar user">你</div>
+              <span class="message-role">你</span>
+            </div>
+            <div class="message-body">
+              <p>流式响应怎么处理？</p>
+            </div>
+          </div>
+          <div class="message">
+            <div class="message-header">
+              <div class="message-avatar assistant">AI</div>
+              <span class="message-role">助手</span>
+            </div>
+            <div class="message-body">
+              <div class="thinking-block">
+                <div class="thinking-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                  Thinking 过程
+                </div>
+                <div class="thinking-content">需要展示SSE在WebFlux中的写法<span class="streaming-cursor"></span></div>
+              </div>
+              <p>核心是返回 <code>Flux&lt;ServerSentEvent&gt;</code><span class="streaming-cursor"></span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="input-area">
+        <div class="queue-zone">
+          <div class="queue-item">
+            <span class="queue-badge">排队中</span>
+            <span class="queue-text">前端如何解析SSE流？</span>
+            <button class="queue-remove" title="移除">&times;</button>
+          </div>
+        </div>
+        <div class="input-box">
+          <textarea rows="1" placeholder="输入消息..."></textarea>
+          <button class="btn-send" disabled>
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== PAGE 9: SSE Event Flow ===================== -->
+<div class="proto-page" id="page-sse">
+  <div class="app" style="flex-direction:column;height:100vh;">
+    <div style="padding:24px;max-width:900px;margin:0 auto;width:100%;overflow-y:auto;flex:1;">
+      <h2 style="font-size:20px;font-weight:600;margin-bottom:6px;">SSE 流式事件交互流程</h2>
+      <p style="font-size:14px;color:var(--text-secondary);margin-bottom:24px;">前端 fetch 发起请求 &rarr; 后端 WebFlux 返回 text/event-stream &rarr; 按事件类型增量更新 UI</p>
+
+      <!-- Sequence diagram -->
+      <div style="display:flex;flex-direction:column;gap:2px;font-size:13px;font-family:'Menlo','Consolas',monospace;">
+
+        <!-- Row: User sends message -->
+        <div style="display:grid;grid-template-columns:120px 1fr 120px;gap:8px;align-items:center;padding:6px 0;">
+          <div style="text-align:right;color:var(--accent);font-weight:600;">前端</div>
+          <div style="background:#1a2e1a;border:1px solid #2a5a2a;border-radius:6px;padding:6px 12px;color:#a0d0a0;">fetch POST /api/agent/sessions/{sessionId}/messages/stream &nbsp; &rarr; &nbsp;{ content }</div>
+          <div style="color:var(--text-dim);">后端</div>
+        </div>
+
+        <!-- Row: User message saved -->
+        <div style="display:grid;grid-template-columns:120px 1fr 120px;gap:8px;align-items:center;padding:6px 0;">
+          <div style="text-align:right;color:var(--text-dim);">前端</div>
+          <div style="background:#1e1e2e;border:1px solid #2a2a4a;border-radius:6px;padding:6px 12px;color:var(--text-dim);margin-left:128px;">&larr; 保存用户消息: agent_message + agent_message_part(text)</div>
+          <div style="color:#6a6aff;font-weight:600;">后端</div>
+        </div>
+
+        <!-- Row: Assistant message created -->
+        <div style="display:grid;grid-template-columns:120px 1fr 120px;gap:8px;align-items:center;padding:6px 0;">
+          <div style="text-align:right;color:var(--text-dim);">前端</div>
+          <div style="background:#1e1e2e;border:1px solid #2a2a4a;border-radius:6px;padding:6px 12px;color:var(--text-dim);margin-left:128px;">&larr; 创建 assistant 消息: status=streaming</div>
+          <div style="color:#6a6aff;font-weight:600;">后端</div>
+        </div>
+
+        <!-- Row: meta event -->
+        <div style="display:grid;grid-template-columns:120px 1fr 120px;gap:8px;align-items:center;padding:6px 0;">
+          <div style="text-align:right;color:var(--accent);">前端</div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <div style="background:#1e1e2e;border:1px solid #2a2a4a;border-radius:6px;padding:6px 12px;color:#b8b8e8;">event: meta &nbsp; data: {"sessionId":"s1","userMessageId":"m1","assistantMessageId":"m2"}</div>
+            <div style="font-size:12px;color:var(--text-dim);padding-left:12px;">&darr; 前端绑定当前轮消息 ID，后续增量更新本地消息</div>
+          </div>
+          <div style="color:#6a6aff;">后端</div>
+        </div>
+
+        <div style="padding:8px 0 4px 136px;color:var(--text-dim);font-style:italic;">-- 流式响应开始 --</div>
+
+        <!-- Row: thinking event -->
+        <div style="display:grid;grid-template-columns:120px 1fr 120px;gap:8px;align-items:center;padding:6px 0;">
+          <div style="text-align:right;color:var(--accent);">前端</div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <div style="background:#1a1a2e;border:1px solid #3a3a5e;border-radius:6px;padding:6px 12px;color:var(--thinking-text);">event: thinking &nbsp; data: {"delta":"让我分析一下..."}</div>
+            <div style="font-size:12px;color:var(--text-dim);padding-left:12px;">&darr; 追加到 thinking part，更新 Thinking 面板</div>
+          </div>
+          <div style="color:#6a6aff;">后端</div>
+        </div>
+
+        <!-- Row: more thinking -->
+        <div style="display:grid;grid-template-columns:120px 1fr 120px;gap:8px;align-items:center;padding:6px 0;">
+          <div style="text-align:right;color:var(--accent);">前端</div>
+          <div style="background:#1a1a2e;border:1px solid #3a3a5e;border-radius:6px;padding:6px 12px;color:var(--thinking-text);">event: thinking &nbsp; data: {"delta":"需要从编程模型..."}</div>
+          <div style="color:#6a6aff;">后端</div>
+        </div>
+
+        <!-- Row: message event -->
+        <div style="display:grid;grid-template-columns:120px 1fr 120px;gap:8px;align-items:center;padding:6px 0;">
+          <div style="text-align:right;color:var(--accent);">前端</div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <div style="background:#1a2e1a;border:1px solid #2a5a2a;border-radius:6px;padding:6px 12px;color:#a0d0a0;">event: message &nbsp; data: {"delta":"Spring WebFlux"}</div>
+            <div style="font-size:12px;color:var(--text-dim);padding-left:12px;">&darr; 追加到 text part，更新助手回复区域</div>
+          </div>
+          <div style="color:#6a6aff;">后端</div>
+        </div>
+
+        <!-- Row: more message -->
+        <div style="display:grid;grid-template-columns:120px 1fr 120px;gap:8px;align-items:center;padding:6px 0;">
+          <div style="text-align:right;color:var(--accent);">前端</div>
+          <div style="background:#1a2e1a;border:1px solid #2a5a2a;border-radius:6px;padding:6px 12px;color:#a0d0a0;">event: message &nbsp; data: {"delta":"基于 Reactive Stack..."}</div>
+          <div style="color:#6a6aff;">后端</div>
+        </div>
+
+        <!-- Row: done event -->
+        <div style="display:grid;grid-template-columns:120px 1fr 120px;gap:8px;align-items:center;padding:6px 0;">
+          <div style="text-align:right;color:var(--accent);">前端</div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <div style="background:#2e2e1a;border:1px solid #5a5a2a;border-radius:6px;padding:6px 12px;color:#d0d0a0;">event: done &nbsp; data: {"finishReason":"stop"}</div>
+            <div style="font-size:12px;color:var(--text-dim);padding-left:12px;">&darr; 消息状态 &rarr; completed，检查排队消息</div>
+          </div>
+          <div style="color:#6a6aff;">后端</div>
+        </div>
+
+        <div style="padding:8px 0 4px 136px;color:var(--text-dim);font-style:italic;">-- 流式响应结束 --</div>
+
+        <!-- Row: error event -->
+        <div style="display:grid;grid-template-columns:120px 1fr 120px;gap:8px;align-items:center;padding:12px 0 6px;">
+          <div style="text-align:right;color:var(--accent);">前端</div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <div style="background:#2e1a1a;border:1px solid #5a2a2a;border-radius:6px;padding:6px 12px;color:#d0a0a0;">event: error &nbsp; data: {"message":"模型调用超时"}</div>
+            <div style="font-size:12px;color:var(--text-dim);padding-left:12px;">&darr; 消息状态 &rarr; failed，保存 error_message</div>
+          </div>
+          <div style="color:#6a6aff;">后端</div>
+        </div>
+
+      </div>
+
+      <!-- SSE event types reference -->
+      <div style="margin-top:32px;">
+        <h3 style="font-size:16px;font-weight:600;margin-bottom:12px;">SSE 事件类型说明</h3>
+        <div style="display:grid;grid-template-columns:100px 1fr;gap:8px 16px;font-size:14px;">
+          <code style="color:#b8b8e8;">meta</code>
+          <span style="color:var(--text-secondary);">当前轮消息元信息 &mdash; 包含 sessionId、userMessageId、assistantMessageId</span>
+
+          <code style="color:var(--thinking-text);">thinking</code>
+          <span style="color:var(--text-secondary);">大模型思考过程增量片段 &mdash; 追加到 thinking part，UI 展示在可折叠区域</span>
+
+          <code style="color:#a0d0a0;">message</code>
+          <span style="color:var(--text-secondary);">助手最终回复增量片段 &mdash; 追加到 text part，UI 展示在回复区域</span>
+
+          <code style="color:#d0d0a0;">done</code>
+          <span style="color:var(--text-secondary);">当前轮回复完成 &mdash; 消息状态变更为 completed，前端检查排队队列</span>
+
+          <code style="color:#d0a0a0;">error</code>
+          <span style="color:var(--text-secondary);">当前轮回复失败 &mdash; 消息状态变更为 failed，前端展示错误提示</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== PAGE 10: Data Model ===================== -->
+<div class="proto-page" id="page-data">
+  <div class="app" style="flex-direction:column;height:100vh;">
+    <div style="padding:24px;max-width:960px;margin:0 auto;width:100%;overflow-y:auto;flex:1;">
+      <h2 style="font-size:20px;font-weight:600;margin-bottom:6px;">数据模型设计</h2>
+      <p style="font-size:14px;color:var(--text-secondary);margin-bottom:24px;">三表结构：agent_session + agent_message + agent_message_part。ID 实际使用 VARCHAR(64)，避免前端 JavaScript 大整数精度问题。</p>
+
+      <!-- agent_session -->
+      <div style="margin-bottom:28px;">
+        <h3 style="font-size:16px;font-weight:600;margin-bottom:12px;color:var(--accent);">agent_session &mdash; 会话元数据</h3>
+        <div style="background:#1e1e2e;border-radius:8px;overflow:hidden;font-size:13px;font-family:'Menlo','Consolas',monospace;">
+          <div style="display:grid;grid-template-columns:180px 100px 1fr;gap:0;border-bottom:1px solid #2a2a4a;padding:8px 12px;font-weight:600;color:#8888cc;">
+            <span>字段</span><span>类型</span><span>说明</span>
+          </div>
+          <div style="display:grid;grid-template-columns:180px 100px 1fr;gap:0;padding:6px 12px;border-bottom:1px solid #1a1a2a;">
+            <span style="color:#a0d0a0;">id</span><span style="color:var(--text-dim);">VARCHAR(64) PK</span><span style="color:var(--text-secondary);">主键</span>
+          </div>
+          <div style="display:grid;grid-template-columns:180px 100px 1fr;gap:0;padding:6px 12px;border-bottom:1px solid #1a1a2a;">
+            <span style="color:#a0d0a0;">user_code</span><span style="color:var(--text-dim);">VARCHAR</span><span style="color:var(--text-secondary);">用户标识，= appCode</span>
+          </div>
+          <div style="display:grid;grid-template-columns:180px 100px 1fr;gap:0;padding:6px 12px;border-bottom:1px solid #1a1a2a;">
+            <span style="color:#a0d0a0;">parent_session_id</span><span style="color:var(--text-dim);">VARCHAR(64)</span><span style="color:var(--text-secondary);">预留分支续聊，V1 为空</span>
+          </div>
+          <div style="display:grid;grid-template-columns:180px 100px 1fr;gap:0;padding:6px 12px;border-bottom:1px solid #1a1a2a;">
+            <span style="color:#a0d0a0;">title</span><span style="color:var(--text-dim);">VARCHAR</span><span style="color:var(--text-secondary);">会话标题，V1 基于首条消息截断</span>
+          </div>
+          <div style="display:grid;grid-template-columns:180px 100px 1fr;gap:0;padding:6px 12px;border-bottom:1px solid #1a1a2a;">
+            <span style="color:#a0d0a0;">status</span><span style="color:var(--text-dim);">VARCHAR</span><span style="color:var(--text-secondary);">会话状态</span>
+          </div>
+          <div style="display:grid;grid-template-columns:180px 100px 1fr;gap:0;padding:6px 12px;border-bottom:1px solid #1a1a2a;">
+            <span style="color:#a0d0a0;">message_count</span><span style="color:var(--text-dim);">INT</span><span style="color:var(--text-secondary);">消息数量</span>
+          </div>
+          <div style="display:grid;grid-template-columns:180px 100px 1fr;gap:0;padding:6px 12px;border-bottom:1px solid #1a1a2a;">
+            <span style="color:#a0d0a0;">prompt_tokens</span><span style="color:var(--text-dim);">INT</span><span style="color:var(--text-secondary);">预留 token 统计</span>
+          </div>
+          <div style="display:grid;grid-template-columns:180px 100px 1fr;gap:0;padding:6px 12px;border-bottom:1px solid #1a1a2a;">
+            <span style="color:#a0d0a0;">completion_tokens</span><span style="color:var(--text-dim);">INT</span><span style="color:var(--text-secondary);">预留 token 统计</span>
+          </div>
+          <div style="display:grid;grid-template-columns:180px 100px 1fr;gap:0;padding:6px 12px;border-bottom:1px solid #1a1a2a;">
+            <span style="color:#a0d0a0;">summary_message_id</span><span style="color:var(--text-dim);">VARCHAR(64)</span><span style="color:var(--text-secondary);">预留上下文压缩摘要边界</span>
+          </div>
+          <div style="display:grid;grid-template-columns:180px 100px 1fr;gap:0;padding:6px 12px;border-bottom:1px solid #1a1a2a;">
+            <span style="color:#a0d0a0;">last_message_at</span><span style="color:var(--text-dim);">TIMESTAMP</span><span style="color:var(--text-secondary);">最后消息时间</span>
+          </div>
+          <div style="display:grid;grid-template-columns:180px 100px 1fr;gap:0;padding:6px 12px;">
+            <span style="color:var(--text-dim);">created_at / updated_at</span><span style="color:var(--text-dim);">TIMESTAMP</span><span style="color:var(--text-secondary);">创建/更新时间</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- agent_message -->
+      <div style="margin-bottom:28px;">
+        <h3 style="font-size:16px;font-weight:600;margin-bottom:12px;color:var(--accent);">agent_message &mdash; 消息元数据</h3>
+        <div style="background:#1e1e2e;border-radius:8px;overflow:hidden;font-size:13px;font-family:'Menlo','Consolas',monospace;">
+          <div style="display:grid;grid-template-columns:180px 100px 1fr;gap:0;border-bottom:1px solid #2a2a4a;padding:8px 12px;font-weight:600;color:#8888cc;">
+            <span>字段</span><span>类型</span><span>说明</span>
+          </div>
+          <div style="display:grid;grid-template-columns:180px 100px 1fr;gap:0;padding:6px 12px;border-bottom:1px solid #1a1a2a;">
+            <span style="color:#a0d0a0;">id</span><span style="color:var(--text-dim);">VARCHAR(64) PK</span><span style="color:var(--text-secondary);">主键</span>
+          </div>
+          <div style="display:grid;grid-template-columns:180px 100px 1fr;gap:0;padding:6px 12px;border-bottom:1px solid #1a1a2a;">
+            <span style="color:#a0d0a0;">session_id</span><span style="color:var(--text-dim);">VARCHAR(64) FK</span><span style="color:var(--text-secondary);">所属会话</span>
+          </div>
+          <div style="display:grid;grid-template-columns:180px 100px 1fr;gap:0;padding:6px 12px;border-bottom:1px solid #1a1a2a;">
+            <span style="color:#a0d0a0;">user_code</span><span style="color:var(--text-dim);">VARCHAR</span><span style="color:var(--text-secondary);">用户标识</span>
+          </div>
+          <div style="display:grid;grid-template-columns:180px 100px 1fr;gap:0;padding:6px 12px;border-bottom:1px solid #1a1a2a;">
+            <span style="color:#a0d0a0;">sequence</span><span style="color:var(--text-dim);">INT</span><span style="color:var(--text-secondary);">会话内消息顺序</span>
+          </div>
+          <div style="display:grid;grid-template-columns:180px 100px 1fr;gap:0;padding:6px 12px;border-bottom:1px solid #1a1a2a;">
+            <span style="color:#a0d0a0;">role</span><span style="color:var(--text-dim);">VARCHAR</span><span style="color:var(--text-secondary);">user / assistant</span>
+          </div>
+          <div style="display:grid;grid-template-columns:180px 100px 1fr;gap:0;padding:6px 12px;border-bottom:1px solid #1a1a2a;">
+            <span style="color:#a0d0a0;">status</span><span style="color:var(--text-dim);">VARCHAR</span><span style="color:var(--text-secondary);">streaming / completed / failed</span>
+          </div>
+          <div style="display:grid;grid-template-columns:180px 100px 1fr;gap:0;padding:6px 12px;border-bottom:1px solid #1a1a2a;">
+            <span style="color:#a0d0a0;">model_name</span><span style="color:var(--text-dim);">VARCHAR</span><span style="color:var(--text-secondary);">助手消息记录调用模型</span>
+          </div>
+          <div style="display:grid;grid-template-columns:180px 100px 1fr;gap:0;padding:6px 12px;border-bottom:1px solid #1a1a2a;">
+            <span style="color:#a0d0a0;">finish_reason</span><span style="color:var(--text-dim);">VARCHAR</span><span style="color:var(--text-secondary);">stop / length / error</span>
+          </div>
+          <div style="display:grid;grid-template-columns:180px 100px 1fr;gap:0;padding:6px 12px;">
+            <span style="color:var(--text-dim);">error_message / created_at / updated_at</span><span style="color:var(--text-dim);">VARCHAR / TS</span><span style="color:var(--text-secondary);">错误摘要 / 时间戳</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- agent_message_part -->
+      <div style="margin-bottom:28px;">
+        <h3 style="font-size:16px;font-weight:600;margin-bottom:12px;color:var(--accent);">agent_message_part &mdash; 消息内容分段</h3>
+        <div style="background:#1e1e2e;border-radius:8px;overflow:hidden;font-size:13px;font-family:'Menlo','Consolas',monospace;">
+          <div style="display:grid;grid-template-columns:180px 100px 1fr;gap:0;border-bottom:1px solid #2a2a4a;padding:8px 12px;font-weight:600;color:#8888cc;">
+            <span>字段</span><span>类型</span><span>说明</span>
+          </div>
+          <div style="display:grid;grid-template-columns:180px 100px 1fr;gap:0;padding:6px 12px;border-bottom:1px solid #1a1a2a;">
+            <span style="color:#a0d0a0;">id</span><span style="color:var(--text-dim);">VARCHAR(64) PK</span><span style="color:var(--text-secondary);">主键</span>
+          </div>
+          <div style="display:grid;grid-template-columns:180px 100px 1fr;gap:0;padding:6px 12px;border-bottom:1px solid #1a1a2a;">
+            <span style="color:#a0d0a0;">message_id</span><span style="color:var(--text-dim);">VARCHAR(64) FK</span><span style="color:var(--text-secondary);">所属消息</span>
+          </div>
+          <div style="display:grid;grid-template-columns:180px 100px 1fr;gap:0;padding:6px 12px;border-bottom:1px solid #1a1a2a;">
+            <span style="color:#a0d0a0;">session_id</span><span style="color:var(--text-dim);">VARCHAR(64) FK</span><span style="color:var(--text-secondary);">所属会话（冗余查询）</span>
+          </div>
+          <div style="display:grid;grid-template-columns:180px 100px 1fr;gap:0;padding:6px 12px;border-bottom:1px solid #1a1a2a;">
+            <span style="color:#a0d0a0;">user_code</span><span style="color:var(--text-dim);">VARCHAR</span><span style="color:var(--text-secondary);">用户标识（权限隔离）</span>
+          </div>
+          <div style="display:grid;grid-template-columns:180px 100px 1fr;gap:0;padding:6px 12px;border-bottom:1px solid #1a1a2a;">
+            <span style="color:#a0d0a0;">part_sequence</span><span style="color:var(--text-dim);">INT</span><span style="color:var(--text-secondary);">同消息内分段顺序</span>
+          </div>
+          <div style="display:grid;grid-template-columns:180px 100px 1fr;gap:0;padding:6px 12px;border-bottom:1px solid #1a1a2a;">
+            <span style="color:#a0d0a0;">part_type</span><span style="color:var(--text-dim);">VARCHAR</span><span style="color:var(--text-secondary);">text / thinking / finish / error</span>
+          </div>
+          <div style="display:grid;grid-template-columns:180px 100px 1fr;gap:0;padding:6px 12px;border-bottom:1px solid #1a1a2a;">
+            <span style="color:#a0d0a0;">content</span><span style="color:var(--text-dim);">TEXT</span><span style="color:var(--text-secondary);">分段内容</span>
+          </div>
+          <div style="display:grid;grid-template-columns:180px 100px 1fr;gap:0;padding:6px 12px;">
+            <span style="color:var(--text-dim);">status / created_at / updated_at</span><span style="color:var(--text-dim);">VARCHAR / TS</span><span style="color:var(--text-secondary);">streaming/completed/failed</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Relationship diagram -->
+      <div style="margin-bottom:28px;">
+        <h3 style="font-size:16px;font-weight:600;margin-bottom:12px;color:var(--accent);">关联关系</h3>
+        <div style="background:#1e1e2e;border-radius:8px;padding:20px;font-size:14px;font-family:'Menlo','Consolas',monospace;line-height:2;color:var(--text-secondary);">
+          <div><span style="color:#a0d0a0;">agent_session</span> <span style="color:var(--text-dim);">1 ──→ N</span> <span style="color:#a0d0a0;">agent_message</span> &nbsp; (session_id)</div>
+          <div><span style="color:#a0d0a0;">agent_message</span> <span style="color:var(--text-dim);">1 ──→ N</span> <span style="color:#a0d0a0;">agent_message_part</span> &nbsp; (message_id)</div>
+          <div style="margin-top:12px;padding:12px;background:#12121e;border-radius:6px;font-size:13px;line-height:1.8;">
+            <div style="color:var(--thinking-text);">-- 用户消息保存规则</div>
+            <div>1 agent_message (role=user) + 1 agent_message_part (part_type=text)</div>
+            <div style="margin-top:8px;color:var(--thinking-text);">-- 助手消息保存规则</div>
+            <div>1 agent_message (role=assistant, status=streaming→completed)</div>
+            <div>+ 1 agent_message_part (part_type=thinking) -- 思考过程</div>
+            <div>+ 1 agent_message_part (part_type=text) -- 最终回复</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ===================== Navigation Bar ===================== -->
+<div class="proto-nav">
+  <button class="active" onclick="switchPage('page-empty')">空白状态</button>
+  <button onclick="switchPage('page-chat')">对话中</button>
+  <button onclick="switchPage('page-queue')">排队消息</button>
+  <button onclick="switchPage('page-history')">历史会话</button>
+  <button onclick="switchPage('page-delete')">删除确认</button>
+  <button onclick="switchPage('page-failed')">失败状态</button>
+  <button onclick="switchPage('page-error')">鉴权错误</button>
+  <button onclick="switchPage('page-mobile')">移动端</button>
+  <button onclick="switchPage('page-sse')">SSE流程</button>
+  <button onclick="switchPage('page-data')">数据模型</button>
+</div>
+
+<script>
+function switchPage(pageId) {
+  document.querySelectorAll('.proto-page').forEach(p => p.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+  document.querySelectorAll('.proto-nav button').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('onclick').includes(pageId));
+  });
+}
+
+function openSidebar() {
+  // Find the sidebar in the active page
+  const activePage = document.querySelector('.proto-page.active');
+  if (!activePage) return;
+  const sidebar = activePage.querySelector('.sidebar');
+  const overlay = activePage.querySelector('.sidebar-overlay');
+  if (sidebar) sidebar.classList.add('open');
+  if (overlay) overlay.classList.add('open');
+}
+
+function closeSidebar() {
+  const activePage = document.querySelector('.proto-page.active');
+  if (!activePage) return;
+  const sidebar = activePage.querySelector('.sidebar');
+  const overlay = activePage.querySelector('.sidebar-overlay');
+  if (sidebar) sidebar.classList.remove('open');
+  if (overlay) overlay.classList.remove('open');
+}
+</script>
+
+</body>
+</html>

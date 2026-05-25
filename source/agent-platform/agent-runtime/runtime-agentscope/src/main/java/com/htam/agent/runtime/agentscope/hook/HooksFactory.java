@@ -1,14 +1,15 @@
 package com.htam.agent.runtime.agentscope.hook;
 
 import com.htam.agent.common.entity.AgentDefinition;
+import com.htam.agent.common.entity.AgentHook;
 import com.htam.agent.common.entity.HookConfig;
 import com.htam.agent.common.enums.CodeLanguage;
 import com.htam.agent.common.enums.HookType;
+import com.htam.agent.repo.capability.AgentHookRepository;
+import com.htam.agent.repo.capability.HookConfigRepository;
 import com.htam.agent.runtime.agentscope.hook.dynamices.HookInstanceLoadFactory;
 import com.htam.agent.runtime.agentscope.workspace.hook.WorkspaceValidateHook;
 import com.htam.agent.runtime.agentscope.workspace.hook.WorkspaceWebsocketHook;
-import com.htam.agent.capability.tool.hook.service.AgentHookService;
-import com.htam.agent.capability.tool.hook.service.HookConfigService;
 import io.agentscope.core.hook.Hook;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -24,8 +25,8 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class HooksFactory {
-    private final AgentHookService agentHookService;
-    private final HookConfigService hookConfigService;
+    private final AgentHookRepository agentHookRepository;
+    private final HookConfigRepository hookConfigRepository;
     private final WorkspaceWebsocketHook workspaceWebsocketHook;
 
     public List<Hook> getHooks(AgentDefinition agentDefinition) {
@@ -35,12 +36,15 @@ public class HooksFactory {
         hooks.add(new WorkspaceValidateHook());
         hooks.add(workspaceWebsocketHook);
 
-        List<Long> hookIds = agentHookService.getHookIds(agentDefinition.getId());
+        List<Long> hookIds = agentHookRepository.listByAgentDefinitionId(agentDefinition.getId())
+                .stream()
+                .map(AgentHook::getHookConfigId)
+                .toList();
         if (hookIds.isEmpty()) {
             return hooks;
         }
 
-        hookConfigService.listByIds(hookIds)
+        hookConfigRepository.listByIds(hookIds)
                 .stream()
                 .filter(HookConfig::getEnabled)
                 .forEach(hookConfig -> {

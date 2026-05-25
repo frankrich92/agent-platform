@@ -1,9 +1,9 @@
 package com.htam.agent.runtime.agentscope.agui;
 
-import com.htam.agent.profile.agent.service.AgentDefinitionService;
 import com.htam.agent.run.event.cluster.core.ChannelSubscriber;
 import com.htam.agent.common.consts.RedisChannelTopic;
 import com.htam.agent.common.entity.AgentDefinition;
+import com.htam.agent.repo.agent.AgentDefinitionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.Topic;
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 public class AgentReRegisterMessageSubscriber implements ChannelSubscriber {
 
 
-    private final AgentDefinitionService agentDefinitionService;
+    private final AgentDefinitionRepository agentDefinitionRepository;
     private final AguiAgentConfiguration aguiAgentConfiguration;
 
     @Override
@@ -33,7 +33,7 @@ public class AgentReRegisterMessageSubscriber implements ChannelSubscriber {
             return;
         }
 
-        AgentDefinition agentDefinition = agentDefinitionService.getById(Long.valueOf(message));
+        AgentDefinition agentDefinition = agentDefinitionRepository.getById(Long.valueOf(message));
         if (agentDefinition != null) {
             aguiAgentConfiguration.reRegisterAgent(agentDefinition);
         }

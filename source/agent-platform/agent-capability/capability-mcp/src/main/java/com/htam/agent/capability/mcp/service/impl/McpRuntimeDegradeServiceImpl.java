@@ -3,11 +3,11 @@ package com.htam.agent.capability.mcp.service.impl;
 import com.htam.agent.run.event.cluster.core.MessagePublisher;
 import com.htam.agent.common.consts.RedisChannelTopic;
 import com.htam.agent.common.entity.McpServer;
+import com.htam.agent.common.mcp.McpRuntimeDegradeRecorder;
 import com.htam.agent.common.enums.HealthStatus;
 import com.htam.agent.common.enums.McpActivationStatus;
 import com.htam.agent.common.enums.McpFailureSource;
-import com.htam.agent.capability.mcp.service.AgentMcpServerService;
-import com.htam.agent.capability.mcp.service.McpRuntimeDegradeService;
+import com.htam.agent.repo.capability.AgentMcpServerRepository;
 import com.htam.agent.repo.capability.McpServerRepository;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -27,7 +27,7 @@ import org.springframework.util.StringUtils;
  */
 @Service
 @RequiredArgsConstructor
-public class McpRuntimeDegradeServiceImpl implements McpRuntimeDegradeService {
+public class McpRuntimeDegradeServiceImpl implements McpRuntimeDegradeRecorder {
     private static final Logger log = LoggerFactory.getLogger(McpRuntimeDegradeServiceImpl.class);
     private static final String KEY_PREFIX = "agent:mcp:runtime:degrade:";
     private static final long KEY_TTL_SECONDS = 3600L;
@@ -69,7 +69,7 @@ public class McpRuntimeDegradeServiceImpl implements McpRuntimeDegradeService {
     private final StringRedisTemplate stringRedisTemplate;
     private final McpRuntimeFailureClassifier failureClassifier;
     private final McpServerRepository mcpServerRepository;
-    private final AgentMcpServerService agentMcpServerService;
+    private final AgentMcpServerRepository agentMcpServerRepository;
     private final MessagePublisher messagePublisher;
 
     @Override
@@ -166,7 +166,11 @@ public class McpRuntimeDegradeServiceImpl implements McpRuntimeDegradeService {
 
         log.warn("MCP 已触发运行时自动降级: serverId={}, activationRevision={}, configHash={}, failureCount={}, eventSeq={}",
                 serverId, activationRevision, configHash, currentState.failureCount(), currentState.eventSeq());
-        publishAgentReregister(agentMcpServerService.getAgentIds(List.of(serverId)));
+        publishAgentReregister(agentMcpServerRepository.listByMcpServerIds(List.of(serverId))
+                .stream()
+                .map(com.htam.agent.common.entity.AgentMcpServer::getAgentDefinitionId)
+                .distinct()
+                .toList());
     }
 
     private RuntimeDegradeState getCurrentState(Long serverId, Long activationRevision, String configHash) {

@@ -22,23 +22,7 @@
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>common-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.htam.agent</groupId>
       <artifactId>repo-spi</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.htam.agent</groupId>
-      <artifactId>capability-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.htam.agent</groupId>
-      <artifactId>governance-sensitive</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.htam.agent</groupId>
-      <artifactId>capability-provider</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
@@ -46,51 +30,55 @@
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>worker-file</artifactId>
+      <artifactId>governance-policy</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>agent-domain</artifactId>
+      <artifactId>domain-common</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>agent-api</artifactId>
+      <artifactId>domain-profile</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>profile-agent</artifactId>
+      <artifactId>domain-run</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>capability-knowledge</artifactId>
+      <artifactId>domain-capability</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>capability-rag</artifactId>
+      <artifactId>domain-worker</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>capability-tool</artifactId>
+      <artifactId>domain-governance</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>capability-mcp</artifactId>
+      <artifactId>api-common</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>capability-skill</artifactId>
+      <artifactId>api-profile</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>profile-admin</artifactId>
+      <artifactId>api-run</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>profile-prompt</artifactId>
+      <artifactId>api-capability</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>adapter-websocket</artifactId>
+      <artifactId>api-worker</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>api-governance</artifactId>
     </dependency>
     <dependency>
       <groupId>com.alibaba.nacos</groupId>
@@ -122,9 +110,22 @@
       <version>${agentscope.version}</version>
     </dependency>
     <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-webflux</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.groovy</groupId>
+      <artifactId>groovy-all</artifactId>
+      <type>pom</type>
+    </dependency>
+    <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-webmvc</artifactId>
     </dependency>
   </dependencies>
 </project>

@@ -18,6 +18,7 @@ import com.htam.agent.common.enums.McpFailureSource;
 import com.htam.agent.common.enums.McpMode;
 import com.htam.agent.common.enums.McpProtocol;
 import com.htam.agent.common.exception.BusinessException;
+import com.htam.agent.common.mcp.McpRuntimeDegradeRecorder;
 import com.htam.agent.common.mcp.ToolSchemaRefreshResult;
 import com.htam.agent.common.mcp.ToolSchemaRefresher;
 import com.htam.agent.common.mp.support.PageParams;
@@ -25,7 +26,6 @@ import com.htam.agent.common.util.CryptoUtils;
 import com.htam.agent.common.vo.McpToolVO;
 import com.htam.agent.capability.mcp.service.AgentMcpServerService;
 import com.htam.agent.capability.mcp.service.AgentMcpToolService;
-import com.htam.agent.capability.mcp.service.McpRuntimeDegradeService;
 import com.htam.agent.capability.mcp.service.McpServerService;
 import com.htam.agent.capability.mcp.service.McpToolService;
 import com.htam.agent.repo.agent.AgentDefinitionRepository;
@@ -61,7 +61,7 @@ public class McpServerServiceImpl implements McpServerService {
     private final McpToolService mcpToolService;
     private final MessagePublisher messagePublisher;
     private final ToolSchemaRefresher toolSchemaRefresher;
-    private final McpRuntimeDegradeService mcpRuntimeDegradeService;
+    private final McpRuntimeDegradeRecorder mcpRuntimeDegradeRecorder;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -244,7 +244,7 @@ public class McpServerServiceImpl implements McpServerService {
         if (applied && refreshResult.isSuccess()) {
             McpServer refreshed = requireServer(id);
             mcpToolService.syncServerTools(refreshed, parseToolSchemas(refreshResult.getToolSchemas()));
-            mcpRuntimeDegradeService.recordSuccess(
+            mcpRuntimeDegradeRecorder.recordSuccess(
                     refreshed.getId(),
                     refreshed.getActivationRevision(),
                     refreshed.getConfigHash(),

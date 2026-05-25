@@ -9,11 +9,14 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>agent-api</artifactId>
-  <packaging>jar</packaging>
-  <dependencies>
-    <dependency>
-      <groupId>com.htam.agent</groupId>
-      <artifactId>agent-domain</artifactId>
-    </dependency>
-  </dependencies>
+  <packaging>pom</packaging>
+  <modules>
+    <module>api-common</module>
+    <module>api-profile</module>
+    <module>api-run</module>
+    <module>api-capability</module>
+    <module>api-workflow</module>
+    <module>api-worker</module>
+    <module>api-governance</module>
+  </modules>
 </project>

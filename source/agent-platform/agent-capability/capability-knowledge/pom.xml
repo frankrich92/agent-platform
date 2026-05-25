@@ -13,19 +13,59 @@
   <dependencies>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>agent-domain</artifactId>
+      <artifactId>domain-common</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>agent-api</artifactId>
+      <artifactId>domain-profile</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
-      <artifactId>repo-vector</artifactId>
+      <artifactId>domain-run</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>domain-capability</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>domain-worker</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>domain-governance</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>api-common</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>api-profile</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>api-run</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>api-capability</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>api-worker</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>api-governance</artifactId>
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
       <artifactId>repo-spi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>run-event</artifactId>
     </dependency>
   </dependencies>
 </project>

@@ -1,16 +1,22 @@
 package com.htam.agent.adapter.websocket.service;
 
 import com.htam.agent.common.consts.SysConst;
+import com.htam.agent.common.enums.WsMessageType;
+import com.htam.agent.common.enums.Role;
+import com.htam.agent.common.message.AccountRoleChangeMessage;
+import com.htam.agent.common.message.AccountRoleChangePublisher;
 import com.htam.agent.common.util.JsonUtils;
 import com.htam.agent.adapter.websocket.cluster.ClusterMessage;
 import com.htam.agent.adapter.websocket.cluster.RedisSessionManager;
 import com.htam.agent.adapter.websocket.config.AgentWebSocketSessionManager;
 import com.htam.agent.adapter.websocket.context.AgentWebSocketSession;
 import com.htam.agent.adapter.websocket.model.WsServerMessage;
+import com.htam.agent.runtime.WorkspaceEventPublisher;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 描述：WebSocket 消息推送服务 - 支持集群环境
@@ -19,12 +25,31 @@ import java.util.List;
  **/
 @Slf4j
 @Service
-public class WebSocketPushService {
+public class WebSocketPushService implements WorkspaceEventPublisher, AccountRoleChangePublisher {
 
     private final RedisSessionManager redisSessionManager;
 
     public WebSocketPushService(RedisSessionManager redisSessionManager) {
         this.redisSessionManager = redisSessionManager;
+    }
+
+    @Override
+    public void publishFileChanged(String sessionId, String fileName) {
+        broadcastCluster(WsServerMessage.build(
+                WsMessageType.WORKSPACE_FILE_CHANGE.name(),
+                Map.of("fileName", fileName, "sessionId", sessionId)));
+    }
+
+    @Override
+    public void publishRoleChanged(String accountId, Role role) {
+        pushToUserCluster(accountId,
+                WsServerMessage.build(
+                        WsMessageType.ACCOUNT_ROLE_CHANGE.name(),
+                        AccountRoleChangeMessage
+                                .builder()
+                                .accountId(accountId)
+                                .role(role)
+                                .build()));
     }
 
     /**

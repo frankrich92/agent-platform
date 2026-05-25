@@ -1,12 +1,15 @@
 package com.htam.agent.runtime.agentscope.model;
 
 import com.htam.agent.common.entity.AgentDefinition;
+import com.htam.agent.common.entity.ModelConfig;
+import com.htam.agent.common.entity.ModelProvider;
 import com.htam.agent.common.enums.ModelProviderType;
 import com.htam.agent.common.util.ExtendConfigHelper;
 import com.htam.agent.common.wrapper.ModelConfigWrapper;
 import com.htam.agent.common.wrapper.ModelWrapper;
-import com.htam.agent.capability.provider.service.ModelConfigService;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.htam.agent.repo.provider.ModelConfigRepository;
+import com.htam.agent.repo.provider.ModelProviderRepository;
 import io.agentscope.core.model.Model;
 import org.springframework.stereotype.Component;
 
@@ -24,10 +27,14 @@ import java.util.stream.Collectors;
 public class ChatModelFactory {
     private static final Map<ModelProviderType, IChatModel> MODEL_MAP = new ConcurrentHashMap<>();
 
-    private final ModelConfigService modelConfigService;
+    private final ModelConfigRepository modelConfigRepository;
+    private final ModelProviderRepository modelProviderRepository;
 
-    public ChatModelFactory(List<IChatModel> IChatModels, ModelConfigService modelConfigService) {
-        this.modelConfigService = modelConfigService;
+    public ChatModelFactory(List<IChatModel> IChatModels,
+                            ModelConfigRepository modelConfigRepository,
+                            ModelProviderRepository modelProviderRepository) {
+        this.modelConfigRepository = modelConfigRepository;
+        this.modelProviderRepository = modelProviderRepository;
         IChatModels.stream()
                 .collect(Collectors.groupingBy(IChatModel::getProvider))
                 .forEach((provider, models) -> {
@@ -88,7 +95,7 @@ public class ChatModelFactory {
             }
         }
 
-        ModelWrapper config = modelConfigService.getModelWrapperById(agentDefinition.getModelConfigId());
+        ModelWrapper config = getModelWrapperById(agentDefinition.getModelConfigId());
         // 填充模型配置
         config.getConfig().fillModelConfigWrapper(configWrapper);
         // 填充供应商配置
@@ -103,5 +110,30 @@ public class ChatModelFactory {
         }
 
         return IChatModel.getModel(configWrapper);
+    }
+
+    private ModelWrapper getModelWrapperById(Long id) {
+        ModelConfig config = modelConfigRepository.getById(id);
+        if (config == null) {
+            throw new RuntimeException("model config not found");
+        }
+
+        if (!Boolean.TRUE.equals(config.getEnabled())) {
+            throw new RuntimeException("model config is disabled");
+        }
+
+        ModelProvider modelProvider = modelProviderRepository.getById(config.getProviderId());
+        if (modelProvider == null) {
+            throw new RuntimeException("model provider not found");
+        }
+
+        if (!Boolean.TRUE.equals(modelProvider.getEnabled())) {
+            throw new RuntimeException("model provider is disabled");
+        }
+
+        return ModelWrapper.builder()
+                .config(config)
+                .provider(modelProvider)
+                .build();
     }
 }

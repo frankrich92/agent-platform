@@ -1,7 +1,9 @@
 package com.htam.agent.runtime.agentscope.hook;
 
+import com.htam.agent.common.entity.HookConfig;
+import com.htam.agent.common.enums.HookType;
 import com.htam.agent.common.wrapper.HookConfigWrapper;
-import com.htam.agent.capability.tool.hook.service.HookConfigService;
+import com.htam.agent.repo.capability.HookConfigRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
@@ -19,7 +21,8 @@ import java.util.ArrayList;
 @Component
 @RequiredArgsConstructor
 public class HooksSyncToDatabase implements ApplicationRunner {
-    private final HookConfigService hookConfigService;
+    private final HookConfigRepository hookConfigRepository;
+
     @Override
     public void run(ApplicationArguments args) {
         log.info("IAgentHooks sync to DB starting");
@@ -32,7 +35,36 @@ public class HooksSyncToDatabase implements ApplicationRunner {
                     .build());
         });
 
-        hookConfigService.SyncConfigToDatabase(hookConfigWrappers);
+        syncConfigToDatabase(hookConfigWrappers);
         log.info("IAgentHooks sync to DB completed");
+    }
+
+    private void syncConfigToDatabase(ArrayList<HookConfigWrapper> configWrappers) {
+        hookConfigRepository.deleteBuiltinNotInClassPaths(configWrappers.stream()
+                .map(HookConfigWrapper::getClassPath)
+                .toList());
+        configWrappers.forEach(configWrapper -> {
+            java.util.List<HookConfig> list = hookConfigRepository.listByClassPath(configWrapper.getClassPath());
+            if (list.isEmpty()) {
+                HookConfig hookConfig = new HookConfig();
+                hookConfig.setName(configWrapper.getName());
+                hookConfig.setHookType(HookType.BUILTIN);
+                hookConfig.setDescription(configWrapper.getDescription());
+                hookConfig.setClassPath(configWrapper.getClassPath());
+                hookConfig.setEnabled(true);
+                hookConfig.setPriority(1);
+                hookConfigRepository.save(hookConfig);
+            } else {
+                for (int i = 0; i < list.size(); i++) {
+                    if (i == 0) {
+                        list.get(i).setHookType(HookType.BUILTIN);
+                        list.get(i).setClassPath(configWrapper.getClassPath());
+                        hookConfigRepository.updateById(list.get(i));
+                    } else {
+                        hookConfigRepository.deleteById(list.get(i).getId());
+                    }
+                }
+            }
+        });
     }
 }

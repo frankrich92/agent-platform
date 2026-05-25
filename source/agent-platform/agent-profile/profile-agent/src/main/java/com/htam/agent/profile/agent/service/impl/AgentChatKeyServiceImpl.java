@@ -5,17 +5,17 @@ import com.htam.agent.profile.agent.service.AgentDefinitionService;
 import com.htam.agent.common.consts.SysConst;
 import com.htam.agent.common.entity.AgentChatKey;
 import com.htam.agent.common.entity.AgentDefinition;
-import com.htam.agent.common.util.RedisUtils;
 import com.htam.agent.repo.agent.AgentChatKeyRepository;
+import com.htam.agent.repo.cache.CacheRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.nio.ByteBuffer;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 /**
  * 描述：智能体对话Key服务实现
@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 public class AgentChatKeyServiceImpl implements AgentChatKeyService {
     private final AgentChatKeyRepository agentChatKeyRepository;
     private final AgentDefinitionService agentDefinitionService;
-    private final RedisUtils redisUtils;
+    private final CacheRepository cacheRepository;
 
     /**
      * 空值缓存标识，用于防止缓存穿透
@@ -84,12 +84,12 @@ public class AgentChatKeyServiceImpl implements AgentChatKeyService {
             // 删除旧的 ChatKey -> AgentCode 的映射关系
             if (existingKey != null) {
                 String oldRedisKey = buildChatKeyRedisKey(existingKey.getChatKey());
-                redisUtils.delete(oldRedisKey);
+                cacheRepository.evict(oldRedisKey);
             }
 
             // 将 ChatKey -> AgentCode 的映射关系存储到Redis
             String redisKey = buildChatKeyRedisKey(newChatKey);
-            redisUtils.setEx(redisKey, agentCode, CACHE_EXPIRE_DAYS, TimeUnit.DAYS);
+            cacheRepository.put(redisKey, agentCode, Duration.ofDays(CACHE_EXPIRE_DAYS));
 
             return newChatKey;
         }
@@ -104,7 +104,7 @@ public class AgentChatKeyServiceImpl implements AgentChatKeyService {
         String redisKey = buildChatKeyRedisKey(chatKey);
 
         // 1. 先从Redis缓存获取
-        String cachedValue = redisUtils.get(redisKey);
+        String cachedValue = cacheRepository.get(redisKey, String.class).orElse(null);
         if (cachedValue != null) {
             // 空值缓存直接返回null
             if (NULL_VALUE_PLACEHOLDER.equals(cachedValue)) {
@@ -119,11 +119,11 @@ public class AgentChatKeyServiceImpl implements AgentChatKeyService {
         if (agentChatKey != null) {
             // 查询到数据，回填Redis缓存
             String agentCode = agentChatKey.getAgentCode();
-            redisUtils.setEx(redisKey, agentCode, CACHE_EXPIRE_DAYS, TimeUnit.DAYS);
+            cacheRepository.put(redisKey, agentCode, Duration.ofDays(CACHE_EXPIRE_DAYS));
             return agentCode;
         } else {
             // 3. 缓存穿透防护：缓存空值，设置较短的过期时间
-            redisUtils.setEx(redisKey, NULL_VALUE_PLACEHOLDER, NULL_CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES);
+            cacheRepository.put(redisKey, NULL_VALUE_PLACEHOLDER, Duration.ofMinutes(NULL_CACHE_EXPIRE_MINUTES));
             return null;
         }
     }

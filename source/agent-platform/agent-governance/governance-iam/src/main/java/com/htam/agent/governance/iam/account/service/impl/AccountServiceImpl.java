@@ -3,32 +3,32 @@ package com.htam.agent.governance.iam.account.service.impl;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.htam.agent.governance.iam.account.service.AccountRoleService;
 import com.htam.agent.governance.iam.account.service.AccountService;
-import com.htam.agent.profile.agent.service.AgentChatKeyService;
-import com.htam.agent.profile.agent.service.AgentDefinitionService;
 import com.htam.agent.common.UserDetail;
 import com.htam.agent.common.config.auth.AuthInterceptor;
 import com.htam.agent.common.consts.SysConst;
 import com.htam.agent.common.dto.*;
 import com.htam.agent.common.entity.Account;
 import com.htam.agent.common.entity.AccountRole;
+import com.htam.agent.common.entity.AgentChatKey;
 import com.htam.agent.common.entity.AgentDefinition;
 import com.htam.agent.common.enums.Role;
-import com.htam.agent.common.enums.WsMessageType;
 import com.htam.agent.common.exception.NotAuthException;
-import com.htam.agent.common.message.AccountRoleChangeMessage;
+import com.htam.agent.common.message.AccountRoleChangePublisher;
 import com.htam.agent.common.util.*;
+import com.htam.agent.repo.agent.AgentChatKeyRepository;
+import com.htam.agent.repo.agent.AgentDefinitionRepository;
+import com.htam.agent.repo.cache.CacheRepository;
 import com.htam.agent.repo.iam.AccountRepository;
-import com.htam.agent.adapter.websocket.model.WsServerMessage;
-import com.htam.agent.adapter.websocket.service.WebSocketPushService;
 import com.htam.agent.governance.system.params.core.ParamsAdapter;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 /**
  * 账号Service实现
@@ -39,13 +39,17 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class AccountServiceImpl implements AccountService {
 
+    private static final String NULL_VALUE_PLACEHOLDER = "__NULL__";
+    private static final long CACHE_EXPIRE_DAYS = 7;
+    private static final long NULL_CACHE_EXPIRE_MINUTES = 5;
+
     private final AccountRepository accountRepository;
-    private final RedisUtils redisUtils;
+    private final CacheRepository cacheRepository;
     private final ParamsAdapter paramsAdapter;
     private final AccountRoleService accountRoleService;
-    private final WebSocketPushService webSocketPushService;
-    private final AgentChatKeyService agentChatKeyService;
-    private final AgentDefinitionService agentDefinitionService;
+    private final ObjectProvider<AccountRoleChangePublisher> accountRoleChangePublisher;
+    private final AgentChatKeyRepository agentChatKeyRepository;
+    private final AgentDefinitionRepository agentDefinitionRepository;
 
     @Override
     public List<Account> list(AccountDTO query) {
@@ -179,7 +183,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public void logout() {
         try {
-            redisUtils.delete(SysConst.LOGIN_USER_KEY + TokenUtils.getToken());
+            cacheRepository.evict(SysConst.LOGIN_USER_KEY + TokenUtils.getToken());
         } catch (Exception e) {
             throw new RuntimeException("退出登录失败");
         }
@@ -308,12 +312,12 @@ public class AccountServiceImpl implements AccountService {
             return null;
         }
 
-        String agentCode = agentChatKeyService.getAgentCodeByChatKey(chatKey);
+        String agentCode = getAgentCodeByChatKey(chatKey);
         if (FuncUtils.isEmpty(agentCode)) {
             return null;
         }
 
-        AgentDefinition agent = agentDefinitionService.getByAgentCode(agentCode);
+        AgentDefinition agent = agentDefinitionRepository.getByAgentCode(agentCode);
         if (agent == null || !Boolean.TRUE.equals(agent.getEnabled())) {
             return null;
         }
@@ -327,7 +331,7 @@ public class AccountServiceImpl implements AccountService {
         String token = TokenUtils.createToken(chatKey, userDetail, neverExpireTtl);
 
         // 存储到Redis（无过期时间）
-        redisUtils.set(SysConst.LOGIN_USER_KEY + token, JsonUtils.toJsonStr(userDetail));
+        cacheRepository.put(SysConst.LOGIN_USER_KEY + token, JsonUtils.toJsonStr(userDetail), null);
 
         return LoginResponse.builder()
                 .accessToken(token)
@@ -363,7 +367,7 @@ public class AccountServiceImpl implements AccountService {
 
         // 存储到Redis
         String userDetailStr = JsonUtils.toJsonStr(userDetail);
-        redisUtils.setEx(SysConst.LOGIN_USER_KEY + accessToken, userDetailStr, accessTokenTtl, TimeUnit.MILLISECONDS);
+        cacheRepository.put(SysConst.LOGIN_USER_KEY + accessToken, userDetailStr, Duration.ofMillis(accessTokenTtl));
 
         // 返回登录响应
         long currentTime = System.currentTimeMillis();
@@ -403,14 +407,32 @@ public class AccountServiceImpl implements AccountService {
      */
     private void senRoleChangeNoticeUseWs(String accountId, Role role) {
         try {
-            webSocketPushService.pushToUserCluster(accountId,
-                    WsServerMessage.build(
-                            WsMessageType.ACCOUNT_ROLE_CHANGE.name(),
-                            AccountRoleChangeMessage
-                                    .builder()
-                                    .accountId(accountId)
-                                    .role(role)
-                                    .build()));
+            AccountRoleChangePublisher publisher = accountRoleChangePublisher.getIfAvailable();
+            if (publisher != null) {
+                publisher.publishRoleChanged(accountId, role);
+            }
         } catch (Exception ignored) {}
+    }
+
+    private String getAgentCodeByChatKey(String chatKey) {
+        if (FuncUtils.isEmpty(chatKey)) {
+            return null;
+        }
+
+        String redisKey = SysConst.CHAT_KEY_TO_AGENT_CODE_PREFIX + chatKey;
+        String cachedValue = cacheRepository.get(redisKey, String.class).orElse(null);
+        if (cachedValue != null) {
+            return NULL_VALUE_PLACEHOLDER.equals(cachedValue) ? null : cachedValue;
+        }
+
+        AgentChatKey agentChatKey = agentChatKeyRepository.getByChatKey(chatKey);
+        if (agentChatKey == null) {
+            cacheRepository.put(redisKey, NULL_VALUE_PLACEHOLDER, Duration.ofMinutes(NULL_CACHE_EXPIRE_MINUTES));
+            return null;
+        }
+
+        String agentCode = agentChatKey.getAgentCode();
+        cacheRepository.put(redisKey, agentCode, Duration.ofDays(CACHE_EXPIRE_DAYS));
+        return agentCode;
     }
 }
