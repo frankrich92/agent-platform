@@ -22,6 +22,10 @@ public class TableConst {
     public static final String HOOK = "hook_config";
     public static final String CHAT_SESSION = "chat_session";
     public static final String CHAT_MESSAGE = "chat_message";
+    public static final String AGENT_RUN = "agent_run";
+    public static final String AGENT_RUN_EVENT = "agent_run_event";
+    public static final String AGENT_RUN_STEP = "agent_run_step";
+    public static final String AGENT_TOOL_CALL = "agent_tool_call";
     public static final String ATTACH_LOG = "attach_log";
     public static final String ATTACH_CHUNK = "attach_chunk";
     public static final String ATTACH = "attach";

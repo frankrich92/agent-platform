@@ -108,6 +108,7 @@ const {
   historyLoading,
   selectSession,
   resetSession,
+  loadCurrentMessages,
   loadMoreHistory,
 } = useCurrentSession(agentId)
 
@@ -139,8 +140,8 @@ const {
   memoryActive,
   planActive,
   toolProcessActive,
-  (chatMsg: ChatMessageVO) => {
-    messagesList.value.push(chatMsg)
+  async () => {
+    await loadCurrentMessages()
   })
 
 // 输入框内容

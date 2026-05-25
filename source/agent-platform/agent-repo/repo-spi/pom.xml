@@ -34,7 +34,12 @@
     <dependency>
       <groupId>com.htam.agent</groupId>
       <artifactId>domain-governance</artifactId>
-    </dependency>    <dependency>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
+      <artifactId>runtime-spi</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.baomidou</groupId>
       <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
     </dependency>

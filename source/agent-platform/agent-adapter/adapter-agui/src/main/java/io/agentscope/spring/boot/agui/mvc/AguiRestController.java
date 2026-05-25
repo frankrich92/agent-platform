@@ -18,6 +18,8 @@ package io.agentscope.spring.boot.agui.mvc;
 import com.htam.agent.common.config.auth.ChatKeyAccess;
 import com.htam.agent.common.config.auth.SkAccess;
 import io.agentscope.core.agui.model.RunAgentInput;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,7 +37,11 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @RestController
 public class AguiRestController {
 
+    private static final String TRACE_ID_HEADER = "X-Trace-Id";
+    private static final String PARENT_TRACE_ID_HEADER = "X-Parent-Trace-Id";
+
     private final AguiMvcEndpoint aguiMvcEndpoint;
+    private final AguiMvcController aguiMvcController;
     private final String pathPrefix;
     private final boolean enablePathRouting;
 
@@ -49,6 +55,15 @@ public class AguiRestController {
     public AguiRestController(
             AguiMvcEndpoint aguiMvcEndpoint, String pathPrefix, boolean enablePathRouting) {
         this.aguiMvcEndpoint = aguiMvcEndpoint;
+        this.aguiMvcController = null;
+        this.pathPrefix = pathPrefix;
+        this.enablePathRouting = enablePathRouting;
+    }
+
+    public AguiRestController(
+            AguiMvcController aguiMvcController, String pathPrefix, boolean enablePathRouting) {
+        this.aguiMvcEndpoint = null;
+        this.aguiMvcController = aguiMvcController;
         this.pathPrefix = pathPrefix;
         this.enablePathRouting = enablePathRouting;
     }
@@ -79,8 +94,17 @@ public class AguiRestController {
             @RequestHeader(
                             value = "${agentscope.agui.agent-id-header:X-Agent-Id}",
                             required = false)
-                    String agentIdHeader) {
-        return aguiMvcEndpoint.handle(input, agentIdHeader);
+                    String agentIdHeader,
+            @RequestHeader(value = TRACE_ID_HEADER, required = false) String traceIdHeader,
+            @RequestHeader(value = PARENT_TRACE_ID_HEADER, required = false) String parentTraceIdHeader) {
+        input = withTraceHeaders(input, traceIdHeader, parentTraceIdHeader);
+        if (aguiMvcEndpoint != null) {
+            return aguiMvcEndpoint.handle(input, agentIdHeader);
+        }
+        if (aguiMvcController != null) {
+            return aguiMvcController.handle(input, agentIdHeader);
+        }
+        throw new IllegalStateException("No AG-UI MVC handler configured");
     }
 
     /**
@@ -105,7 +129,48 @@ public class AguiRestController {
             @RequestHeader(
                             value = "${agentscope.agui.agent-id-header:X-Agent-Id}",
                             required = false)
-                    String agentIdHeader) {
-        return aguiMvcEndpoint.handleWithAgentId(input, agentIdHeader, agentId);
+                    String agentIdHeader,
+            @RequestHeader(value = TRACE_ID_HEADER, required = false) String traceIdHeader,
+            @RequestHeader(value = PARENT_TRACE_ID_HEADER, required = false) String parentTraceIdHeader) {
+        input = withTraceHeaders(input, traceIdHeader, parentTraceIdHeader);
+        if (aguiMvcEndpoint != null) {
+            return aguiMvcEndpoint.handleWithAgentId(input, agentIdHeader, agentId);
+        }
+        if (aguiMvcController != null) {
+            return aguiMvcController.handleWithAgentId(input, agentIdHeader, agentId);
+        }
+        throw new IllegalStateException("No AG-UI MVC handler configured");
+    }
+
+    private RunAgentInput withTraceHeaders(
+            RunAgentInput input,
+            String traceIdHeader,
+            String parentTraceIdHeader) {
+        if (isBlank(traceIdHeader) && isBlank(parentTraceIdHeader)) {
+            return input;
+        }
+        Map<String, Object> forwardedProps = new LinkedHashMap<>();
+        if (input.getForwardedProps() != null) {
+            forwardedProps.putAll(input.getForwardedProps());
+        }
+        if (!isBlank(traceIdHeader)) {
+            forwardedProps.put("traceId", traceIdHeader);
+        }
+        if (!isBlank(parentTraceIdHeader)) {
+            forwardedProps.put("parentTraceId", parentTraceIdHeader);
+        }
+        return RunAgentInput.builder()
+                .threadId(input.getThreadId())
+                .runId(input.getRunId())
+                .messages(input.getMessages())
+                .tools(input.getTools())
+                .context(input.getContext())
+                .state(input.getState())
+                .forwardedProps(forwardedProps)
+                .build();
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 }

@@ -2,7 +2,9 @@ package com.htam.agent.runtime.planning;
 
 import com.htam.agent.runtime.ToolCall;
 import java.util.List;
+import org.springframework.stereotype.Service;
 
+@Service
 public class FailureRecoveryPlanner {
 
     public FailureRecoveryPlan plan(Throwable throwable, List<ToolCall> recentToolCalls, boolean approvalPossible) {

@@ -17,6 +17,10 @@
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
+      <artifactId>repo-spi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
       <artifactId>run-event</artifactId>
     </dependency>
     <dependency>
@@ -31,6 +35,10 @@
       <groupId>com.htam.agent</groupId>
       <artifactId>run-message</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
     </dependency>
   </dependencies>
 </project>

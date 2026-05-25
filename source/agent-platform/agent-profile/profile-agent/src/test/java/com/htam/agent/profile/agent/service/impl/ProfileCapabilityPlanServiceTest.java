@@ -14,6 +14,7 @@ import com.htam.agent.capability.knowledge.service.AgentKnowledgeBaseService;
 import com.htam.agent.capability.knowledge.service.KnowledgeBaseConfigService;
 import com.htam.agent.capability.mcp.service.AgentMcpServerService;
 import com.htam.agent.capability.mcp.service.McpServerService;
+import com.htam.agent.capability.mcp.service.McpToolService;
 import com.htam.agent.capability.tool.hook.service.AgentHookService;
 import com.htam.agent.capability.tool.hook.service.HookConfigService;
 import com.htam.agent.common.dto.AgentDefinitionDTO;
@@ -28,6 +29,7 @@ import com.htam.agent.common.entity.AgentMcpServer;
 import com.htam.agent.common.entity.HookConfig;
 import com.htam.agent.common.entity.KnowledgeBaseConfig;
 import com.htam.agent.common.entity.McpServer;
+import com.htam.agent.common.entity.McpTool;
 import com.htam.agent.common.entity.SkillPackage;
 import com.htam.agent.common.entity.ToolConfig;
 import com.htam.agent.common.enums.McpActivationStatus;
@@ -64,6 +66,7 @@ class ProfileCapabilityPlanServiceTest {
                 new EmptyHookConfigService(),
                 agentMcpServerService,
                 mcpServerService,
+                new RecordingMcpToolService(),
                 new EmptyAgentKnowledgeBaseService(),
                 new EmptyKnowledgeBaseConfigService());
 
@@ -84,13 +87,22 @@ class ProfileCapabilityPlanServiceTest {
         assertEquals(CapabilityRiskPolicy.ALLOW, skill.riskPolicy());
         assertTrue(skill.readOnly());
         assertEquals("skill:20", skill.attributes().get("contentRef"));
+        assertEquals("1.2.3", skill.attributes().get("version"));
+        assertEquals("Use for code review", skill.attributes().get("trigger"));
+        assertEquals(List.of("read_file", "search"), skill.attributes().get("allowedTools"));
+        assertEquals("LOW", skill.attributes().get("riskLevel"));
+        assertEquals("repo://skills/review", skill.attributes().get("source"));
+        assertTrue(String.valueOf(skill.attributes().get("summaryHash")).length() >= 32);
 
         CapabilityItem mcp = find(plan, CapabilityKind.MCP, "mcp-git");
         assertEquals(CapabilityRiskLevel.MEDIUM, mcp.riskLevel());
         assertEquals(CapabilityRiskPolicy.ASK, mcp.riskPolicy());
         assertEquals("mcp-server:30:protocol-config", mcp.secretRef());
         assertEquals(List.of("mcp-tool:301", "mcp-tool:302"), mcp.includePatterns());
+        assertEquals(List.of("mcp-tool:399"), mcp.excludePatterns());
         assertEquals(McpToolExposureMode.SELECTED_ONLY, mcp.attributes().get("exposureMode"));
+        assertEquals(List.of("git.status", "git.diff"), mcp.attributes().get("runtimeToolNames"));
+        assertEquals(List.of("hash-status", "hash-diff"), mcp.attributes().get("runtimeToolSchemaHashes"));
     }
 
     private static CapabilityItem find(CapabilityPlan plan, CapabilityKind kind, String name) {
@@ -139,6 +151,19 @@ class ProfileCapabilityPlanServiceTest {
             skill.setName("skill-review");
             skill.setCategory("coding");
             skill.setDescription("review code changes");
+            skill.setSkillContent("""
+                    ---
+                    name: skill-review
+                    description: review code changes
+                    version: 1.2.3
+                    trigger: Use for code review
+                    allowed_tools: read_file, search
+                    risk_level: low
+                    source: repo://skills/review
+                    ---
+
+                    Review the current code changes.
+                    """);
             return List.of(skill);
         }
 
@@ -204,6 +229,42 @@ class ProfileCapabilityPlanServiceTest {
         @Override public McpServer syncTools(Long id) { throw unsupported(); }
         @Override public List<McpToolVO> listTools(Long id) { throw unsupported(); }
         @Override public McpServer updateToolGlobalEnabled(Long id, McpToolEnabledDTO dto) { throw unsupported(); }
+    }
+
+    private static final class RecordingMcpToolService implements McpToolService {
+        @Override
+        public List<McpTool> listRuntimeTools(Long mcpServerId) {
+            return List.of(
+                    tool(301L, "git.status", true, false, "hash-status"),
+                    tool(302L, "git.diff", true, false, "hash-diff"));
+        }
+
+        @Override
+        public List<McpTool> listByServerIds(List<Long> mcpServerIds) {
+            return List.of(
+                    tool(301L, "git.status", true, false, "hash-status"),
+                    tool(302L, "git.diff", true, false, "hash-diff"),
+                    tool(399L, "git.push", false, false, "hash-push"));
+        }
+
+        private static McpTool tool(Long id, String name, boolean enabled, boolean missing, String schemaHash) {
+            McpTool tool = new McpTool();
+            tool.setId(id);
+            tool.setMcpServerId(30L);
+            tool.setToolName(name);
+            tool.setEnabled(enabled);
+            tool.setMissing(missing);
+            tool.setSchemaHash(schemaHash);
+            return tool;
+        }
+
+        @Override public List<McpToolVO> listToolVos(Long mcpServerId) { throw unsupported(); }
+        @Override public void ensureBackfilledFromCache(McpServer mcpServer) { throw unsupported(); }
+        @Override public void syncServerTools(McpServer mcpServer, List<io.modelcontextprotocol.spec.McpSchema.Tool> tools) { throw unsupported(); }
+        @Override public void updateGlobalEnabled(Long mcpServerId, List<Long> toolIds, Boolean enabled) { throw unsupported(); }
+        @Override public List<McpTool> listByIdsPreserveOrder(List<Long> ids) { throw unsupported(); }
+        @Override public Map<Long, Integer> countAvailableTools(List<Long> mcpServerIds) { throw unsupported(); }
+        @Override public void deleteByMcpServerIds(List<Long> mcpServerIds) { throw unsupported(); }
     }
 
     private static final class EmptyAgentSubAgentService implements AgentSubAgentService {

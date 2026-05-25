@@ -4,7 +4,9 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.stereotype.Component;
 
+@Component
 public class TraceContextPlanner {
 
     public AgentTraceContext plan(
@@ -45,8 +47,6 @@ public class TraceContextPlanner {
     }
 
     private static String defaultTraceId(String runId) {
-        return runId == null || runId.isBlank()
-                ? "trace-" + UUID.randomUUID()
-                : runId;
+        return "trace-" + UUID.randomUUID();
     }
 }

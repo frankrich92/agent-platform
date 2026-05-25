@@ -7,15 +7,19 @@ import io.agentscope.core.agui.adapter.AguiAdapterConfig;
 import io.agentscope.core.agui.encoder.AguiEventEncoder;
 import io.agentscope.core.agui.event.AguiEvent;
 import io.agentscope.core.agui.model.RunAgentInput;
+import io.agentscope.core.agui.observer.AguiRunEventContext;
+import io.agentscope.core.agui.observer.AguiRunEventObserver;
 import io.agentscope.core.agui.processor.AguiRequestProcessor;
 import io.agentscope.core.agui.registry.AguiAgentRegistry;
 import io.agentscope.core.session.Session;
 import io.agentscope.spring.boot.agui.common.DefaultAgentResolver;
 import io.agentscope.spring.boot.agui.common.ThreadSessionManager;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +40,7 @@ public class AguiMvcEndpoint {
     private final long sseTimeout;
     private final ExecutorService executorService;
     private final ThreadSessionManager sessionManager;
+    private final List<AguiRunEventObserver> eventObservers;
 
     private AguiMvcEndpoint(Builder builder) {
         Session session = builder.session;
@@ -63,6 +68,7 @@ public class AguiMvcEndpoint {
         this.sseTimeout = builder.sseTimeout > 0 ? builder.sseTimeout : 600000L;
         this.executorService = Executors.newCachedThreadPool();
         this.sessionManager = builder.sessionManager;
+        this.eventObservers = builder.eventObservers == null ? List.of() : List.copyOf(builder.eventObservers);
     }
 
     /**
@@ -94,6 +100,7 @@ public class AguiMvcEndpoint {
         SseEmitter emitter = new SseEmitter(sseTimeout);
         String threadId = input.getThreadId();
         String runId = input.getRunId();
+        AtomicBoolean terminalObserved = new AtomicBoolean(false);
 
         executorService.submit(
                 () -> {
@@ -131,10 +138,18 @@ public class AguiMvcEndpoint {
                                                     + " agent",
                                             runId);
 
-                                    AgentContext.clean();
+                                            AgentContext.clean();
 
-                                    result.agent().interrupt();
-                                });
+                                            notifyErrorAndFinish(
+                                                    input,
+                                                    finalAgentId,
+                                                    threadId,
+                                                    runId,
+                                                    "SSE connection timed out",
+                                                    terminalObserved);
+                                            result.agent().interrupt();
+                                            emitter.complete();
+                                        });
                         emitter.onError(
                                 (ex) -> {
                                     logger.info(
@@ -143,8 +158,15 @@ public class AguiMvcEndpoint {
                                             runId,
                                             ex.getMessage());
 
-                                    AgentContext.clean();
+                                            AgentContext.clean();
 
+                                    notifyErrorAndFinish(
+                                            input,
+                                            finalAgentId,
+                                            threadId,
+                                            runId,
+                                            ex.getMessage(),
+                                            terminalObserved);
                                     result.agent().interrupt();
                                 });
 
@@ -152,7 +174,7 @@ public class AguiMvcEndpoint {
                         subscription =
                                 result.events()
                                         .subscribe(
-                                                event -> sendEvent(emitter, event),
+                                                event -> sendEvent(emitter, event, input, finalAgentId, terminalObserved),
                                                 error -> {
                                                     logger.error(
                                                             "Error during AG-UI run: {}",
@@ -162,9 +184,12 @@ public class AguiMvcEndpoint {
 
                                                     sendErrorAndComplete(
                                                             emitter,
+                                                            input,
+                                                            finalAgentId,
                                                             threadId,
                                                             runId,
-                                                            error.getMessage());
+                                                            error.getMessage(),
+                                                            terminalObserved);
                                                 },
                                                 () -> {
                                                     try {
@@ -183,21 +208,30 @@ public class AguiMvcEndpoint {
 
                         AgentContext.clean();
 
-                        sendErrorAndComplete(emitter, threadId, runId, e.getMessage());
+                        sendErrorAndComplete(emitter, input, pathAgentId, threadId, runId, e.getMessage(), terminalObserved);
                     } catch (Exception e) {
                         logger.error("Error processing AG-UI request: {}", e.getMessage());
 
                         AgentContext.clean();
 
-                        sendErrorAndComplete(emitter, threadId, runId, e.getMessage());
+                        sendErrorAndComplete(emitter, input, pathAgentId, threadId, runId, e.getMessage(), terminalObserved);
                     }
                 });
 
         return emitter;
     }
 
-    private void sendEvent(SseEmitter emitter, AguiEvent event) {
+    private void sendEvent(
+            SseEmitter emitter,
+            AguiEvent event,
+            RunAgentInput input,
+            String agentId,
+            AtomicBoolean terminalObserved) {
         try {
+            notifyObservers(input, agentId, event);
+            if (event instanceof AguiEvent.RunFinished) {
+                terminalObserved.set(true);
+            }
             String jsonData = encoder.encodeToJson(event);
             emitter.send(SseEmitter.event().data(jsonData, MediaType.APPLICATION_JSON));
         } catch (IOException e) {
@@ -206,12 +240,23 @@ public class AguiMvcEndpoint {
     }
 
     private void sendErrorAndComplete(
-            SseEmitter emitter, String threadId, String runId, String errorMessage) {
+            SseEmitter emitter,
+            RunAgentInput input,
+            String agentId,
+            String threadId,
+            String runId,
+            String errorMessage,
+            AtomicBoolean terminalObserved) {
         try {
+            AguiEvent.Raw errorEvent = new AguiEvent.Raw(threadId, runId, Map.of("error", safeError(errorMessage)));
+            AguiEvent.RunFinished finishEvent = new AguiEvent.RunFinished(threadId, runId);
+            if (terminalObserved.compareAndSet(false, true)) {
+                notifyObservers(input, agentId, errorEvent);
+                notifyObservers(input, agentId, finishEvent);
+            }
             String errorJson =
-                    encoder.encodeToJson(
-                            new AguiEvent.Raw(threadId, runId, Map.of("error", errorMessage)));
-            String finishJson = encoder.encodeToJson(new AguiEvent.RunFinished(threadId, runId));
+                    encoder.encodeToJson(errorEvent);
+            String finishJson = encoder.encodeToJson(finishEvent);
             emitter.send(SseEmitter.event().data(errorJson, MediaType.APPLICATION_JSON));
             emitter.send(SseEmitter.event().data(finishJson, MediaType.APPLICATION_JSON));
             emitter.complete();
@@ -221,6 +266,40 @@ public class AguiMvcEndpoint {
                 emitter.completeWithError(e);
             } catch (Exception ex) {
                 logger.debug("Failed to complete emitter with error: {}", ex.getMessage());
+            }
+        }
+    }
+
+    private void notifyErrorAndFinish(
+            RunAgentInput input,
+            String agentId,
+            String threadId,
+            String runId,
+            String errorMessage,
+            AtomicBoolean terminalObserved) {
+        if (!terminalObserved.compareAndSet(false, true)) {
+            return;
+        }
+        AguiEvent.Raw errorEvent = new AguiEvent.Raw(threadId, runId, Map.of("error", safeError(errorMessage)));
+        AguiEvent.RunFinished finishEvent = new AguiEvent.RunFinished(threadId, runId);
+        notifyObservers(input, agentId, errorEvent);
+        notifyObservers(input, agentId, finishEvent);
+    }
+
+    private static String safeError(String errorMessage) {
+        return errorMessage == null || errorMessage.isBlank() ? "AG-UI run interrupted" : errorMessage;
+    }
+
+    private void notifyObservers(RunAgentInput input, String agentId, AguiEvent event) {
+        if (eventObservers.isEmpty()) {
+            return;
+        }
+        AguiRunEventContext context = new AguiRunEventContext(input, agentId);
+        for (AguiRunEventObserver observer : eventObservers) {
+            try {
+                observer.onEvent(context, event);
+            } catch (Exception e) {
+                logger.warn("AG-UI event observer failed for run {}: {}", event.getRunId(), e.getMessage());
             }
         }
     }
@@ -255,6 +334,7 @@ public class AguiMvcEndpoint {
         private Session session;
         private JdbcTemplate jdbcTemplate;
         private JdbcTemplate conversationJdbcTemplate;
+        private List<AguiRunEventObserver> eventObservers = List.of();
 
         /**
          * Set the agent registry.
@@ -346,6 +426,11 @@ public class AguiMvcEndpoint {
 
         public Builder conversationJdbcTemplate(JdbcTemplate conversationJdbcTemplate) {
             this.conversationJdbcTemplate = conversationJdbcTemplate;
+            return this;
+        }
+
+        public Builder eventObservers(List<AguiRunEventObserver> eventObservers) {
+            this.eventObservers = eventObservers == null ? List.of() : List.copyOf(eventObservers);
             return this;
         }
 

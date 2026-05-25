@@ -80,6 +80,14 @@ public class RedisUtils {
         if (valueStr == null) {
             return null;
         }
+        if (String.class.equals(clazz)) {
+            if (valueStr.length() >= 2
+                    && valueStr.charAt(0) == '"'
+                    && valueStr.charAt(valueStr.length() - 1) == '"') {
+                return JsonUtils.parse(valueStr, clazz);
+            }
+            return clazz.cast(valueStr);
+        }
         return JsonUtils.parse(valueStr, clazz);
     }
 

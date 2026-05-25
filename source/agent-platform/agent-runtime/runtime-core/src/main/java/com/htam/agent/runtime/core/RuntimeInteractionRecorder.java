@@ -19,6 +19,8 @@ import java.util.function.Supplier;
 
 public final class RuntimeInteractionRecorder {
 
+    private static final int TOOL_SUMMARY_MAX_CHARS = 16_384;
+
     private static final InheritableThreadLocal<TraceState> STATE = new InheritableThreadLocal<>();
 
     private RuntimeInteractionRecorder() {
@@ -85,12 +87,15 @@ public final class RuntimeInteractionRecorder {
         String stepId = UUID.randomUUID().toString();
         Instant start = startedAt == null ? Instant.now() : startedAt;
         Instant end = endedAt == null ? Instant.now() : endedAt;
+        String parameter = truncated(parameterSummary);
+        String result = truncated(resultSummary);
         Map<String, Object> payload = payload(
                 "toolName", toolName,
-                "parameterSummary", parameterSummary,
-                "resultSummary", resultSummary,
+                "parameterSummary", parameter,
+                "resultSummary", result,
                 "errorCode", errorCode,
                 "errorMessage", errorMessage);
+        Map<String, Object> tags = mergedAuditTags(auditTags, parameterSummary, resultSummary);
         state.events.add(event(state,
                 failed ? RuntimeEventType.TOOL_CALL_FAILED : RuntimeEventType.TOOL_CALL_COMPLETED,
                 stepId,
@@ -98,8 +103,8 @@ public final class RuntimeInteractionRecorder {
         state.steps.add(new RunStep(stepId, state.runId, RunStepType.TOOL_CALL,
                 failed ? AgentRunStatus.FAILED : AgentRunStatus.SUCCEEDED, start, end, payload));
         state.toolCalls.add(new ToolCall(UUID.randomUUID().toString(), state.runId, toolName,
-                policy, readOnly, duration(start, end), 0, parameterSummary, resultSummary,
-                errorCode, errorMessage, auditTags));
+                policy, readOnly, duration(start, end), 0, parameter, result,
+                errorCode, errorMessage, tags));
     }
 
     public static void recordMcpCall(
@@ -118,11 +123,13 @@ public final class RuntimeInteractionRecorder {
         String stepId = UUID.randomUUID().toString();
         Instant start = startedAt == null ? Instant.now() : startedAt;
         Instant end = endedAt == null ? Instant.now() : endedAt;
+        String parameter = truncated(parameterSummary);
+        String result = truncated(resultSummary);
         Map<String, Object> payload = payload(
                 "mcpServer", serverName,
                 "toolName", toolName,
-                "parameterSummary", parameterSummary,
-                "resultSummary", resultSummary,
+                "parameterSummary", parameter,
+                "resultSummary", result,
                 "errorMessage", errorMessage);
         state.events.add(event(state,
                 failed ? RuntimeEventType.TOOL_CALL_FAILED : RuntimeEventType.TOOL_CALL_COMPLETED,
@@ -131,9 +138,9 @@ public final class RuntimeInteractionRecorder {
         state.steps.add(new RunStep(stepId, state.runId, RunStepType.MCP_CALL,
                 failed ? AgentRunStatus.FAILED : AgentRunStatus.SUCCEEDED, start, end, payload));
         state.toolCalls.add(new ToolCall(UUID.randomUUID().toString(), state.runId, toolName,
-                ToolCallPolicy.ASK, false, duration(start, end), 0, parameterSummary, resultSummary,
+                ToolCallPolicy.ASK, false, duration(start, end), 0, parameter, result,
                 failed ? "MCP_CALL_FAILED" : null, errorMessage,
-                payload("capability", "mcp", "mcpServer", serverName)));
+                mergedAuditTags(payload("capability", "mcp", "mcpServer", serverName), parameterSummary, resultSummary)));
     }
 
     private static RuntimeEvent event(
@@ -161,6 +168,32 @@ public final class RuntimeInteractionRecorder {
             }
         }
         return payload;
+    }
+
+    private static Map<String, Object> mergedAuditTags(
+            Map<String, Object> auditTags,
+            String parameterSummary,
+            String resultSummary) {
+        Map<String, Object> tags = new LinkedHashMap<>();
+        if (auditTags != null) {
+            tags.putAll(auditTags);
+        }
+        tags.put("parameterSize", parameterSummary == null ? 0 : parameterSummary.length());
+        tags.put("parameterTruncated", parameterSummary != null && parameterSummary.length() > TOOL_SUMMARY_MAX_CHARS);
+        tags.put("resultSize", resultSummary == null ? 0 : resultSummary.length());
+        tags.put("resultTruncated", resultSummary != null && resultSummary.length() > TOOL_SUMMARY_MAX_CHARS);
+        return tags;
+    }
+
+    private static String truncated(String value) {
+        if (value == null || value.length() <= TOOL_SUMMARY_MAX_CHARS) {
+            return value;
+        }
+        int omitted = value.length() - TOOL_SUMMARY_MAX_CHARS;
+        return value.substring(0, TOOL_SUMMARY_MAX_CHARS)
+                + "\n...[truncated "
+                + omitted
+                + " chars]";
     }
 
     private static final class TraceState {

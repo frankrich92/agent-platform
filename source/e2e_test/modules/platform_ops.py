@@ -78,7 +78,7 @@ class PlatformOpsModule(Module):
             "type": "AGENT",
             "bizId": agent_id,
             "cron": "0 0 0 1 1 ? 2099",
-            "jobClass": "com.htam.agent.job.scheduler.AgentScheduler",
+            "jobClass": "com.htam.agent.run.task.scheduler.AgentScheduler",
             "dataMap": json.dumps({"agentId": agent_id, "input": "hello from e2e"}),
             "enabled": False,
         }

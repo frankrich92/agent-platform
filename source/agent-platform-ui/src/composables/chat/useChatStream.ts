@@ -2,9 +2,6 @@ import { ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { useAgentClient } from '@/composables/useAgentClient'
 import { usePlanTracking } from '@/composables/chat/usePlanTracking'
-import * as chatSessionApi from '@/api/chatSession'
-import { buildToolCallsContent } from '@/utils/chat/format'
-import { chatMessageQueue } from '@/utils/chat/messageQueue'
 import type {ChatMessageVO, RawEvent} from '@/types'
 import { useAccountStore } from '@/stores'
 
@@ -16,7 +13,7 @@ export function useChatStream(
   memoryActive?: import('vue').Ref<boolean>,
   planActive?: import('vue').Ref<boolean>,
   toolProcessActive?: import('vue').Ref<boolean>,
-  onMessageSaved?: (chatMsg: ChatMessageVO) => void) {
+  onMessagesChanged?: () => void | Promise<void>) {
 
   const { userInfo } = useAccountStore()
 
@@ -36,8 +33,17 @@ export function useChatStream(
     fileIds: fileIds?.value ?? [],
     memoryActive: memoryActive?.value ?? false,
     planActive: planActive?.value ?? false,
+    toolProcessActive: toolProcessActive?.value ?? true,
     userInfo: userInfo
   })
+
+  const newRunIds = () => {
+    const suffix = `${Date.now()}_${Math.random().toString(36).slice(2, 11)}`
+    return {
+      runId: `run_${suffix}`,
+      traceId: `trace_${suffix}`
+    }
+  }
 
   // 流式内容
   const agentHasResult = ref(true)
@@ -60,11 +66,6 @@ export function useChatStream(
         toolCallsInProgress.value = []
         reasoningContent.value = ''
         reasoningMessageId.value = null
-        // 新 run 开始时清理上一轮残留的僵尸队列，防止异常中断留下的任务阻塞后续消息
-        const sid = currentSessionId.value
-        if (sid) {
-          chatMessageQueue.clear(sid)
-        }
       },
       onTextMessageStart: (e) => {
         streamingMessageId.value = e.messageId
@@ -74,21 +75,7 @@ export function useChatStream(
         agentHasResult.value = true
         streamingContent.value = currentText
       },
-      onTextMessageEnd: (_e, finalText) => {
-        const sid = currentSessionId.value
-        if (sid && finalText) {
-          // 纯文本保存，不再与推理打包，通过队列保证写入顺序
-          const contentToSave = JSON.stringify({ reasoning: '', content: finalText })
-          chatMessageQueue.enqueue(sid, () =>
-            chatSessionApi.appendMessage(sid, { role: 'assistant', content: contentToSave }),
-            (res) => {
-              onMessageSaved?.(res.data.data)
-              // 保存完成后清除流式状态，利用 displayMessages 去重避免闪烁
-              streamingContent.value = ''
-              streamingMessageId.value = null
-            }
-          )
-        }
+      onTextMessageEnd: () => {
         reasoningContent.value = ''
       },
       onReasoningMessageStart: (e) => {
@@ -98,22 +85,7 @@ export function useChatStream(
       onReasoningMessageContent: (_e, currentText) => {
         reasoningContent.value = currentText
       },
-      onReasoningMessageEnd: () => {
-        const sid = currentSessionId.value
-        if (sid && reasoningContent.value) {
-          // 推理结束时立即保存为独立消息，通过队列保证写入顺序
-          const contentToSave = JSON.stringify({ reasoning: reasoningContent.value, content: '' })
-          chatMessageQueue.enqueue(sid, () =>
-            chatSessionApi.appendMessage(sid, { role: 'assistant', content: contentToSave }),
-            (res) => {
-              onMessageSaved?.(res.data.data)
-              // 保存完成后清除推理状态，利用 displayMessages 去重避免闪烁
-              reasoningMessageId.value = null
-              reasoningContent.value = ''
-            }
-          )
-        }
-      },
+      onReasoningMessageEnd: () => {},
       onToolCallStart: (e) => {
         // 计划追踪：记录工具调用名称
         onPlanToolStart(e.toolCallId, e.toolCallName)
@@ -124,20 +96,6 @@ export function useChatStream(
           { id: e.toolCallId, name: e.toolCallName, args: '', startTime: Date.now() }
         ]
 
-        const sid = currentSessionId.value
-        if (sid && reasoningContent.value) {
-          // 推理结束时保存为独立消息，通过队列保证写入顺序
-          const contentToSave = JSON.stringify({ reasoning: reasoningContent.value, content: '' })
-          chatMessageQueue.enqueue(sid, () =>
-            chatSessionApi.appendMessage(sid, { role: 'assistant', content: contentToSave }),
-            (res) => {
-              onMessageSaved?.(res.data.data)
-              // 保存完成后清除推理状态，利用 displayMessages 去重避免闪烁
-              reasoningMessageId.value = null
-              reasoningContent.value = ''
-            }
-          )
-        }
       },
       onToolCallArgs: (_e, partialArgs) => {
         // 计划追踪：累积工具参数
@@ -162,17 +120,6 @@ export function useChatStream(
             t.id === e.toolCallId ? { ...t, result: e.content, elapsed: Date.now() - t.startTime } : t
           )
 
-          // 保存工具调用消息，通过队列保证写入顺序
-          const sid = currentSessionId.value
-          if (sid) {
-            const contentToSave = buildToolCallsContent(toolCallsInProgress.value)
-            if (contentToSave) {
-              chatMessageQueue.enqueue(sid, () =>
-                chatSessionApi.appendMessage(sid, { role: 'tool', content: contentToSave }),
-                (res) => onMessageSaved?.(res.data.data)
-              )
-            }
-          }
         } finally {
           // 清空进行中的工具调用（可根据需要保留，此处清空）
           toolCallsInProgress.value = []
@@ -183,6 +130,12 @@ export function useChatStream(
         if (toolCallsInProgress.value.length > 0) {
           toolCallsInProgress.value.forEach(item => item.needConfirm = true)
         }
+        Promise.resolve(onMessagesChanged?.()).finally(() => {
+          streamingContent.value = ''
+          streamingMessageId.value = null
+          reasoningContent.value = ''
+          reasoningMessageId.value = null
+        })
       },
       onRaw: (event) => {
         const e = event as RawEvent
@@ -191,18 +144,6 @@ export function useChatStream(
         if(rawEvent.error) {
           streamingMessageId.value = new Date().getTime() + '' + Math.floor(Math.random() * 90000) + 10000
           streamingContent.value = rawEvent.error
-          const sid = currentSessionId.value
-          if (sid) {
-            chatMessageQueue.enqueue(sid, () =>
-              chatSessionApi.appendMessage(sid, { role: 'error', content: rawEvent.error }),
-              (res) => {
-                onMessageSaved?.(res.data.data)
-                // 保存完成后清除流式状态，利用 displayMessages 去重避免闪烁
-                streamingContent.value = ''
-                streamingMessageId.value = null
-              }
-            )
-          }
         }
      }
     }
@@ -210,7 +151,7 @@ export function useChatStream(
 
   // 发送消息
   const sendToolContent = async (value: any) => {
-    const {id, name, args, result, content } = value
+    const {id, content } = value
     client.messages = [{
       id,
       role: 'tool',
@@ -218,26 +159,16 @@ export function useChatStream(
       toolCallId: content[0].id,
     }]
 
-    // 判断是否开启了显示工具调用
-    if ((toolProcessActive?.value ?? true)) {
-      const sid = currentSessionId.value as string
-      // 保存历史，通过队列保证写入顺序
-      const contentToSave = buildToolCallsContent([{ id, name, args, result, elapsed: 0 }])
-      if (contentToSave) {
-        await chatMessageQueue.enqueue(sid, () =>
-          chatSessionApi.appendMessage(sid, { role: 'tool', content: contentToSave }),
-          (res) => {
-            toolCallsInProgress.value = toolCallsInProgress.value.filter(item => item.id != id)
-            onMessageSaved?.(res.data.data)
-          }
-        )
-      }
-    }
+    toolCallsInProgress.value = toolCallsInProgress.value.filter(item => item.id != id)
 
+    const ids = newRunIds()
     await run({
       threadId: currentSessionId.value || undefined,
-      runId: `run_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
-      forwardedProps: getForwardedProps()
+      runId: ids.runId,
+      forwardedProps: {
+        ...getForwardedProps(),
+        traceId: ids.traceId
+      }
     })
   }
 
@@ -251,27 +182,6 @@ export function useChatStream(
 
     const sid = currentSessionId.value
     if (sid) {
-      // 保存工具调用消息，通过队列保证写入顺序
-      if (toolCallsInProgress.value.length > 0) {
-        const contentToSave = buildToolCallsContent(toolCallsInProgress.value)
-        if (contentToSave) {
-          await chatMessageQueue.enqueue(sid, () =>
-            chatSessionApi.appendMessage(sid, { role: 'tool', content: contentToSave }),
-            (res) => onMessageSaved?.(res.data.data)
-          )
-        }
-      }
-      // 保存AI回复消息
-      else {
-        if (streamingContent.value) {
-          // 推理已在 REASONING_MESSAGE_END 中独立保存，此处只保存纯文本
-          await chatMessageQueue.enqueue(sid, () =>
-            chatSessionApi.appendMessage(sid, { role: 'assistant', content: streamingContent.value }),
-            (res) => onMessageSaved?.(res.data.data)
-          )
-        }
-      }
-
       toolCallsInProgress.value = []
       streamingContent.value = ''
       streamingMessageId.value = null
@@ -313,10 +223,14 @@ export function useChatStream(
     }
 
     agentHasResult.value = false
+    const ids = newRunIds()
     await run({
       threadId: currentSessionId.value || undefined,
-      runId: `run_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
-      forwardedProps
+      runId: ids.runId,
+      forwardedProps: {
+        ...forwardedProps,
+        traceId: ids.traceId
+      }
     })
   }
 

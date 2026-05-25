@@ -3,7 +3,9 @@ package com.htam.agent.runtime.memory;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.IntStream;
+import org.springframework.stereotype.Service;
 
+@Service
 public class DefaultRuntimeContextPlanner implements RuntimeContextPlanner {
 
     @Override

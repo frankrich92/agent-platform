@@ -465,12 +465,27 @@
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
+        <artifactId>runtime-planning</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
         <artifactId>run-step</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.htam.agent</groupId>
         <artifactId>run-tool-call</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
+        <artifactId>run-history</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
+        <artifactId>run-replay</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
