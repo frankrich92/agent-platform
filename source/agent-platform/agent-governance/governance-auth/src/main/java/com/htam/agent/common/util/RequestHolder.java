@@ -6,8 +6,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 public class RequestHolder {
-    // 使用InheritableThreadLocal支持子线程继承
-    private static final InheritableThreadLocal<HttpServletRequest> REQUEST_HOLDER = new InheritableThreadLocal<>();
+    private static final ThreadLocal<HttpServletRequest> REQUEST_HOLDER = new ThreadLocal<>();
 
     public static void setRequest(HttpServletRequest request) {
         REQUEST_HOLDER.set(request);

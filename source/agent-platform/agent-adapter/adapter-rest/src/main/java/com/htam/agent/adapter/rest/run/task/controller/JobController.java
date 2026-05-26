@@ -47,7 +47,7 @@ public class JobController {
         return R.data(true);
     }
 
-    @GetMapping("/updateCron")
+    @PatchMapping("/updateCron")
     @RoleNeed({Role.ADMIN, Role.EDIT})
     public R<Boolean> updateCron(@RequestParam("id") String id, @RequestParam("cron") String cron) throws ClassNotFoundException {
         quartzInfoService.updateJobCron(id, cron);
@@ -56,7 +56,7 @@ public class JobController {
         return R.data(true);
     }
 
-    @GetMapping("/delete")
+    @DeleteMapping("/delete")
     @RoleNeed({Role.ADMIN, Role.EDIT})
     public R<Boolean> delete(@RequestParam("id") String id) throws ClassNotFoundException {
         boolean result = quartzInfoService.deleteJob(id);
@@ -65,7 +65,7 @@ public class JobController {
         return R.data(result);
     }
 
-    @GetMapping("/start")
+    @PostMapping("/start")
     @RoleNeed({Role.ADMIN, Role.EDIT})
     public R<Boolean> start(@RequestParam("id") String id) throws ClassNotFoundException {
         quartzInfoService.startJob(id);
@@ -74,7 +74,7 @@ public class JobController {
         return R.data(true);
     }
 
-    @GetMapping("stop")
+    @PostMapping("stop")
     @RoleNeed({Role.ADMIN, Role.EDIT})
     public R<Boolean> stop(@RequestParam("id") String id) throws ClassNotFoundException {
         quartzInfoService.stopJob(id);
@@ -102,7 +102,7 @@ public class JobController {
      * @param bizId 业务ID（即agentId）
      * @return 是否删除成功
      */
-    @GetMapping("/deleteByBizId")
+    @DeleteMapping("/deleteByBizId")
     @RoleNeed({Role.ADMIN, Role.EDIT})
     public R<Boolean> deleteByBizId(@RequestParam("bizId") String bizId) throws ClassNotFoundException {
         JobInfo jobInfo = quartzInfoService.getAgentJobByBizId(bizId);

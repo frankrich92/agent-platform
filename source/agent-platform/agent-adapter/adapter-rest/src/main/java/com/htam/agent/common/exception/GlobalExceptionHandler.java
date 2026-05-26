@@ -191,7 +191,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<?> notAuthExceptionHandler(NotAuthException e) {
         log.warn("权限验证失败: {}", e.getMessage());
         Throwable cause = e.getCause();
-        String message = cause != null ? cause.getMessage() : e.getMessage();
+        String message = publicMessage(cause != null ? cause.getMessage() : e.getMessage(), "认证失败");
         return new ResponseEntity<>(R.fail(401, message), HttpStatus.UNAUTHORIZED);
     }
 
@@ -224,16 +224,22 @@ public class GlobalExceptionHandler {
 
     // ================ 通用异常处理 ================
 
+    @ExceptionHandler(value = {IllegalArgumentException.class})
+    public R<?> illegalArgumentExceptionHandler(IllegalArgumentException e) {
+        log.warn("请求参数异常: {}", e.getMessage());
+        return R.fail(400, publicMessage(e.getMessage(), "请求参数不合法"));
+    }
+
+    @ExceptionHandler(value = {IllegalStateException.class})
+    public R<?> illegalStateExceptionHandler(IllegalStateException e) {
+        log.warn("业务状态异常: {}", e.getMessage());
+        return R.fail(409, publicMessage(e.getMessage(), "当前状态不允许执行该操作"));
+    }
+
     @ExceptionHandler(Exception.class)
     public R<?> exceptionHandler(Exception e) {
         log.error("系统异常: {}", e.getMessage(), e);
-
-        String errorMsg = "系统异常，请稍后重试";
-        if (e.getMessage() != null) {
-            errorMsg = e.getMessage();
-        }
-
-        return R.fail(500, errorMsg);
+        return R.fail(500, "系统异常，请稍后重试");
     }
 
     // ================ 私有辅助方法 ================
@@ -262,6 +268,24 @@ public class GlobalExceptionHandler {
         }
 
         return "数据已存在，请勿重复添加";
+    }
+
+    private String publicMessage(String message, String fallback) {
+        if (message == null || message.trim().isEmpty()) {
+            return fallback;
+        }
+        String normalized = message.trim();
+        String lower = normalized.toLowerCase();
+        if (normalized.contains("\n")
+                || normalized.contains("\r")
+                || normalized.contains("\"")
+                || lower.contains("exception")
+                || lower.contains("sql")
+                || lower.contains("jdbc")
+                || lower.contains("stacktrace")) {
+            return fallback;
+        }
+        return normalized;
     }
 
     /**

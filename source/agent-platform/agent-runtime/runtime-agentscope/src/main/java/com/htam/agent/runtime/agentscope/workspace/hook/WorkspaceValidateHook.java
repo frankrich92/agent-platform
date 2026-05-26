@@ -299,7 +299,7 @@ public class WorkspaceValidateHook implements Hook {
      */
     private String extractThreadId(HookEvent event) {
         if (event.getAgent() instanceof AgentBase agentBase) {
-            return AgentMetadataStore.get(agentBase.getAgentId(), "threadId");
+            return AgentMetadataStore.get(agentBase, "threadId");
         }
         return null;
     }

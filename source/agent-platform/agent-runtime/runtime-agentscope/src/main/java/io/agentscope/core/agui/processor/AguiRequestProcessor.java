@@ -74,7 +74,7 @@ public class AguiRequestProcessor {
 
         // 添加threadId
         if (agent instanceof AgentBase agentBase) {
-            AgentMetadataStore.put(agentBase.getAgentId(), "threadId", threadId);
+            AgentMetadataStore.put(agentBase, "threadId", threadId);
         }
 
         // 获取是否开启记忆

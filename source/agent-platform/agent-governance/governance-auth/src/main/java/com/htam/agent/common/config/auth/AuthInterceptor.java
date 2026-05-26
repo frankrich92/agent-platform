@@ -3,6 +3,7 @@ package com.htam.agent.common.config.auth;
 import com.htam.agent.common.UserDetail;
 import com.htam.agent.common.consts.SysConst;
 import com.htam.agent.common.enums.Role;
+import com.htam.agent.common.r.R;
 import com.htam.agent.common.util.*;
 import com.htam.agent.repo.cache.CacheRepository;
 import io.jsonwebtoken.Claims;
@@ -12,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.NonNull;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
-import org.springframework.web.servlet.ModelAndView;
 
 import java.lang.reflect.Method;
 import java.util.List;
@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class AuthInterceptor implements HandlerInterceptor {
 
     private static final int UNAUTHORIZED_STATUS = HttpServletResponse.SC_UNAUTHORIZED;
-    private static final int OK_STATUS = HttpServletResponse.SC_OK;
+    private static final int FORBIDDEN_STATUS = HttpServletResponse.SC_FORBIDDEN;
 
     private static final Map<Long, Role> ROLE_MAP = new ConcurrentHashMap<>();
     /** 存储有效的SK ID集合，用于快速校验SK是否有效 */
@@ -92,7 +92,7 @@ public class AuthInterceptor implements HandlerInterceptor {
         try {
             String token = TokenUtils.getToken();
             if (token == null) {
-                sendErrorResponse(response, OK_STATUS, UNAUTHORIZED_STATUS, "无权进行此操作");
+                sendErrorResponse(response, UNAUTHORIZED_STATUS, UNAUTHORIZED_STATUS, "无权进行此操作");
                 return false;
             }
 
@@ -105,16 +105,17 @@ public class AuthInterceptor implements HandlerInterceptor {
             return handleJwtToken(token, request, response, handlerMethod);
 
         } catch (Exception e) {
-            sendErrorResponse(response, UNAUTHORIZED_STATUS, UNAUTHORIZED_STATUS, e.getMessage());
+            log.warn("认证失败: {}", e.getMessage());
+            sendErrorResponse(response, UNAUTHORIZED_STATUS, UNAUTHORIZED_STATUS, "认证失败");
             return false;
         }
     }
 
     @Override
-    public void postHandle(HttpServletRequest request,
-                           HttpServletResponse response,
-                           Object handler,
-                           ModelAndView modelAndView) {
+    public void afterCompletion(HttpServletRequest request,
+                                HttpServletResponse response,
+                                Object handler,
+                                Exception ex) {
         RequestHolder.clear();
     }
 
@@ -160,7 +161,7 @@ public class AuthInterceptor implements HandlerInterceptor {
 
         // 检查接口权限
         if (!checkRoleNeed(handlerMethod)) {
-            sendErrorResponse(response, OK_STATUS, UNAUTHORIZED_STATUS, "无权进行此操作");
+            sendErrorResponse(response, FORBIDDEN_STATUS, FORBIDDEN_STATUS, "无权进行此操作");
             return false;
         }
 
@@ -188,7 +189,7 @@ public class AuthInterceptor implements HandlerInterceptor {
 
         // 是ChatKey token，检查接口是否允许ChatKey访问
         if (!isChatKeyAccessAllowed(handlerMethod)) {
-            sendErrorResponse(response, UNAUTHORIZED_STATUS, UNAUTHORIZED_STATUS, "该接口不支持ChatKey访问");
+            sendErrorResponse(response, FORBIDDEN_STATUS, FORBIDDEN_STATUS, "该接口不支持ChatKey访问");
             return false;
         }
 
@@ -210,7 +211,7 @@ public class AuthInterceptor implements HandlerInterceptor {
                                   HandlerMethod handlerMethod) {
         // 检查接口是否被 @SkAccess 标记
         if (!isSkAccessAllowed(handlerMethod)) {
-            sendErrorResponse(response, UNAUTHORIZED_STATUS, UNAUTHORIZED_STATUS, "该接口不支持SK访问");
+            sendErrorResponse(response, FORBIDDEN_STATUS, FORBIDDEN_STATUS, "该接口不支持SK访问");
             return false;
         }
 
@@ -240,7 +241,8 @@ public class AuthInterceptor implements HandlerInterceptor {
             return true;
 
         } catch (Exception e) {
-            sendErrorResponse(response, UNAUTHORIZED_STATUS, UNAUTHORIZED_STATUS, e.getMessage());
+            log.warn("SK认证失败: {}", e.getMessage());
+            sendErrorResponse(response, UNAUTHORIZED_STATUS, UNAUTHORIZED_STATUS, "认证失败");
             return false;
         }
     }
@@ -303,7 +305,7 @@ public class AuthInterceptor implements HandlerInterceptor {
         response.setContentType("application/json;charset=UTF-8");
 
         try {
-            String errorJson = String.format("{\"code\": %d, \"msg\": \"%s\"}", code, message);
+            String errorJson = JsonUtils.toJsonStr(R.fail(code, message));
             response.getWriter().write(errorJson);
         } catch (Exception e) {
             log.error("写入错误响应失败", e);

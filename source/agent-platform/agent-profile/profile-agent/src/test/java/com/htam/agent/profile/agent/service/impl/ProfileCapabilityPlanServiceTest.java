@@ -59,16 +59,15 @@ class ProfileCapabilityPlanServiceTest {
         RecordingMcpServerService mcpServerService = new RecordingMcpServerService();
         ProfileCapabilityPlanService service = new ProfileCapabilityPlanService(
                 agentDefinitionService,
-                new EmptyAgentSubAgentService(),
-                new EmptyAgentCodeExecutionService(),
-                new EmptyCodeExecutionConfigService(),
-                new EmptyAgentHookService(),
-                new EmptyHookConfigService(),
-                agentMcpServerService,
-                mcpServerService,
-                new RecordingMcpToolService(),
-                new EmptyAgentKnowledgeBaseService(),
-                new EmptyKnowledgeBaseConfigService());
+                List.of(
+                        new ModelPolicyCapabilityContributor(),
+                        new ToolCapabilityContributor(agentDefinitionService),
+                        new SkillCapabilityContributor(agentDefinitionService),
+                        new McpCapabilityContributor(agentMcpServerService, mcpServerService, new RecordingMcpToolService()),
+                        new KnowledgeCapabilityContributor(new EmptyAgentKnowledgeBaseService(), new EmptyKnowledgeBaseConfigService()),
+                        new HookCapabilityContributor(new EmptyAgentHookService(), new EmptyHookConfigService()),
+                        new SubAgentCapabilityContributor(new EmptyAgentSubAgentService(), agentDefinitionService),
+                        new WorkerCapabilityContributor(new EmptyAgentCodeExecutionService(), new EmptyCodeExecutionConfigService())));
 
         CapabilityPlan plan = service.resolvePlan(100L);
 
