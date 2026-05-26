@@ -38,6 +38,8 @@ public class SysConst {
     public static final String ALLOW_IMAGE_FILE_TYPE = "png,jpeg,png,gif,webp";
     public static final String ALLOW_AUDIO_FILE_TYPE = "mp3,wav,mpeg";
     public static final String ALLOW_VIDEO_FILE_TYPE = "mp4,mpeg";
+    public static final String ALLOW_SKILL_FILE_TYPE =
+            "txt,md,markdown,csv,tsv,json,yaml,yml,xml,html,htm,pdf,doc,docx,xls,xlsx,ppt,pptx,zip,log,sql";
 
     public static final Long ADMIN_ACCOUNT_ID = 1111111111111111111L;
 

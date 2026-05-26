@@ -27,6 +27,7 @@ public class AgentContext {
     private boolean memoryActive;
     private boolean planActive;
     private List<String> fileIds;
+    private List<Map<String, Object>> fileAttachments;
     private AccountVO userInfo;
     private AgentDefinition agentDefinition;
     private Map<String, Object> params;
@@ -49,7 +50,18 @@ public class AgentContext {
                         ? (Boolean) input.getForwardedProp("planActive")
                         : false);
 
-        agentContext.setFileIds(toList(input.getForwardedProp("fileIds")));
+        List<Map<String, Object>> fileAttachments = toMapList(input.getForwardedProp("fileAttachments"));
+        agentContext.setFileAttachments(fileAttachments);
+
+        List<String> fileIds = toList(input.getForwardedProp("fileIds"));
+        if (fileIds.isEmpty() && !fileAttachments.isEmpty()) {
+            fileIds = fileAttachments.stream()
+                    .map(item -> item.get("id"))
+                    .filter(Objects::nonNull)
+                    .map(String::valueOf)
+                    .toList();
+        }
+        agentContext.setFileIds(fileIds);
 
         AccountVO userInfo = input.getForwardedProp("userInfo") != null
                 ? JsonUtils.objectToBean(input.getForwardedProp("userInfo"), AccountVO.class)
@@ -72,6 +84,13 @@ public class AgentContext {
             return new ArrayList<>();
         }
         return JsonUtils.parse(JsonUtils.toJsonStr(params), new TypeReference<List<String>>() {});
+    }
+
+    private static List<Map<String, Object>> toMapList(Object params) {
+        if (params == null) {
+            return new ArrayList<>();
+        }
+        return JsonUtils.parse(JsonUtils.toJsonStr(params), new TypeReference<List<Map<String, Object>>>() {});
     }
 
     public static AgentContext get() {

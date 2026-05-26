@@ -60,6 +60,7 @@ const handleRemove = (item: UploadedFileItem) => {
           :key="item.id"
           @click="openPreview(item, index)"
           class="chat-input-file-item"
+          data-testid="chat-uploaded-file"
         >
           <span v-if="item.uploading" class="chat-input-file-loading">
             <LoadingOutlined spin />
@@ -70,6 +71,8 @@ const handleRemove = (item: UploadedFileItem) => {
             type="button"
             class="chat-input-file-remove"
             title="移除"
+            aria-label="移除附件"
+            data-testid="chat-uploaded-file-remove"
             @click.stop="handleRemove(item)"
           >
             <CloseOutlined />

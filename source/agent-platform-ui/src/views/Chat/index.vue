@@ -384,7 +384,8 @@ const handleSend = async () => {
   await sendMessage(
     finalText,
     [{ role: 'user', content: finalText }] as ChatMessageVO[],
-    fileIdsToSend
+    fileIdsToSend,
+    filesToSend
   )
 }
 

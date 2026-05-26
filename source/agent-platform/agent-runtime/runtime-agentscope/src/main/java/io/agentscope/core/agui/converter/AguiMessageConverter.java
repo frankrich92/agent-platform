@@ -16,9 +16,8 @@
 package io.agentscope.core.agui.converter;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.htam.agent.common.file.AttachmentContentReader;
-import com.htam.agent.common.util.BeanUtils;
-import com.htam.agent.common.wrapper.FileBase64Wrapper;
+import com.htam.agent.runtime.agentscope.attachment.UploadedAttachmentRef;
+import com.htam.agent.runtime.agentscope.attachment.UploadedAttachmentReferences;
 import com.htam.agent.runtime.agentscope.agui.AgentContext;
 import io.agentscope.core.agui.model.AguiFunctionCall;
 import io.agentscope.core.agui.model.AguiMessage;
@@ -26,11 +25,8 @@ import io.agentscope.core.agui.model.AguiToolCall;
 import io.agentscope.core.message.*;
 import io.agentscope.core.util.JsonException;
 import io.agentscope.core.util.JsonUtils;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeansException;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -41,18 +37,11 @@ import java.util.stream.Collectors;
  * <p>This class handles the bidirectional conversion between the AG-UI protocol's
  * message format and AgentScope's internal message format.
  */
-@Slf4j
 public class AguiMessageConverter {
     /**
      * Creates a new AguiMessageConverter
      */
-    private AttachmentContentReader attachmentContentReader;
     public AguiMessageConverter() {
-        try {
-            attachmentContentReader = BeanUtils.getBean(AttachmentContentReader.class);
-        } catch (BeansException e) {
-            log.error(e.getMessage(), e);
-        }
     }
 
     /**
@@ -138,88 +127,50 @@ public class AguiMessageConverter {
      * @return The converted AgentScope messages
      */
     public List<Msg> toMsgList(List<AguiMessage> aguiMessages) {
+        if (aguiMessages == null || aguiMessages.isEmpty()) {
+            return List.of();
+        }
         List<Msg> message = aguiMessages.stream().map(this::toMsg).collect(Collectors.toList());
 
         if ("user".equals(aguiMessages.getLast().getRole())) {
-            fullMultimodalMsg(message);
+            appendAttachmentReferences(message);
         }
 
         return message;
     }
 
     /**
-     * 填充多模态消息
-     *
-     * auther  huxuehao
+     * Append uploaded attachment references to the latest user message without reading file content.
      */
-    private void fullMultimodalMsg(List<Msg> message) {
-        // 获取服务
-        if (attachmentContentReader == null) {
-            try {
-                attachmentContentReader = BeanUtils.getBean(AttachmentContentReader.class);
-            } catch (BeansException e) {
-                log.error(e.getMessage(), e);
-            }
-
+    private void appendAttachmentReferences(List<Msg> messages) {
+        if (messages == null || messages.isEmpty()) {
             return;
         }
-
-        // 获取附件ID
-        AgentContext agentContext = AgentContext.get();
-        List<String> fileIds = agentContext.getFileIds();
-        if (fileIds != null && !fileIds.isEmpty()) {
-
-            // 基于 附件 构建 多模态 ContentBlock
-            List<ContentBlock> blocks = new LinkedList<>();
-            fileIds.forEach(fileId -> {
-                FileBase64Wrapper wrapper = attachmentContentReader.getFileBase64(Long.valueOf(fileId));
-                if (wrapper != null) {
-                    ContentBlock block = switch (wrapper.getModelType()) {
-                        case IMAGE -> ImageBlock.builder()
-                                    .source(Base64Source.builder()
-                                            .data(wrapper.getBase64())
-                                            .mediaType(wrapper.getMediaType())
-                                            .build())
-                                    .build();
-                        case VIDEO -> VideoBlock.builder()
-                                .source(Base64Source.builder()
-                                        .data(wrapper.getBase64())
-                                        .mediaType(wrapper.getMediaType())
-                                        .build())
-                                .build();
-                        case AUDIO -> AudioBlock.builder()
-                                .source(Base64Source.builder()
-                                        .data(wrapper.getBase64())
-                                        .mediaType(wrapper.getMediaType())
-                                        .build())
-                                .build();
-                        default -> null;
-                    };
-
-                    if (block != null) {
-                        blocks.add(block);
-                    }
-                }
-            });
-
-            // 移除 message 中最后一条消息，并构建新的文本 ContentBlock
-            String content = message.removeLast().getTextContent();
-            if (content != null && !content.isEmpty()) {
-                // 去除
-                String[] split = content.split("@==##::::##==@", 2);
-                String result = split.length > 1 ? split[1] : split[0];
-                blocks.add(TextBlock.builder().text(result).build());
-            }
-
-            // 构建复合消息
-            Msg multiMsg = Msg.builder()
-                    .role(MsgRole.USER)
-                    .content(blocks)
-                    .build();
-
-            // 追加到末尾
-            message.add(multiMsg);
+        Msg latest = messages.getLast();
+        if (latest.getRole() != MsgRole.USER) {
+            return;
         }
+        String content = latest.getTextContent();
+        AgentContext agentContext = AgentContext.getIfExists().orElse(null);
+        List<UploadedAttachmentRef> refs = UploadedAttachmentReferences.from(agentContext, content);
+        if (refs.isEmpty()) {
+            return;
+        }
+        List<ContentBlock> blocks = new ArrayList<>();
+        String text = UploadedAttachmentReferences.stripFilePrefix(content);
+        if (text != null && !text.isBlank()) {
+            blocks.add(TextBlock.builder().text(text).build());
+        }
+        blocks.add(TextBlock.builder().text(UploadedAttachmentReferences.toPrompt(refs)).build());
+        messages.removeLast();
+        messages.add(Msg.builder()
+                .id(latest.getId())
+                .name(latest.getName())
+                .role(latest.getRole())
+                .content(blocks)
+                .metadata(latest.getMetadata())
+                .timestamp(latest.getTimestamp())
+                .build());
     }
 
     /**

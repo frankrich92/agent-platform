@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import zipfile
 
 from common import E2EError, Module
@@ -120,7 +121,12 @@ class AgentChatModule(Module):
         self.client.json("PUT", "/agent/definition", payload)
         self.client.json("POST", "/agent/definition/used-with-agent", [agent_id])
         self.client.json("GET", "/agent/definition/get/tags")
-        self.client.json("GET", f"/agent/definition/{agent_id}/allow/file-type")
+        allowed_file_types = self.require_data(
+            self.client.json("GET", f"/agent/definition/{agent_id}/allow/file-type"),
+            "agent-allow-file-type",
+        )
+        if "pdf" not in allowed_file_types or "txt" not in allowed_file_types:
+            raise E2EError(f"skill-parsed upload file types missing: {allowed_file_types}")
         self.client.json("GET", f"/agent/definition/{agent_id}/enabled/tools")
         self.client.json("GET", f"/agent/definition/{agent_id}/enabled/skills")
         self.client.json("GET", f"/agent/statistics/{agent_id}/trends", params={"days": 7})
@@ -169,6 +175,34 @@ class AgentChatModule(Module):
             ),
             "append-message",
         )
+        attach_id = self.state.created.get("attach_id")
+        if attach_id:
+            upload_prefix = json.dumps(
+                {
+                    "files": [
+                        {
+                            "id": str(attach_id),
+                            "name": f"{self.state.prefix}.txt",
+                            "extension": "txt",
+                            "size": "29 B",
+                        }
+                    ]
+                },
+                ensure_ascii=False,
+            )
+            upload_msg = self.require_data(
+                self.client.json(
+                    "POST",
+                    f"/agent/chat/session/{session_id}/message",
+                    {
+                        "role": "user",
+                        "content": upload_prefix + "@==##::::##==@" + "summarize uploaded attachment",
+                    },
+                ),
+                "append-upload-message",
+            )
+            if "@==##::::##==@" not in upload_msg.get("content", ""):
+                raise E2EError("chat upload message did not retain attachment prefix")
         self.client.json(
             "POST",
             f"/agent/chat/session/{session_id}/regenerate",

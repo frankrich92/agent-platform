@@ -11,6 +11,7 @@ import {
   PaperClipOutlined,
   ThunderboltOutlined
 } from '@ant-design/icons-vue'
+import { computed } from 'vue'
 
 const props = withDefaults(
   defineProps<{
@@ -58,6 +59,21 @@ const toggleToolProcess = () => {
   if (!props.showToolProcess) return
   emit('toolProcess', !props.toolProcessActive)
 }
+
+const memoryTitle = computed(() => {
+  if (!props.enableMemory) return '不支持记忆持久化'
+  return props.memoryActive ? '点击关闭记忆' : '点击开启记忆'
+})
+
+const toolProcessTitle = computed(() => {
+  if (!props.showToolProcess) return '不支持控制工具调用显示'
+  return props.toolProcessActive ? '点击关闭工具调用历史' : '点击显示工具调用历史'
+})
+
+const uploadTitle = computed(() => {
+  const types = props.allowUploadFileType ?? []
+  return types.length > 0 ? `点击上传文件（${types.join('、')}）` : '点击上传文件'
+})
 </script>
 
 <template>
@@ -65,14 +81,16 @@ const toggleToolProcess = () => {
     <div class="chat-input-toolbar-left">
       <ATooltip placement="bottom">
         <template #title>
-          <span v-if="enableMemory">{{ (memoryActive && enableMemory) ? '点击关闭记忆' : '点击开启记忆' }}</span>
-          <span v-else>不支持记忆持久化</span>
+          <span>{{ memoryTitle }}</span>
         </template>
         <button
           :disabled="!enableMemory"
           type="button"
           class="chat-toolbar-btn chat-toolbar-btn-icon chat-toolbar-btn-circle"
           :class="{ 'is-active': memoryActive && enableMemory }"
+          :aria-label="memoryTitle"
+          :title="memoryTitle"
+          data-testid="chat-memory-toggle"
           @click="toggleMemory"
         >
           <ClockCircleOutlined />
@@ -81,14 +99,16 @@ const toggleToolProcess = () => {
 
       <ATooltip placement="bottom">
         <template #title>
-          <span v-if="showToolProcess">{{ (toolProcessActive && showToolProcess) ? '点击关闭工具调用历史' : '点击显示工具调用历史' }}</span>
-          <span v-else>不支持控制工具调用显示</span>
+          <span>{{ toolProcessTitle }}</span>
         </template>
         <button
           :disabled="!showToolProcess"
           type="button"
           class="chat-toolbar-btn chat-toolbar-btn-icon chat-toolbar-btn-circle"
           :class="{ 'is-active': toolProcessActive && showToolProcess }"
+          :aria-label="toolProcessTitle"
+          :title="toolProcessTitle"
+          data-testid="chat-tool-process-toggle"
           @click="toggleToolProcess"
         >
           <ThunderboltOutlined />
@@ -102,6 +122,9 @@ const toggleToolProcess = () => {
           :disabled="!mentionAllowed"
           type="button"
           class="chat-toolbar-btn chat-toolbar-btn-icon chat-toolbar-btn-circle"
+          aria-label="添加上下文"
+          title="添加上下文"
+          data-testid="chat-mention-trigger"
           @mousedown.prevent
           @click="emit('mentionTrigger')"
         >
@@ -110,16 +133,15 @@ const toggleToolProcess = () => {
       </ATooltip>
       <ATooltip placement="bottom">
         <template #title>
-          <span v-if="allowUploadFileType && allowUploadFileType.length > 0">
-            点击上传文件（{{ allowUploadFileType.join('、') }}）
-          </span>
-          <span v-else>不支持上传文件</span>
+          <span>{{ uploadTitle }}</span>
         </template>
         <button
-          :disabled="!allowUploadFileType?.length"
           type="button"
-          class="chat-toolbar-btn chat-toolbar-btn-icon chat-toolbar-btn-circle"
+          class="chat-toolbar-btn chat-toolbar-btn-icon chat-toolbar-btn-circle chat-toolbar-upload-btn"
           style="margin-right: 15px"
+          :aria-label="uploadTitle"
+          :title="uploadTitle"
+          data-testid="chat-file-upload-trigger"
           @click="emit('pickFile')"
         >
           <PaperClipOutlined />
@@ -129,6 +151,9 @@ const toggleToolProcess = () => {
         type="button"
         class="chat-send-btn-inner"
         :disabled="!isRunning && !canSend"
+        :aria-label="isRunning ? '中断回复' : '发送消息'"
+        :title="isRunning ? '中断回复' : '发送消息'"
+        data-testid="chat-send-button"
         @click="isRunning ? emit('abort') : emit('send')"
       >
         <template v-if="isRunning"><div class="send"></div></template>
@@ -165,16 +190,16 @@ const toggleToolProcess = () => {
   align-items: center;
   justify-content: center;
   border: none;
-  background-color: #f5f5f5;
+  background-color: rgba($chat-primary, 0.08);
   cursor: pointer;
-  color: var(--color-text-secondary);
+  color: $chat-primary;
   transition: color 0.2s ease, background-color 0.2s ease;
   border-radius: var(--border-radius-md);
   margin-right: 10px;
 
   &:hover {
     color: $chat-primary;
-    background-color: rgba($chat-primary, 0.06);
+    background-color: rgba($chat-primary, 0.14);
   }
 
   &.is-active {
@@ -185,12 +210,22 @@ const toggleToolProcess = () => {
 
   &:disabled,
   &[disabled] {
+    cursor: not-allowed;
+    color: #b8bec8;
+    background-color: #f2f4f7;
+    opacity: 0.75;
+
     &:hover {
       cursor: not-allowed;
-      color: var(--color-text-secondary);
-      background-color: transparent;
+      color: #b8bec8;
+      background-color: #f2f4f7;
     }
   }
+}
+
+.chat-toolbar-upload-btn {
+  background-color: rgba($chat-primary, 0.12);
+  box-shadow: 0 0 0 1px rgba($chat-primary, 0.08) inset;
 }
 
 .chat-toolbar-btn-text {

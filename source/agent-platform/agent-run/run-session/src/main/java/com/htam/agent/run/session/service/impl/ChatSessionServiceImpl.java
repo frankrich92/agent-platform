@@ -93,7 +93,13 @@ public class ChatSessionServiceImpl implements ChatSessionService {
     @Override
     @DSTransactional(rollbackFor = Exception.class)
     public ChatMessageVO appendMessage(Long sessionId, ChatMessageAppendDTO dto) {
-        ChatSession session = getAndCheckSession(sessionId);
+        return appendMessageAsUser(sessionId, UserUtils.getId(), dto);
+    }
+
+    @Override
+    @DSTransactional(rollbackFor = Exception.class)
+    public ChatMessageVO appendMessageAsUser(Long sessionId, Long userId, ChatMessageAppendDTO dto) {
+        ChatSession session = getAndCheckSession(sessionId, userId);
         ChatMessage parent = getMessageBy(session.getCurrentMessageId(), sessionId);
         return saveNewMessageAndMoveCursor(session, parent, dto.getRole(), dto.getContent());
     }
@@ -237,11 +243,15 @@ public class ChatSessionServiceImpl implements ChatSessionService {
     }
 
     private ChatSession getAndCheckSession(Long sessionId) {
+        return getAndCheckSession(sessionId, UserUtils.getId());
+    }
+
+    private ChatSession getAndCheckSession(Long sessionId, Long userId) {
         ChatSession session = chatSessionRepository.getById(sessionId);
         if (session == null) {
             throw new RuntimeException("会话不存在或已删除");
         }
-        if (!session.getUserId().equals(UserUtils.getId())) {
+        if (userId == null || userId == 0L || !session.getUserId().equals(userId)) {
             throw new RuntimeException("无权限操作该会话");
         }
         return session;

@@ -65,12 +65,20 @@ public class SkillBoxFactory {
                 .map(AgentSkillPackage::getSkillPackageId)
                 .toList();
         if (skillPackageIds.isEmpty()) {
+            registerUploadedAttachmentSkill(skillBox);
             return skillBox;
         }
 
         registerSkills(skillBox, skillPackageIds);
+        registerUploadedAttachmentSkill(skillBox);
 
         return skillBox;
+    }
+
+    private void registerUploadedAttachmentSkill(SkillBox skillBox) {
+        if (UploadedAttachmentSkill.hasUploadedAttachments()) {
+            skillBox.registerSkill(UploadedAttachmentSkill.getAgentSkill());
+        }
     }
 
     /**
