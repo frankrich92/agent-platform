@@ -28,40 +28,40 @@ export function update(jobInfo: JobInfo) {
 
 /**
  * 修改定时任务的 cron 表达式
- * GET /job/updateCron
+ * PATCH /job/updateCron
  */
 export function updateCron(id: string, cron: string) {
-  return request.get<ApiResponse<boolean>>('/api/job/updateCron', {
+  return request.patch<ApiResponse<boolean>>('/api/job/updateCron', null, {
     params: { id, cron }
   })
 }
 
 /**
  * 删除定时任务
- * GET /job/delete
+ * DELETE /job/delete
  */
 export function remove(id: string) {
-  return request.get<ApiResponse<boolean>>('/api/job/delete', {
+  return request.delete<ApiResponse<boolean>>('/api/job/delete', {
     params: { id }
   })
 }
 
 /**
  * 启动定时任务
- * GET /job/start
+ * POST /job/start
  */
 export function start(id: string) {
-  return request.get<ApiResponse<boolean>>('/api/job/start', {
+  return request.post<ApiResponse<boolean>>('/api/job/start', null, {
     params: { id }
   })
 }
 
 /**
  * 停止定时任务
- * GET /job/stop
+ * POST /job/stop
  */
 export function stop(id: string) {
-  return request.get<ApiResponse<boolean>>('/api/job/stop', {
+  return request.post<ApiResponse<boolean>>('/api/job/stop', null, {
     params: { id }
   })
 }
@@ -78,10 +78,10 @@ export function getByBizId(bizId: string) {
 
 /**
  * 根据业务ID删除定时任务（解绑）
- * GET /job/deleteByBizId
+ * DELETE /job/deleteByBizId
  */
 export function deleteByBizId(bizId: string) {
-  return request.get<ApiResponse<boolean>>('/api/job/deleteByBizId', {
+  return request.delete<ApiResponse<boolean>>('/api/job/deleteByBizId', {
     params: { bizId }
   })
 }
