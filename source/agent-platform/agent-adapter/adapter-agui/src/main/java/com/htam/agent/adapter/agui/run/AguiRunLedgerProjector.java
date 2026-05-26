@@ -87,6 +87,9 @@ public class AguiRunLedgerProjector implements AguiRunEventObserver {
         }
         ProjectionState state = states.computeIfAbsent(runId, id -> new ProjectionState(id, context.threadId()));
         state.sessionId = nonBlank(event.getThreadId(), context.threadId(), state.sessionId);
+        if (context.userId() != null && context.userId() > 0) {
+            state.userId = context.userId();
+        }
         if (context.input() != null && context.input().getForwardedProps() != null) {
             context.input().getForwardedProps().forEach((key, value) -> {
                 if (key != null && value != null) {
@@ -261,7 +264,7 @@ public class AguiRunLedgerProjector implements AguiRunEventObserver {
                 null,
                 toolAuditTags(state, capability, tool, toolResult.messageId())));
         if (toolProcessActive(state)) {
-            appendChatMessage(state.sessionId, "tool", toolContent(tool, duration));
+            appendChatMessage(state.sessionId, state.userId, "tool", toolContent(tool, duration));
         }
         appendEvent(state, RuntimeEventType.TOOL_CALL_COMPLETED, toolResult.toolCallId(),
                 payload("aguiType", AguiEventType.TOOL_CALL_RESULT.name(),
@@ -276,7 +279,7 @@ public class AguiRunLedgerProjector implements AguiRunEventObserver {
         if (error != null && !error.isBlank()) {
             state.failed = true;
             state.output = error;
-            appendChatMessage(state.sessionId, "error", error);
+            appendChatMessage(state.sessionId, state.userId, "error", error);
             saveRun(new AgentRunRecord(
                     state.runId,
                     state.agentId,
@@ -302,7 +305,7 @@ public class AguiRunLedgerProjector implements AguiRunEventObserver {
         String content = assistantContent(reasoning, text);
         state.output = text == null || text.isBlank() ? reasoning : text;
         if (!content.isBlank()) {
-            appendChatMessage(state.sessionId, "assistant", content);
+            appendChatMessage(state.sessionId, state.userId, "assistant", content);
         }
         state.reasoning.setLength(0);
     }
@@ -407,7 +410,7 @@ public class AguiRunLedgerProjector implements AguiRunEventObserver {
         runLedgers.forEach(ledger -> ledger.save(record));
     }
 
-    private void appendChatMessage(String sessionId, String role, String content) {
+    private void appendChatMessage(String sessionId, Long userId, String role, String content) {
         Long parsedSessionId = parseLong(sessionId);
         if (parsedSessionId == null || content == null || content.isBlank()) {
             return;
@@ -418,7 +421,7 @@ public class AguiRunLedgerProjector implements AguiRunEventObserver {
             ChatMessageAppendDTO dto = new ChatMessageAppendDTO();
             dto.setRole(role);
             dto.setContent(content);
-            chatSessionService.appendMessage(parsedSessionId, dto);
+            chatSessionService.appendMessageAsUser(parsedSessionId, userId, dto);
         } finally {
             lock.unlock();
             sessionLockManager.cleanupIfUnused(parsedSessionId, lock);
@@ -577,6 +580,7 @@ public class AguiRunLedgerProjector implements AguiRunEventObserver {
         private final Map<String, Object> forwardedProps = new ConcurrentHashMap<>();
         private final Map<String, CapabilityItem> capabilitiesByName = new ConcurrentHashMap<>();
         private String sessionId;
+        private Long userId;
         private Long agentId;
         private String input;
         private String output;

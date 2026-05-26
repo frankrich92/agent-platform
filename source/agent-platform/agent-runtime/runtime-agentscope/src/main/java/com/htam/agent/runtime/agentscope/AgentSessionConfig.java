@@ -3,6 +3,7 @@ package com.htam.agent.runtime.agentscope;
 import com.htam.agent.common.consts.TableConst;
 import io.agentscope.core.agui.adapter.AguiAdapterConfig;
 import io.agentscope.core.agui.observer.AguiRunEventObserver;
+import io.agentscope.core.agui.observer.AguiRequestUserProvider;
 import io.agentscope.core.agui.registry.AguiAgentRegistry;
 import io.agentscope.core.session.Session;
 import io.agentscope.spring.boot.agui.common.AguiProperties;
@@ -60,6 +61,7 @@ public class AgentSessionConfig {
             @Autowired(required = false) AguiAgentRegistry registry,
             @Autowired(required = false) ThreadSessionManager sessionManager,
             ObjectProvider<AguiRunEventObserver> eventObservers,
+            ObjectProvider<AguiRequestUserProvider> requestUserProvider,
             AguiProperties props,
             Session session) {
 
@@ -79,6 +81,7 @@ public class AgentSessionConfig {
                 .jdbcTemplate(jdbcTemplate)
                 .conversationJdbcTemplate(conversationJdbcTemplate.getIfAvailable(() -> jdbcTemplate))
                 .eventObservers(eventObservers.orderedStream().toList())
+                .requestUserProvider(requestUserProvider.getIfAvailable())
                 .sseTimeout(600000L)
                 .config(buildAguiAdapterConfig(props))
                 .build();

@@ -133,6 +133,8 @@ onMounted(() => {
         ref="fileInputRef"
         type="file"
         class="chat-file-input-hidden"
+        aria-label="选择上传文件"
+        data-testid="chat-file-input"
         :accept="fileAccept"
         multiple
         @change="handleFileChange"

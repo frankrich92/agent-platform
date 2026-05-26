@@ -2,8 +2,27 @@ import { ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { useAgentClient } from '@/composables/useAgentClient'
 import { usePlanTracking } from '@/composables/chat/usePlanTracking'
-import type {ChatMessageVO, RawEvent} from '@/types'
+import type {ChatMessageVO, RawEvent, UploadedFileItem} from '@/types'
 import { useAccountStore } from '@/stores'
+
+interface ChatAttachmentRef {
+  id: string
+  name?: string
+  extension?: string
+  size?: string
+}
+
+interface ChatForwardedProps {
+  agentId: string
+  agentCode?: string
+  fileIds: string[]
+  fileAttachments: ChatAttachmentRef[]
+  memoryActive: boolean
+  planActive: boolean
+  toolProcessActive: boolean
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  userInfo: any
+}
 
 export function useChatStream(
   agentId: import('vue').Ref<string>,
@@ -27,10 +46,21 @@ export function useChatStream(
     resetPlan
   } = usePlanTracking()
 
-  const getForwardedProps = () => ({
+  const normalizeAttachments = (files?: UploadedFileItem[]): ChatAttachmentRef[] =>
+    (files ?? [])
+      .filter((file) => file && !file.uploading)
+      .map((file) => ({
+        id: file.id,
+        name: file.name,
+        extension: file.extension,
+        size: file.size
+      }))
+
+  const getForwardedProps = (): ChatForwardedProps => ({
     agentId: agentId.value,
     agentCode: agentDetail.value?.agentCode,
     fileIds: fileIds?.value ?? [],
+    fileAttachments: [],
     memoryActive: memoryActive?.value ?? false,
     planActive: planActive?.value ?? false,
     toolProcessActive: toolProcessActive?.value ?? true,
@@ -197,7 +227,8 @@ export function useChatStream(
   const sendMessage = async (
     inputText: string,
     messagesList: ChatMessageVO[],
-    overrideFileIds?: string[]
+    overrideFileIds?: string[],
+    overrideFiles?: UploadedFileItem[]
   ) => {
     const effectiveFileIds = overrideFileIds ?? fileIds?.value ?? []
     if (!agentId.value) return
@@ -220,6 +251,9 @@ export function useChatStream(
     const forwardedProps = getForwardedProps()
     if (overrideFileIds !== undefined) {
       forwardedProps.fileIds = overrideFileIds
+    }
+    if (overrideFiles !== undefined) {
+      forwardedProps.fileAttachments = normalizeAttachments(overrideFiles)
     }
 
     agentHasResult.value = false

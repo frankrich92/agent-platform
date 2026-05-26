@@ -7,6 +7,7 @@ import com.htam.agent.profile.a2a.service.AgentA2aService;
 import com.htam.agent.profile.agent.service.AgentDefinitionService;
 import com.htam.agent.profile.agent.service.AgentSubAgentService;
 import com.htam.agent.run.event.cluster.core.MessagePublisher;
+import com.htam.agent.common.consts.SysConst;
 import com.htam.agent.common.consts.RedisChannelTopic;
 import com.htam.agent.common.dto.AgentDefinitionDTO;
 import com.htam.agent.common.entity.*;
@@ -280,33 +281,46 @@ public class AgentDefinitionServiceImpl implements AgentDefinitionService {
             return List.of();
         }
 
+        List<String> allowFileTypes = new ArrayList<>();
+        addFileTypes(allowFileTypes, SysConst.ALLOW_SKILL_FILE_TYPE);
+
         ModelConfig modelConfig = modelConfigService.getById(agentDefinition.getModelConfigId());
         if (modelConfig == null) {
-            return List.of();
+            return distinctFileTypes(allowFileTypes);
         }
         JsonNode modelTypeJ = modelConfig.getModelType();
         if (modelTypeJ == null) {
-            return List.of();
+            return distinctFileTypes(allowFileTypes);
         }
 
         List<String> modelType = parseModelType(modelTypeJ);
-        List<String> allowImageFileType = new ArrayList<>();
         if (modelType.contains(ModelType.IMAGE.name())) {
-            allowImageFileType.add(paramsAdapter.getValue("ALLOW_IMAGE_FILE_TYPE"));
+            addFileTypes(allowFileTypes, paramsAdapter.getValue("ALLOW_IMAGE_FILE_TYPE"));
         }
         if (modelType.contains(ModelType.AUDIO.name())) {
-            allowImageFileType.add(paramsAdapter.getValue("ALLOW_AUDIO_FILE_TYPE"));
+            addFileTypes(allowFileTypes, paramsAdapter.getValue("ALLOW_AUDIO_FILE_TYPE"));
         }
         if (modelType.contains(ModelType.VIDEO.name())) {
-            allowImageFileType.add(paramsAdapter.getValue("ALLOW_VIDEO_FILE_TYPE"));
+            addFileTypes(allowFileTypes, paramsAdapter.getValue("ALLOW_VIDEO_FILE_TYPE"));
         }
 
-        if (allowImageFileType.isEmpty()) {
-            return List.of();
-        }
+        return distinctFileTypes(allowFileTypes);
+    }
 
-        String join = String.join(",", allowImageFileType);
-        return List.of(join.split(","));
+    private static void addFileTypes(List<String> target, String csv) {
+        if (csv == null || csv.isBlank()) {
+            return;
+        }
+        for (String item : csv.split(",")) {
+            String normalized = item == null ? "" : item.trim().toLowerCase();
+            if (!normalized.isBlank()) {
+                target.add(normalized);
+            }
+        }
+    }
+
+    private static List<String> distinctFileTypes(List<String> fileTypes) {
+        return fileTypes.stream().distinct().toList();
     }
 
     @Override

@@ -37,6 +37,12 @@ public interface ChatSessionService {
     ChatMessageVO appendMessage(Long sessionId, ChatMessageAppendDTO dto);
 
     /**
+     * 内部运行时追加消息：使用请求入口捕获的 userId 校验会话归属，
+     * 避免异步 SSE 线程依赖已结束的 Servlet request。
+     */
+    ChatMessageVO appendMessageAsUser(Long sessionId, Long userId, ChatMessageAppendDTO dto);
+
+    /**
      * 重新生成：以当前消息为父节点插入新消息（新分支），并更新 current_message_id
      *
      * @param sessionId 会话 ID
