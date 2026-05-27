@@ -7,7 +7,14 @@ import com.htam.agent.common.entity.JobInfo;
 import com.htam.agent.run.task.core.cluster.JobMessagePublisher;
 import com.htam.agent.run.task.service.QuartzInfoService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -74,7 +81,7 @@ public class JobController {
         return R.data(true);
     }
 
-    @PostMapping("stop")
+    @PostMapping("/stop")
     @RoleNeed({Role.ADMIN, Role.EDIT})
     public R<Boolean> stop(@RequestParam("id") String id) throws ClassNotFoundException {
         quartzInfoService.stopJob(id);
@@ -95,12 +102,12 @@ public class JobController {
         return R.data(quartzInfoService.getAgentJobByBizId(bizId));
     }
 
-    /**
-     * 根据业务ID删除定时任务（用于解绑）
-     * GET /job/deleteByBizId
-     *
-     * @param bizId 业务ID（即agentId）
-     * @return 是否删除成功
+     /**
+      * 根据业务ID删除定时任务（用于解绑）
+     * DELETE /job/deleteByBizId
+      *
+      * @param bizId 业务ID（即agentId）
+      * @return 是否删除成功
      */
     @DeleteMapping("/deleteByBizId")
     @RoleNeed({Role.ADMIN, Role.EDIT})

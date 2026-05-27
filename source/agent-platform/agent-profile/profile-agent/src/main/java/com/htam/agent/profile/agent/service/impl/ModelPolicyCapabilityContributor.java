@@ -12,7 +12,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
-@Order(10)
+@Order(CapabilityPlanContributor.ORDER_MODEL_POLICY)
 public class ModelPolicyCapabilityContributor implements CapabilityPlanContributor {
 
     @Override

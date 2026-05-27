@@ -16,7 +16,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
-@Order(80)
+@Order(CapabilityPlanContributor.ORDER_WORKER)
 @RequiredArgsConstructor
 public class WorkerCapabilityContributor implements CapabilityPlanContributor {
 

@@ -19,7 +19,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
-@Order(30)
+@Order(CapabilityPlanContributor.ORDER_SKILL)
 @RequiredArgsConstructor
 public class SkillCapabilityContributor implements CapabilityPlanContributor {
 

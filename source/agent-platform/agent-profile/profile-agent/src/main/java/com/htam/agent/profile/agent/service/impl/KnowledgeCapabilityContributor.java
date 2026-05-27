@@ -16,7 +16,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
-@Order(50)
+@Order(CapabilityPlanContributor.ORDER_KNOWLEDGE)
 @RequiredArgsConstructor
 public class KnowledgeCapabilityContributor implements CapabilityPlanContributor {
 

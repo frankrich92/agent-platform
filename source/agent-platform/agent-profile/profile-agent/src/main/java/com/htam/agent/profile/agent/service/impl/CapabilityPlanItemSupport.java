@@ -11,11 +11,20 @@ final class CapabilityPlanItemSupport {
     }
 
     static Map<String, Object> attributes(Object... entries) {
+        if (entries == null || entries.length == 0) {
+            return new LinkedHashMap<>();
+        }
+        if (entries.length % 2 != 0) {
+            throw new IllegalArgumentException("Capability attributes must be provided as key-value pairs");
+        }
         Map<String, Object> attributes = new LinkedHashMap<>();
-        for (int i = 0; i + 1 < entries.length; i += 2) {
+        for (int i = 0; i < entries.length; i += 2) {
+            if (!(entries[i] instanceof String key) || key.isBlank()) {
+                throw new IllegalArgumentException("Capability attribute key must be a non-blank string");
+            }
             Object value = entries[i + 1];
             if (value != null) {
-                attributes.put(String.valueOf(entries[i]), value);
+                attributes.put(key, value);
             }
         }
         return attributes;

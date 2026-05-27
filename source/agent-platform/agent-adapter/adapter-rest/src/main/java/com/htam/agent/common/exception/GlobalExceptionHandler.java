@@ -17,7 +17,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -54,7 +56,7 @@ public class GlobalExceptionHandler {
         INDEX_FIELD_MAPPING.put("agent_mcp_servers.uk_agent_mcp", "智能体MCP");
         INDEX_FIELD_MAPPING.put("mcp_tool.uk_mcp_tool_name", "MCP工具");
         INDEX_FIELD_MAPPING.put("agent_mcp_tool.uk_agent_mcp_tool", "智能体MCP工具");
-        INDEX_FIELD_MAPPING.put("agent_skill_packages.uk_agent_skill", "智能体Kill");
+        INDEX_FIELD_MAPPING.put("agent_skill_packages.uk_agent_skill", "智能体Skill");
         INDEX_FIELD_MAPPING.put("agent_sub_agents.uk_parent_sub_agent", "智能体AgentAsTool");
     }
 
@@ -99,7 +101,7 @@ public class GlobalExceptionHandler {
         log.warn("数据重复异常: {}", e.getMessage());
 
         // 从异常信息中提取关键信息
-        String message = e.getMessage();
+        String message = Objects.toString(e.getMessage(), "");
         String userFriendlyMsg = extractUserFriendlyMessage(message);
 
         // 记录详细日志但不暴露给前端
@@ -114,19 +116,21 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(value = {DataIntegrityViolationException.class})
     public R<?> dataIntegrityViolationHandler(DataIntegrityViolationException e) {
         log.warn("数据完整性异常: {}", e.getMessage());
+        String message = Objects.toString(e.getMessage(), "");
+        String lowerMessage = message.toLowerCase(Locale.ROOT);
 
         // 判断是否为外键约束
-        if (e.getMessage().contains("foreign key constraint")) {
+        if (lowerMessage.contains("foreign key constraint")) {
             return R.fail(400, "关联数据不存在，请检查关联信息");
         }
 
         // 判断是否为空约束
-        if (e.getMessage().contains("cannot be null") || e.getMessage().contains("not null")) {
+        if (lowerMessage.contains("cannot be null") || lowerMessage.contains("not null")) {
             return R.fail(400, "必填字段不能为空");
         }
 
         // 判断长度约束
-        if (e.getMessage().contains("too long") || e.getMessage().contains("value too large")) {
+        if (lowerMessage.contains("too long") || lowerMessage.contains("value too large")) {
             return R.fail(400, "字段长度超过限制");
         }
 
@@ -139,17 +143,21 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(value = {SQLException.class})
     public R<?> sqlExceptionHandler(SQLException e) {
         log.error("数据库操作异常，错误码: {}，SQL状态: {}", e.getErrorCode(), e.getSQLState(), e);
+        String sqlState = Objects.toString(e.getSQLState(), "");
+        String message = Objects.toString(e.getMessage(), "");
+        String lowerMessage = message.toLowerCase(Locale.ROOT);
 
         // 根据SQL状态码判断
-        switch (e.getSQLState()) {
+        switch (sqlState) {
             case "23000": // 完整性约束违反
                 return R.fail(400, "数据约束冲突，请检查输入数据");
             case "28000": // 无效的授权
                 return R.fail(500, "数据库连接异常");
             case "HY000": // 一般错误
-                if (e.getMessage().contains("lock") || e.getMessage().contains("deadlock")) {
+                if (lowerMessage.contains("lock") || lowerMessage.contains("deadlock")) {
                     return R.fail(409, "数据正在被其他操作占用，请稍后重试");
                 }
+                break;
             case "08001": // 无法建立连接
             case "08004": // 连接被拒绝
                 return R.fail(500, "数据库连接失败");
@@ -253,7 +261,7 @@ public class GlobalExceptionHandler {
         }
 
         // 根据不同的数据库异常信息进行提取
-        String lowerMsg = originalMsg.toLowerCase();
+        String lowerMsg = originalMsg.toLowerCase(Locale.ROOT);
 
         if (lowerMsg.contains("duplicate entry")) {
             return extractDuplicateInfo(originalMsg);
@@ -275,7 +283,7 @@ public class GlobalExceptionHandler {
             return fallback;
         }
         String normalized = message.trim();
-        String lower = normalized.toLowerCase();
+        String lower = normalized.toLowerCase(Locale.ROOT);
         if (normalized.contains("\n")
                 || normalized.contains("\r")
                 || normalized.contains("\"")
@@ -351,7 +359,7 @@ public class GlobalExceptionHandler {
             return "查询条件不准确，返回了多条结果";
         }
 
-        String lowerMsg = originalMsg.toLowerCase();
+        String lowerMsg = originalMsg.toLowerCase(Locale.ROOT);
 
         if (lowerMsg.contains("expected one result") ||
                 lowerMsg.contains("too many results")) {

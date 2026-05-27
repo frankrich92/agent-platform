@@ -19,7 +19,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
-@Order(60)
+@Order(CapabilityPlanContributor.ORDER_HOOK)
 @RequiredArgsConstructor
 public class HookCapabilityContributor implements CapabilityPlanContributor {
 

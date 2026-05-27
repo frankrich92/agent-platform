@@ -4,7 +4,10 @@ import com.htam.agent.common.UserDetail;
 import com.htam.agent.common.consts.SysConst;
 import com.htam.agent.common.enums.Role;
 import com.htam.agent.common.r.R;
-import com.htam.agent.common.util.*;
+import com.htam.agent.common.util.JsonUtils;
+import com.htam.agent.common.util.RequestHolder;
+import com.htam.agent.common.util.TokenUtils;
+import com.htam.agent.common.util.UserUtils;
 import com.htam.agent.repo.cache.CacheRepository;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
@@ -77,37 +80,45 @@ public class AuthInterceptor implements HandlerInterceptor {
     public boolean preHandle(@NonNull HttpServletRequest request,
                              @NonNull HttpServletResponse response,
                              @NonNull Object handler) {
+        boolean continueChain = false;
         RequestHolder.setRequest(request);
 
-        if (!(handler instanceof HandlerMethod handlerMethod)) {
-            return true;
-        }
-
-        // 检查是否需要跳过认证
-        if (shouldSkipAuthentication(handlerMethod)) {
-            log.debug("跳过认证: {}", handlerMethod.getMethod().getName());
-            return true;
-        }
-
         try {
-            String token = TokenUtils.getToken();
-            if (token == null) {
-                sendErrorResponse(response, UNAUTHORIZED_STATUS, UNAUTHORIZED_STATUS, "无权进行此操作");
+            if (!(handler instanceof HandlerMethod handlerMethod)) {
+                continueChain = true;
+                return true;
+            }
+
+            // 检查是否需要跳过认证
+            if (shouldSkipAuthentication(handlerMethod)) {
+                log.debug("跳过认证: {}", handlerMethod.getMethod().getName());
+                continueChain = true;
+                return true;
+            }
+
+            try {
+                String token = TokenUtils.getToken();
+                if (token == null) {
+                    sendErrorResponse(response, UNAUTHORIZED_STATUS, UNAUTHORIZED_STATUS, "无权进行此操作");
+                    return false;
+                }
+
+                // SK token 走独立的认证分支
+                boolean authenticated = token.startsWith("sk-")
+                        ? handleSkToken(token, request, response, handlerMethod)
+                        : handleJwtToken(token, request, response, handlerMethod);
+                continueChain = authenticated;
+                return authenticated;
+
+            } catch (Exception e) {
+                log.warn("认证失败: {}", e.getMessage());
+                sendErrorResponse(response, UNAUTHORIZED_STATUS, UNAUTHORIZED_STATUS, "认证失败");
                 return false;
             }
-
-            // SK token 走独立的认证分支
-            if (token.startsWith("sk-")) {
-                return handleSkToken(token, request, response, handlerMethod);
+        } finally {
+            if (!continueChain) {
+                RequestHolder.clear();
             }
-
-            // 常规 JWT token 认证
-            return handleJwtToken(token, request, response, handlerMethod);
-
-        } catch (Exception e) {
-            log.warn("认证失败: {}", e.getMessage());
-            sendErrorResponse(response, UNAUTHORIZED_STATUS, UNAUTHORIZED_STATUS, "认证失败");
-            return false;
         }
     }
 

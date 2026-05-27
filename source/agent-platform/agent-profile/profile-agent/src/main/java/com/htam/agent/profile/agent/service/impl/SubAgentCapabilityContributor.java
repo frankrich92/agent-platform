@@ -17,7 +17,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
-@Order(70)
+@Order(CapabilityPlanContributor.ORDER_SUB_AGENT)
 @RequiredArgsConstructor
 public class SubAgentCapabilityContributor implements CapabilityPlanContributor {
 
