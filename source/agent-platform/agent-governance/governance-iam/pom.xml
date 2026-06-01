@@ -61,6 +61,10 @@
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
+      <artifactId>support-spring</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
       <artifactId>governance-policy</artifactId>
     </dependency>
     <dependency>
@@ -70,6 +74,10 @@
     <dependency>
       <groupId>com.htam.agent</groupId>
       <artifactId>repo-spi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.baomidou</groupId>
+      <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
     </dependency>
   </dependencies>
 </project>

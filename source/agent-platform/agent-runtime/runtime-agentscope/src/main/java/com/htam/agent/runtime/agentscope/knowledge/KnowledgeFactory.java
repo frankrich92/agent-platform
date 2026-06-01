@@ -6,12 +6,10 @@ import com.htam.agent.common.entity.KnowledgeBaseConfig;
 import com.htam.agent.common.enums.KbType;
 import com.htam.agent.repo.knowledge.AgentKnowledgeBaseRepository;
 import com.htam.agent.repo.knowledge.KnowledgeBaseConfigRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
-
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.stereotype.Component;
 
 /**
  * 描述：知识库工程
@@ -19,12 +17,23 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author huxuehao
  **/
 @Component
-@RequiredArgsConstructor
 public class KnowledgeFactory {
-    private static final Map<KbType, IKnowledge> KNOWLEDGE_MAP = new ConcurrentHashMap<>();
-
     private final AgentKnowledgeBaseRepository agentKnowledgeBaseRepository;
     private final KnowledgeBaseConfigRepository knowledgeBaseConfigRepository;
+    private final Map<KbType, IKnowledge> knowledgeMap;
+
+    public KnowledgeFactory(
+            AgentKnowledgeBaseRepository agentKnowledgeBaseRepository,
+            KnowledgeBaseConfigRepository knowledgeBaseConfigRepository,
+            List<IKnowledge> knowledgeStrategies) {
+        this.agentKnowledgeBaseRepository = agentKnowledgeBaseRepository;
+        this.knowledgeBaseConfigRepository = knowledgeBaseConfigRepository;
+        Map<KbType, IKnowledge> strategies = new LinkedHashMap<>();
+        for (IKnowledge strategy : knowledgeStrategies) {
+            strategies.put(strategy.type(), strategy);
+        }
+        this.knowledgeMap = Map.copyOf(strategies);
+    }
 
     public KnowledgeWrapper getKnowledge(AgentDefinition definition) {
 
@@ -37,7 +46,7 @@ public class KnowledgeFactory {
             return null;
         }
 
-        IKnowledge iKnowledge = KNOWLEDGE_MAP.get(knowledgeBaseConfig.getKbType());
+        IKnowledge iKnowledge = knowledgeMap.get(knowledgeBaseConfig.getKbType());
         if (iKnowledge == null) {
             return null;
         }
@@ -48,18 +57,6 @@ public class KnowledgeFactory {
                 .knowledge(iKnowledge.build(knowledgeBaseConfig))
                 .retrievalConfig(knowledgeBaseConfig.getRetrievalConfig())
                 .build();
-    }
-
-    public static void register(IKnowledge knowledge) {
-        KNOWLEDGE_MAP.put(knowledge.type(), knowledge);
-    }
-
-    public static void unregister(KbType type) {
-        KNOWLEDGE_MAP.remove(type);
-    }
-
-    public static void clear() {
-        KNOWLEDGE_MAP.clear();
     }
 
     private KnowledgeBaseConfig getByAgentId(Long agentId) {

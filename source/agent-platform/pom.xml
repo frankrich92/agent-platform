@@ -11,6 +11,7 @@
   <modules>
     <module>agent-domain</module>
     <module>agent-api</module>
+    <module>agent-support</module>
     <module>agent-repo</module>
     <module>agent-profile</module>
     <module>agent-run</module>
@@ -261,6 +262,11 @@
       <dependency>
         <groupId>com.htam.agent</groupId>
         <artifactId>api-governance</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.htam.agent</groupId>
+        <artifactId>support-spring</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

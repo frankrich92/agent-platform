@@ -1,0 +1,1683 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>v3 嵌入式 Agent 工作台高保真原型</title>
+  <style>
+    :root {
+      --bg: #eef1f5;
+      --panel: #ffffff;
+      --panel-soft: #f6f8fb;
+      --line: #e0e6ef;
+      --line-strong: #c7d0dd;
+      --text: #111827;
+      --muted: #5f6d7e;
+      --subtle: #8b98aa;
+      --primary: #1f5eff;
+      --primary-soft: #edf3ff;
+      --success: #168a4a;
+      --warning: #b7791f;
+      --danger: #c24135;
+      --skill: #6545c2;
+      --skill-soft: #f3efff;
+      --mcp: #087a87;
+      --mcp-soft: #edf9fb;
+      --shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+      --shadow-strong: 0 14px 36px rgba(16, 24, 40, 0.14);
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background: var(--bg);
+      overflow: hidden;
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    .prototype-shell {
+      display: grid;
+      grid-template-rows: 1fr;
+      min-height: 100vh;
+    }
+
+    .embed-frame {
+      min-height: 0;
+      padding: 0;
+      background: var(--bg);
+    }
+
+    .workbench {
+      display: grid;
+      grid-template-columns: var(--left-width, 280px) 6px minmax(360px, 1fr) 6px var(--right-width, 464px);
+      height: 100vh;
+      min-height: 0;
+      overflow: hidden;
+      border: 0;
+      border-radius: 0;
+      background: var(--panel);
+      box-shadow: none;
+    }
+
+    .left-rail {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      min-width: 0;
+      border-right: 0;
+      background: #f7f9fc;
+    }
+
+    .rail-top {
+      padding: 16px 14px 12px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-width: 0;
+      margin-bottom: 0;
+    }
+
+    .logo {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      flex-shrink: 0;
+      border-radius: 8px;
+      background: #172036;
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .brand-name {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .brand-name strong,
+    .brand-name span {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .brand-name strong {
+      font-size: 22px;
+      line-height: 1.25;
+    }
+
+    .icon-btn {
+      display: inline-grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #ffffff;
+      color: var(--muted);
+      cursor: pointer;
+      transition: border-color 0.16s ease, background-color 0.16s ease, color 0.16s ease;
+    }
+
+      .icon-btn:hover {
+      border-color: var(--line-strong);
+      background: var(--panel-soft);
+      color: var(--text);
+    }
+
+    .icon-btn.primary-soft {
+      border-color: #cfdcff;
+      background: var(--primary-soft);
+      color: var(--primary);
+    }
+
+    button:focus-visible,
+    .state-tab:focus-visible,
+    .agent-select-btn:focus-visible,
+    .capability-btn:focus-visible,
+    .option-item:focus-visible {
+      outline: 2px solid rgba(31, 94, 255, 0.38);
+      outline-offset: 2px;
+    }
+
+    .new-chat {
+      display: inline-grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      border: 1px solid var(--primary);
+      border-radius: 6px;
+      background: var(--primary);
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .mode-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .mode-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      min-height: 42px;
+      padding: 0 11px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      color: #344054;
+      font-size: 13px;
+      font-weight: 700;
+      box-shadow: 0 1px 1px rgba(16, 24, 40, 0.02);
+    }
+
+    .mode-copy {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-width: 0;
+    }
+
+    .mode-icon {
+      display: grid;
+      place-items: center;
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+      border-radius: 6px;
+      background: #eef2f7;
+      color: #475467;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .mode-item.active .mode-icon {
+      background: #dbe7ff;
+      color: var(--primary);
+    }
+
+    .mode-item strong {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .mode-item span {
+      flex-shrink: 0;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .mode-item.active {
+      border-color: #b9ccff;
+      background: var(--primary-soft);
+      color: var(--primary);
+    }
+
+    .panel-section {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .workspace-shell {
+      border-bottom: 1px solid var(--line);
+      background: #ffffff;
+    }
+
+    .panel-section.is-collapsed {
+      grid-template-rows: auto 0fr;
+    }
+
+    .section {
+      min-height: 0;
+      padding: 12px;
+      overflow: hidden;
+    }
+
+    .section + .section {
+      border-top: 1px solid var(--line);
+    }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .workspace-tabs {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .workspace-tabs button {
+      border: 0;
+      padding: 0;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .workspace-tabs button.active {
+      color: var(--text);
+    }
+
+    .workspace-tabs button.active::after {
+      content: "";
+      display: block;
+      height: 2px;
+      margin-top: 6px;
+      border-radius: 999px;
+      background: var(--primary);
+    }
+
+    .mini-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .mini-actions .icon-btn {
+      width: 26px;
+      height: 26px;
+      border-color: transparent;
+      background: transparent;
+    }
+
+    .section-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 0;
+      padding: 0;
+      background: transparent;
+      color: #344054;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .section-chevron {
+      color: var(--subtle);
+      font-size: 11px;
+    }
+
+    .panel-section.is-collapsed .section-chevron {
+      transform: rotate(-90deg);
+    }
+
+    .section-title {
+      font-size: 12px;
+      font-weight: 800;
+      color: #344054;
+    }
+
+    .section-count {
+      color: var(--subtle);
+      font-size: 12px;
+    }
+
+    .scroll-list {
+      height: 100%;
+      overflow: auto;
+      padding-right: 3px;
+    }
+
+    .session-item {
+      padding: 9px 10px;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: border-color 0.16s ease, background-color 0.16s ease;
+    }
+
+    .session-item + .session-item {
+      margin-top: 6px;
+    }
+
+    .session-item.active {
+      border-color: #b9ccff;
+      background: var(--primary-soft);
+    }
+
+    .session-item:hover {
+      border-color: var(--line);
+      background: #ffffff;
+    }
+
+    .session-item.active:hover {
+      border-color: #b9ccff;
+      background: var(--primary-soft);
+    }
+
+    .session-title {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .session-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 5px;
+      color: var(--subtle);
+      font-size: 11px;
+    }
+
+    .tree {
+      height: 100%;
+      overflow: auto;
+      padding: 6px 3px 4px 0;
+    }
+
+    .resize-handle {
+      position: relative;
+      min-width: 6px;
+      height: 100%;
+      border-left: 1px solid var(--line);
+      border-right: 1px solid var(--line);
+      background: #f3f6fa;
+      cursor: col-resize;
+    }
+
+    .resize-handle::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 2px;
+      height: 38px;
+      border-radius: 999px;
+      background: #c5cedb;
+      transform: translate(-50%, -50%);
+      opacity: 0;
+      transition: opacity 0.16s ease, background-color 0.16s ease;
+    }
+
+    .resize-handle:hover::after,
+    body.is-resizing .resize-handle::after {
+      opacity: 1;
+      background: var(--primary);
+    }
+
+    .tree-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      height: 30px;
+      border-radius: 6px;
+      padding: 0 8px;
+      color: #344054;
+      font-size: 13px;
+      transition: background-color 0.16s ease, color 0.16s ease;
+    }
+
+    .tree-row:hover {
+      background: #eef3fa;
+    }
+
+    .tree-row.file {
+      padding-left: 26px;
+    }
+
+    .tree-row.selected {
+      background: #eaf3ff;
+      color: #1f5eff;
+      font-weight: 700;
+    }
+
+    .tree-row span:last-child {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .tree-tag {
+      flex-shrink: 0;
+      margin-left: auto;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: #eef2f7;
+      color: #667085;
+      font-size: 11px;
+    }
+
+    .skills-plaza {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-height: 52px;
+      margin: 12px 14px 14px;
+      padding: 0 13px;
+      border: 1px solid #d8c9ff;
+      border-radius: 8px;
+      background: linear-gradient(180deg, #ffffff 0%, #fbf9ff 100%);
+      color: #111827;
+      font-weight: 800;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+    }
+
+    .skills-plaza:hover {
+      border-color: #bfa8ff;
+      box-shadow: 0 8px 22px rgba(101, 69, 194, 0.13);
+      transform: translateY(-1px);
+    }
+
+    .skills-plaza span:first-child {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .preview-pane {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-width: 0;
+      min-height: 0;
+      background: #ffffff;
+    }
+
+    .preview-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-width: 0;
+      height: 58px;
+      padding: 0 18px;
+      border-bottom: 1px solid var(--line);
+      background: #fffefa;
+    }
+
+    .file-title {
+      min-width: 0;
+    }
+
+    .file-title strong {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 14px;
+    }
+
+    .file-title span {
+      display: block;
+      margin-top: 3px;
+      color: var(--subtle);
+      font-size: 12px;
+    }
+
+    .preview-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .preview-body {
+      min-height: 0;
+      overflow: auto;
+      padding: 22px;
+      background: #f5f7fb;
+    }
+
+    .doc-page {
+      max-width: 860px;
+      min-height: 100%;
+      margin: 0 auto;
+      padding: 30px 36px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: #ffffff;
+      box-shadow: 0 10px 28px rgba(16, 24, 40, 0.07);
+    }
+
+    .doc-page h1 {
+      margin: 0 0 14px;
+      font-size: 24px;
+      letter-spacing: 0;
+    }
+
+    .doc-page h2 {
+      margin: 22px 0 10px;
+      font-size: 16px;
+    }
+
+    .doc-page p {
+      margin: 8px 0;
+      color: #344054;
+      line-height: 1.72;
+      font-size: 14px;
+    }
+
+    .risk-table {
+      width: 100%;
+      margin-top: 14px;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .risk-table th,
+    .risk-table td {
+      padding: 9px 10px;
+      border: 1px solid var(--line);
+      text-align: left;
+    }
+
+    .risk-table th {
+      background: var(--panel-soft);
+    }
+
+    .chat-pane {
+      position: relative;
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr) auto;
+      min-width: 0;
+      min-height: 0;
+      background: #ffffff;
+    }
+
+    .chat-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-width: 0;
+      height: 60px;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--line);
+      background: #ffffff;
+    }
+
+    .agent-summary {
+      min-width: 0;
+    }
+
+    .agent-summary strong {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 16px;
+    }
+
+    .agent-summary span {
+      display: block;
+      margin-top: 3px;
+      color: var(--subtle);
+      font-size: 12px;
+    }
+
+    .status-dot {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+      color: var(--success);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .status-dot::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--success);
+    }
+
+    .chat-head-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .chat-head-actions .new-chat {
+      width: 32px;
+      height: 32px;
+      font-size: 18px;
+    }
+
+    .history-popover {
+      position: absolute;
+      top: 54px;
+      right: 12px;
+      z-index: 20;
+      display: none;
+      width: min(360px, calc(100% - 24px));
+      max-height: 430px;
+      overflow: hidden;
+      border: 1px solid var(--line-strong);
+      border-radius: 8px;
+      background: #ffffff;
+      box-shadow: var(--shadow-strong);
+    }
+
+    body.history-open .history-popover {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+    }
+
+    .history-popover-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      height: 48px;
+      padding: 0 12px;
+      border-bottom: 1px solid var(--line);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .history-popover-body {
+      min-height: 0;
+      overflow: auto;
+      padding: 10px;
+    }
+
+    .state-tabs {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+      padding: 8px 16px;
+      border-bottom: 1px solid var(--line);
+      background: #f7f9fc;
+      overflow-x: auto;
+    }
+
+    .state-tab {
+      flex-shrink: 0;
+      min-height: 28px;
+      padding: 5px 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #ffffff;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .state-tab[aria-selected="true"] {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+      color: var(--primary);
+    }
+
+    .state-tab.active {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+      color: var(--primary);
+    }
+
+    .state-tab.danger {
+      border-color: #ffd0ca;
+      color: var(--danger);
+    }
+
+    .state-tab.warning {
+      border-color: #f8df9e;
+      color: var(--warning);
+    }
+
+    .assembly {
+      margin-bottom: 8px;
+      padding: 0;
+      background: transparent;
+    }
+
+    .assembly-controls {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .control-group {
+      position: relative;
+      min-width: 0;
+    }
+
+    .agent-select-btn,
+    .capability-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 7px;
+      min-height: 32px;
+      border-radius: 6px;
+      border: 1px solid #cfd8e6;
+      background: #ffffff;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .agent-select-btn {
+      max-width: 190px;
+      padding: 5px 9px;
+    }
+
+    .capability-btn {
+      padding: 5px 8px;
+    }
+
+    .agent-select-btn .label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .count-badge {
+      display: inline-grid;
+      place-items: center;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      border-radius: 999px;
+      background: var(--primary-soft);
+      color: var(--primary);
+      font-size: 11px;
+    }
+
+    .capability-btn.skill {
+      color: var(--skill);
+      border-color: #d8c9ff;
+      background: var(--skill-soft);
+    }
+
+    .capability-btn.mcp {
+      color: var(--mcp);
+      border-color: #b9e2e7;
+      background: var(--mcp-soft);
+    }
+
+    .dropdown-panel {
+      position: absolute;
+      left: 0;
+      bottom: calc(100% + 6px);
+      z-index: 10;
+      display: none;
+      width: 262px;
+      padding: 8px;
+      border: 1px solid var(--line-strong);
+      border-radius: 8px;
+      background: #ffffff;
+      box-shadow: 0 14px 32px rgba(16, 24, 40, 0.16);
+    }
+
+    .control-group.open .dropdown-panel {
+      display: block;
+    }
+
+    .dropdown-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .option-list {
+      display: grid;
+      gap: 4px;
+    }
+
+    .option-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      min-height: 32px;
+      padding: 6px 7px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text);
+      text-align: left;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .option-item:hover,
+    .option-item.active {
+      border-color: #cfdcff;
+      background: #f4f7ff;
+    }
+
+    .option-item:has(input:checked) {
+      border-color: #d8c9ff;
+      background: #fbf9ff;
+      color: var(--skill);
+      font-weight: 700;
+    }
+
+    .option-item input {
+      width: 14px;
+      height: 14px;
+      margin: 0;
+    }
+
+    .messages {
+      min-height: 0;
+      overflow: auto;
+      padding: 18px 16px 14px;
+      background: #fbfcfe;
+    }
+
+    .welcome-panel {
+      margin-bottom: 18px;
+    }
+
+    .welcome-title {
+      margin: 0 0 14px;
+      color: #0f172a;
+      font-size: 24px;
+      line-height: 1.25;
+      font-weight: 900;
+    }
+
+    .welcome-title strong {
+      color: var(--primary);
+    }
+
+    .prompt-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .prompt-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      min-height: 48px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      color: #1f2937;
+      text-align: left;
+      font-size: 13px;
+      line-height: 1.35;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+    }
+
+    .prompt-card:hover {
+      border-color: #cfdcff;
+      background: #f9fbff;
+    }
+
+    .prompt-card span:first-child {
+      color: #f97316;
+      font-weight: 900;
+    }
+
+    .message {
+      display: flex;
+      gap: 9px;
+      margin-bottom: 14px;
+    }
+
+    .message.user-message {
+      justify-content: flex-end;
+    }
+
+    .message.user-message .avatar {
+      order: 2;
+      background: #dbe7ff;
+      color: var(--primary);
+    }
+
+    .avatar {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      flex-shrink: 0;
+      border-radius: 6px;
+      background: #eef2f7;
+      color: #475467;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .avatar.agent {
+      background: var(--primary);
+      color: #ffffff;
+    }
+
+    .bubble {
+      max-width: calc(100% - 40px);
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #ffffff;
+      font-size: 13px;
+      line-height: 1.55;
+      box-shadow: 0 1px 1px rgba(16, 24, 40, 0.03);
+    }
+
+    .bubble.user {
+      border-color: #c8d9ff;
+      background: #eef4ff;
+    }
+
+    .tool-block {
+      margin-top: 8px;
+      padding: 8px;
+      border: 1px solid #d7e8db;
+      border-radius: 6px;
+      background: #f4fbf6;
+      color: #276749;
+      font-size: 12px;
+    }
+
+    .input-area {
+      padding: 12px 16px 14px;
+      border-top: 1px solid var(--line);
+      background: #ffffff;
+    }
+
+    .input-box {
+      min-height: 74px;
+      padding: 12px 13px;
+      border: 1px solid #a9c0ff;
+      border-radius: 12px;
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(31, 94, 255, 0.06);
+    }
+
+    .input-placeholder {
+      color: var(--subtle);
+      font-size: 13px;
+    }
+
+    .input-tools {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 11px;
+    }
+
+    .tool-buttons {
+      display: flex;
+      gap: 7px;
+    }
+
+    .send-btn {
+      display: inline-grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      border: 0;
+      border-radius: 999px;
+      background: var(--primary);
+      color: #ffffff;
+      font-weight: 900;
+      transition: background-color 0.16s ease, transform 0.16s ease;
+    }
+
+    .send-btn:hover {
+      background: #164fe0;
+      transform: translateY(-1px);
+    }
+
+    .status-view {
+      display: none;
+      min-height: 100%;
+      place-items: center;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .status-view.active {
+      display: grid;
+    }
+
+    .status-card {
+      max-width: 300px;
+    }
+
+    .status-card-icon {
+      display: grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      margin: 0 auto 12px;
+      border-radius: 9px;
+      background: var(--primary-soft);
+      color: var(--primary);
+      font-weight: 900;
+    }
+
+    .status-card h2 {
+      margin: 0 0 8px;
+      font-size: 16px;
+    }
+
+    .status-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .status-card.danger .status-card-icon {
+      background: #fff0ed;
+      color: var(--danger);
+    }
+
+    .status-card.warning .status-card-icon {
+      background: #fff7dc;
+      color: var(--warning);
+    }
+
+    .spinner {
+      width: 22px;
+      height: 22px;
+      border: 3px solid #d7e1ff;
+      border-top-color: var(--primary);
+      border-radius: 999px;
+    }
+
+    body[data-state="loading"] .conversation,
+    body[data-state="auth"] .conversation,
+    body[data-state="empty"] .conversation {
+      display: none;
+    }
+
+    body[data-state="loading"] .input-area,
+    body[data-state="auth"] .input-area,
+    body[data-state="empty"] .input-area {
+      display: none;
+    }
+
+    body[data-state="loading"] .status-view.loading,
+    body[data-state="auth"] .status-view.auth,
+    body[data-state="empty"] .status-view.empty {
+      display: grid;
+    }
+
+    body[data-state="resume"] .resume-banner {
+      display: flex;
+    }
+
+    .resume-banner {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding: 8px 10px;
+      border: 1px solid #cfdcff;
+      border-radius: 7px;
+      background: #f4f7ff;
+      color: #3451a4;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .resume-banner button {
+      border: 0;
+      background: transparent;
+      color: var(--primary);
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+
+    @media (max-width: 1180px) {
+      .workbench {
+        grid-template-columns: 248px 6px minmax(300px, 1fr) 6px 420px;
+      }
+    }
+
+    @media (max-width: 960px) {
+      .workbench {
+        grid-template-columns: 72px 6px minmax(260px, 1fr) 6px 370px;
+      }
+
+      .brand-name,
+      .section-title,
+      .section-count,
+      .mode-item strong,
+      .mode-item span,
+      .session-title,
+      .session-meta,
+      .workspace-tabs,
+      .tree-row span:last-child {
+        display: none;
+      }
+
+      .left-rail {
+        grid-template-rows: auto minmax(0, 1fr) auto;
+      }
+
+      .rail-top,
+      .section {
+        padding-left: 10px;
+        padding-right: 10px;
+      }
+
+      .history-popover .session-title {
+        display: block;
+      }
+
+      .history-popover .session-meta {
+        display: flex;
+      }
+    }
+  </style>
+</head>
+<body data-state="work">
+  <div class="prototype-shell">
+    <main class="embed-frame">
+      <section class="workbench" aria-label="iframe 内嵌工作台">
+        <aside class="left-rail">
+          <div class="rail-top">
+            <div class="brand-row">
+              <div class="logo">HT</div>
+              <div class="brand-name">
+                <strong>我的工作台</strong>
+              </div>
+              <button class="icon-btn" type="button" title="折叠" aria-label="折叠左侧栏">☰</button>
+            </div>
+            <div class="mode-list" aria-label="工作台模式">
+              <div class="mode-item">
+                <div class="mode-copy">
+                  <span class="mode-icon">?</span>
+                  <strong>Ask Agent</strong>
+                </div>
+                <span>单次提问</span>
+              </div>
+              <div class="mode-item active">
+                <div class="mode-copy">
+                  <span class="mode-icon">▣</span>
+                  <strong>Agent Work</strong>
+                </div>
+                <span>AI 工作台</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-section workspace-shell" data-section="workspace">
+            <div class="section section-head">
+              <div class="workspace-tabs">
+                <button class="active" type="button">工作区</button>
+                <button type="button">Skills</button>
+              </div>
+              <div class="mini-actions">
+                <button class="icon-btn" type="button" title="搜索" aria-label="搜索工作区">⌕</button>
+                <button class="icon-btn" type="button" title="添加" aria-label="添加工作区内容">+</button>
+                <button class="icon-btn" type="button" title="更多" aria-label="更多工作区操作">⋯</button>
+                <button class="icon-btn" type="button" data-collapse-target="workspace" aria-expanded="true" title="折叠工作区" aria-label="折叠工作区">▾</button>
+              </div>
+            </div>
+            <div class="section">
+              <div class="tree">
+                <div class="tree-row"><span>▾</span><span>腾讯控股.HK</span><span class="tree-tag">自选</span></div>
+                <div class="tree-row"><span>▾</span><span>快速入门</span></div>
+                <div class="tree-row file"><span>▣</span><span>101_Agent工作台说明.md</span></div>
+                <div class="tree-row file"><span>▣</span><span>102_如何选择Skills.md</span></div>
+                <div class="tree-row"><span>▾</span><span>合同资料</span></div>
+                <div class="tree-row file selected"><span>📄</span><span>采购合同-付款条款.md</span></div>
+                <div class="tree-row file"><span>📄</span><span>补充协议-v2.docx</span></div>
+                <div class="tree-row file"><span>🖼</span><span>签章页扫描.png</span></div>
+                <div class="tree-row"><span>▾</span><span>Agent 产物</span></div>
+                <div class="tree-row file"><span>📄</span><span>风险清单.json</span></div>
+                <div class="tree-row file"><span>📊</span><span>条款对比表.xlsx</span></div>
+                <div class="tree-row"><span>▸</span><span>系统附件</span></div>
+              </div>
+            </div>
+          </div>
+
+          <button class="skills-plaza" type="button" aria-label="打开 Skills 广场">
+            <span>✦ Skills广场</span>
+            <span>›</span>
+          </button>
+        </aside>
+
+        <div class="resize-handle" data-resize-handle="left" role="separator" aria-label="调整左栏宽度"></div>
+
+        <section class="preview-pane">
+          <header class="preview-head">
+            <div class="file-title">
+              <strong>采购合同-付款条款.md</strong>
+              <span>Markdown · 42 KB · 来自工作区 / 合同资料</span>
+            </div>
+            <div class="preview-actions">
+              <button class="icon-btn" type="button" title="下载" aria-label="下载当前文件">⇩</button>
+              <button class="icon-btn" type="button" title="刷新" aria-label="刷新当前文件">↻</button>
+            </div>
+          </header>
+          <div class="preview-body">
+            <article class="doc-page">
+              <h1>采购合同付款条款摘录</h1>
+              <p>甲方应在合同签署后 10 个工作日内支付合同总价的 30% 作为预付款。乙方完成第一阶段交付并通过验收后，甲方支付 40%。剩余 30% 在最终验收通过并收到合规发票后支付。</p>
+              <h2>违约责任</h2>
+              <p>任一方逾期履行付款、交付、验收义务超过 15 个工作日的，应按未履行金额每日万分之五承担违约金。若逾期超过 30 个工作日，守约方有权解除合同。</p>
+              <h2>Agent 初步识别</h2>
+              <table class="risk-table">
+                <thead>
+                  <tr>
+                    <th>条款</th>
+                    <th>风险</th>
+                    <th>建议</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>预付款 30%</td>
+                    <td>中</td>
+                    <td>补充交付保障或履约保证。</td>
+                  </tr>
+                  <tr>
+                    <td>验收后付款</td>
+                    <td>低</td>
+                    <td>明确验收材料和周期。</td>
+                  </tr>
+                  <tr>
+                    <td>逾期解除</td>
+                    <td>中</td>
+                    <td>增加书面催告前置流程。</td>
+                  </tr>
+                </tbody>
+              </table>
+            </article>
+          </div>
+        </section>
+
+        <div class="resize-handle" data-resize-handle="right" role="separator" aria-label="调整右栏宽度"></div>
+
+        <section class="chat-pane">
+          <header class="chat-head">
+            <div class="agent-summary">
+              <strong>PaiPai</strong>
+              <span>合同审核 Agent · 临时选择能力随会话运行快照保存</span>
+            </div>
+            <div class="chat-head-actions">
+              <button class="new-chat" type="button" title="开启新对话" aria-label="开启新对话">+</button>
+              <button class="icon-btn" type="button" data-history-toggle title="对话历史" aria-label="打开对话历史">◷</button>
+              <button class="icon-btn" type="button" title="会话设置" aria-label="会话设置">☷</button>
+              <button class="icon-btn" type="button" title="关闭嵌入页" aria-label="关闭嵌入页">×</button>
+            </div>
+          </header>
+
+          <div class="history-popover" role="dialog" aria-label="对话历史">
+            <div class="history-popover-head">
+              <span>对话历史</span>
+              <button class="icon-btn" type="button" data-history-close title="关闭" aria-label="关闭对话历史">×</button>
+            </div>
+            <div class="history-popover-body">
+              <div class="session-item active">
+                <div class="session-title">付款条款与违约责任初审</div>
+                <div class="session-meta"><span>合同审核 Agent</span><span>刚刚</span></div>
+              </div>
+              <div class="session-item">
+                <div class="session-title">供应商合同风险摘要</div>
+                <div class="session-meta"><span>3 skills</span><span>10:42</span></div>
+              </div>
+              <div class="session-item">
+                <div class="session-title">补充协议差异对比</div>
+                <div class="session-meta"><span>2 MCP</span><span>昨天</span></div>
+              </div>
+              <div class="session-item">
+                <div class="session-title">采购合同验收节点整理</div>
+                <div class="session-meta"><span>文件 8</span><span>周一</span></div>
+              </div>
+              <div class="session-item">
+                <div class="session-title">合同履约风险复核</div>
+                <div class="session-meta"><span>已完成</span><span>05-21</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="state-tabs" aria-label="嵌入工作台状态" role="tablist">
+            <button class="state-tab active" type="button" data-state-target="work" aria-selected="true">工作态</button>
+            <button class="state-tab" type="button" data-state-target="loading" aria-selected="false">初始化中</button>
+            <button class="state-tab danger" type="button" data-state-target="auth" aria-selected="false">鉴权失败</button>
+            <button class="state-tab warning" type="button" data-state-target="empty" aria-selected="false">无可用 Agent</button>
+            <button class="state-tab" type="button" data-state-target="resume" aria-selected="false">历史恢复</button>
+          </div>
+
+          <div class="messages">
+            <div class="conversation">
+              <div class="resume-banner">
+                <span>已恢复上次会话能力：合同审核 Agent / 2 skills / 1 MCP</span>
+                <button type="button" data-state-target="work">关闭</button>
+              </div>
+              <div class="welcome-panel">
+                <h2 class="welcome-title">今天一起<strong>研究什么？</strong></h2>
+                <div class="prompt-list">
+                  <button class="prompt-card" type="button"><span>◎</span><span>跟踪合同付款节点变化并推送风险提醒</span></button>
+                  <button class="prompt-card" type="button"><span>◎</span><span>从当前文件抽取违约责任、验收条件和解除权条款</span></button>
+                  <button class="prompt-card" type="button"><span>◎</span><span>把审查意见整理成给法务确认的问题清单</span></button>
+                </div>
+              </div>
+              <div class="message user-message">
+                <div class="avatar">我</div>
+                <div class="bubble user">请结合当前文件，检查付款条款和违约责任是否存在明显风险。</div>
+              </div>
+              <div class="message">
+                <div class="avatar agent">AI</div>
+                <div class="bubble">
+                  已基于当前文件和本次会话选择的 2 个 skills 进行检查。主要风险集中在预付款比例、验收付款条件和解除权触发条件。
+                  <div class="tool-block">工具过程：读取工作区文件 · 调用 skill: 付款条款识别 · 生成风险摘要</div>
+                </div>
+              </div>
+              <div class="message user-message">
+                <div class="avatar">我</div>
+                <div class="bubble user">把建议整理成可以给法务确认的清单。</div>
+              </div>
+              <div class="message">
+                <div class="avatar agent">AI</div>
+                <div class="bubble">可以。建议清单将按「条款位置、风险等级、原因、修改建议、需确认问题」整理，并保存到工作区。</div>
+              </div>
+            </div>
+            <div class="status-view loading">
+              <div class="status-card">
+                <div class="status-card-icon"><div class="spinner"></div></div>
+                <h2>正在初始化</h2>
+                <p>正在校验宿主 token 与 appCode，并加载可用 Agent、skills、MCP。</p>
+              </div>
+            </div>
+            <div class="status-view auth">
+              <div class="status-card danger">
+                <div class="status-card-icon">!</div>
+                <h2>鉴权失败</h2>
+                <p>外部 token 无效、appCode 未配置或宿主鉴权接口不可用。</p>
+              </div>
+            </div>
+            <div class="status-view empty">
+              <div class="status-card warning">
+                <div class="status-card-icon">0</div>
+                <h2>无可用 Agent</h2>
+                <p>当前用户没有该 appCode 下的 Agent 权限，请联系管理员配置授权。</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="input-area">
+            <div class="assembly">
+              <div class="assembly-controls">
+                <div class="control-group">
+                  <button class="agent-select-btn" type="button" data-dropdown="agentMenu" aria-expanded="false">
+                    <span class="label" id="selectedAgent">合同审核 Agent</span>
+                    <span>⌄</span>
+                  </button>
+                  <div class="dropdown-panel" id="agentMenu">
+                    <div class="dropdown-title">
+                      <span>选择 Agent</span>
+                      <span>单选</span>
+                    </div>
+                    <div class="option-list">
+                      <button class="option-item active" type="button" data-agent="合同审核 Agent">
+                        <span>✓</span><span>合同审核 Agent</span>
+                      </button>
+                      <button class="option-item" type="button" data-agent="供应商风险 Agent">
+                        <span></span><span>供应商风险 Agent</span>
+                      </button>
+                      <button class="option-item" type="button" data-agent="条款对比 Agent">
+                        <span></span><span>条款对比 Agent</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="control-group">
+                  <button class="capability-btn skill" type="button" data-dropdown="skillMenu" aria-expanded="false">
+                    Skills <span class="count-badge" id="skillCount">2</span>
+                  </button>
+                  <div class="dropdown-panel" id="skillMenu">
+                    <div class="dropdown-title">
+                      <span>选择 skills</span>
+                      <span>多选</span>
+                    </div>
+                    <div class="option-list">
+                      <label class="option-item"><input type="checkbox" data-kind="skill" value="付款条款识别" checked />付款条款识别</label>
+                      <label class="option-item"><input type="checkbox" data-kind="skill" value="违约责任复核" checked />违约责任复核</label>
+                      <label class="option-item"><input type="checkbox" data-kind="skill" value="验收节点整理" />验收节点整理</label>
+                    </div>
+                  </div>
+                </div>
+                <div class="control-group">
+                  <button class="capability-btn mcp" type="button" data-dropdown="mcpMenu" aria-expanded="false">
+                    MCP <span class="count-badge" id="mcpCount">1</span>
+                  </button>
+                  <div class="dropdown-panel" id="mcpMenu">
+                    <div class="dropdown-title">
+                      <span>选择 MCP</span>
+                      <span>多选</span>
+                    </div>
+                    <div class="option-list">
+                      <label class="option-item"><input type="checkbox" data-kind="mcp" value="合同系统只读" checked />合同系统只读</label>
+                      <label class="option-item"><input type="checkbox" data-kind="mcp" value="法务知识库" />法务知识库</label>
+                      <label class="option-item"><input type="checkbox" data-kind="mcp" value="供应商档案" />供应商档案</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="input-box">
+              <div class="input-placeholder">输入问题，或 @ 引用工作区文件、历史消息、Agent 产物...</div>
+            </div>
+            <div class="input-tools">
+              <div class="tool-buttons">
+                <button class="icon-btn" type="button" title="上传文件" aria-label="上传文件">📎</button>
+                <button class="icon-btn" type="button" title="添加上下文" aria-label="添加上下文">@</button>
+                <button class="icon-btn" type="button" title="工具过程" aria-label="显示工具过程">⚡</button>
+              </div>
+              <button class="send-btn" type="button" title="发送" aria-label="发送消息">↑</button>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+  <script>
+    const body = document.body
+    const stateButtons = Array.from(document.querySelectorAll('.state-tab[data-state-target]'))
+    const dropdownButtons = Array.from(document.querySelectorAll('[data-dropdown]'))
+    const groups = Array.from(document.querySelectorAll('.control-group'))
+    const workbench = document.querySelector('.workbench')
+    const historyToggle = document.querySelector('[data-history-toggle]')
+    const historyClose = document.querySelector('[data-history-close]')
+    const historyPopover = document.querySelector('.history-popover')
+    const selectedAgent = document.getElementById('selectedAgent')
+    const skillCount = document.getElementById('skillCount')
+    const mcpCount = document.getElementById('mcpCount')
+
+    function setState(state) {
+      body.dataset.state = state
+      stateButtons.forEach((button) => {
+        const active = button.dataset.stateTarget === state
+        button.classList.toggle('active', active)
+        button.setAttribute('aria-selected', String(active))
+      })
+    }
+
+    function closeDropdowns(except) {
+      groups.forEach((group) => {
+        if (group !== except) {
+          group.classList.remove('open')
+          const button = group.querySelector('[data-dropdown]')
+          if (button) button.setAttribute('aria-expanded', 'false')
+        }
+      })
+    }
+
+    function selectedValues(kind) {
+      return Array.from(document.querySelectorAll(`input[data-kind="${kind}"]:checked`)).map((input) => input.value)
+    }
+
+    function updateCounts() {
+      const skills = selectedValues('skill')
+      const mcps = selectedValues('mcp')
+      skillCount.textContent = String(skills.length)
+      mcpCount.textContent = String(mcps.length)
+    }
+
+    stateButtons.forEach((button) => {
+      button.addEventListener('click', () => setState(button.dataset.stateTarget || 'work'))
+    })
+
+    document.querySelectorAll('.resume-banner [data-state-target]').forEach((button) => {
+      button.addEventListener('click', () => setState(button.dataset.stateTarget || 'work'))
+    })
+
+    dropdownButtons.forEach((button) => {
+      button.addEventListener('click', (event) => {
+        event.stopPropagation()
+        body.classList.remove('history-open')
+        const group = button.closest('.control-group')
+        const willOpen = !group.classList.contains('open')
+        closeDropdowns(group)
+        group.classList.toggle('open', willOpen)
+        button.setAttribute('aria-expanded', String(willOpen))
+      })
+    })
+
+    document.querySelectorAll('[data-agent]').forEach((button) => {
+      button.addEventListener('click', () => {
+        document.querySelectorAll('[data-agent]').forEach((item) => {
+          item.classList.remove('active')
+          item.querySelector('span').textContent = ''
+        })
+        button.classList.add('active')
+        button.querySelector('span').textContent = '✓'
+        selectedAgent.textContent = button.dataset.agent
+        closeDropdowns()
+      })
+    })
+
+    document.querySelectorAll('input[data-kind]').forEach((input) => {
+      input.addEventListener('change', updateCounts)
+    })
+
+    document.querySelectorAll('[data-collapse-target]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const section = document.querySelector(`[data-section="${button.dataset.collapseTarget}"]`)
+        if (!section) return
+        const collapsed = section.classList.toggle('is-collapsed')
+        button.setAttribute('aria-expanded', String(!collapsed))
+      })
+    })
+
+    if (historyToggle && historyPopover) {
+      historyToggle.addEventListener('click', (event) => {
+        event.stopPropagation()
+        closeDropdowns()
+        body.classList.toggle('history-open')
+      })
+      historyPopover.addEventListener('click', (event) => event.stopPropagation())
+    }
+
+    if (historyClose) {
+      historyClose.addEventListener('click', () => body.classList.remove('history-open'))
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max)
+    }
+
+    document.querySelectorAll('[data-resize-handle]').forEach((handle) => {
+      handle.addEventListener('pointerdown', (event) => {
+        event.preventDefault()
+        const side = handle.dataset.resizeHandle
+        const rect = workbench.getBoundingClientRect()
+        const startX = event.clientX
+        const styles = getComputedStyle(workbench)
+        const startLeft = parseFloat(styles.getPropertyValue('--left-width')) || 280
+        const startRight = parseFloat(styles.getPropertyValue('--right-width')) || 464
+        document.body.classList.add('is-resizing')
+        handle.setPointerCapture(event.pointerId)
+
+        const onMove = (moveEvent) => {
+          const delta = moveEvent.clientX - startX
+          if (side === 'left') {
+            const nextLeft = clamp(startLeft + delta, 220, Math.min(420, rect.width - startRight - 420))
+            workbench.style.setProperty('--left-width', `${nextLeft}px`)
+          } else {
+            const nextRight = clamp(startRight - delta, 360, Math.min(620, rect.width - startLeft - 420))
+            workbench.style.setProperty('--right-width', `${nextRight}px`)
+          }
+        }
+
+        const onUp = () => {
+          document.body.classList.remove('is-resizing')
+          handle.removeEventListener('pointermove', onMove)
+          handle.removeEventListener('pointerup', onUp)
+          handle.removeEventListener('pointercancel', onUp)
+        }
+
+        handle.addEventListener('pointermove', onMove)
+        handle.addEventListener('pointerup', onUp)
+        handle.addEventListener('pointercancel', onUp)
+      })
+    })
+
+    document.querySelectorAll('.dropdown-panel').forEach((panel) => {
+      panel.addEventListener('click', (event) => event.stopPropagation())
+    })
+
+    document.addEventListener('click', () => {
+      closeDropdowns()
+      body.classList.remove('history-open')
+    })
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        closeDropdowns()
+        body.classList.remove('history-open')
+      }
+    })
+
+    updateCounts()
+  </script>
+</body>
+</html>

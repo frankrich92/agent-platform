@@ -86,15 +86,15 @@ class PlatformOpsModule(Module):
         job = self.require_data(self.client.json("GET", "/job/getByBizId", params={"bizId": agent_id}), "job-get")
         item_id = str(job["id"])
         self.state.created["job_id"] = item_id
-        self.add_cleanup(lambda: self.client.json("GET", "/job/delete", params={"id": item_id}, expect_success=False))
+        self.add_cleanup(lambda: self.client.json("DELETE", "/job/delete", params={"id": item_id}, expect_success=False))
         self.client.json("GET", "/job/list")
         payload["id"] = item_id
         payload["cron"] = "0 0 1 1 1 ? 2099"
         self.client.json("POST", "/job/update", payload)
-        self.client.json("GET", "/job/updateCron", params={"id": item_id, "cron": "0 0 2 1 1 ? 2099"})
-        self.client.json("GET", "/job/start", params={"id": item_id})
-        self.client.json("GET", "/job/stop", params={"id": item_id})
-        self.client.json("GET", "/job/deleteByBizId", params={"bizId": agent_id})
+        self.client.json("PATCH", "/job/updateCron", params={"id": item_id, "cron": "0 0 2 1 1 ? 2099"})
+        self.client.json("POST", "/job/start", params={"id": item_id})
+        self.client.json("POST", "/job/stop", params={"id": item_id})
+        self.client.json("DELETE", "/job/deleteByBizId", params={"bizId": agent_id})
 
     def cleanup(self) -> None:
         for clean in reversed(self.state.cleanups):

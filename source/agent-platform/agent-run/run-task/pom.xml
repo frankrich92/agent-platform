@@ -61,6 +61,10 @@
     </dependency>
     <dependency>
       <groupId>com.htam.agent</groupId>
+      <artifactId>support-spring</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.htam.agent</groupId>
       <artifactId>repo-spi</artifactId>
     </dependency>
     <dependency>

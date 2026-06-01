@@ -2,6 +2,7 @@ package com.htam.agent.profile.agent.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -46,9 +47,11 @@ import com.htam.agent.worker.code.service.AgentCodeExecutionService;
 import com.htam.agent.profile.agent.service.AgentDefinitionService;
 import com.htam.agent.profile.agent.service.AgentSubAgentService;
 import com.htam.agent.worker.code.service.CodeExecutionConfigService;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.annotation.AnnotationAwareOrderComparator;
 
 class ProfileCapabilityPlanServiceTest {
 
@@ -59,16 +62,15 @@ class ProfileCapabilityPlanServiceTest {
         RecordingMcpServerService mcpServerService = new RecordingMcpServerService();
         ProfileCapabilityPlanService service = new ProfileCapabilityPlanService(
                 agentDefinitionService,
-                new EmptyAgentSubAgentService(),
-                new EmptyAgentCodeExecutionService(),
-                new EmptyCodeExecutionConfigService(),
-                new EmptyAgentHookService(),
-                new EmptyHookConfigService(),
-                agentMcpServerService,
-                mcpServerService,
-                new RecordingMcpToolService(),
-                new EmptyAgentKnowledgeBaseService(),
-                new EmptyKnowledgeBaseConfigService());
+                List.of(
+                        new ModelPolicyCapabilityContributor(),
+                        new ToolCapabilityContributor(agentDefinitionService),
+                        new SkillCapabilityContributor(agentDefinitionService),
+                        new McpCapabilityContributor(agentMcpServerService, mcpServerService, new RecordingMcpToolService()),
+                        new KnowledgeCapabilityContributor(new EmptyAgentKnowledgeBaseService(), new EmptyKnowledgeBaseConfigService()),
+                        new HookCapabilityContributor(new EmptyAgentHookService(), new EmptyHookConfigService()),
+                        new SubAgentCapabilityContributor(new EmptyAgentSubAgentService(), agentDefinitionService),
+                        new WorkerCapabilityContributor(new EmptyAgentCodeExecutionService(), new EmptyCodeExecutionConfigService())));
 
         CapabilityPlan plan = service.resolvePlan(100L);
 
@@ -103,6 +105,39 @@ class ProfileCapabilityPlanServiceTest {
         assertEquals(McpToolExposureMode.SELECTED_ONLY, mcp.attributes().get("exposureMode"));
         assertEquals(List.of("git.status", "git.diff"), mcp.attributes().get("runtimeToolNames"));
         assertEquals(List.of("hash-status", "hash-diff"), mcp.attributes().get("runtimeToolSchemaHashes"));
+    }
+
+    @Test
+    void capabilityContributorsKeepExpectedRuntimeOrder() {
+        RecordingAgentDefinitionService agentDefinitionService = new RecordingAgentDefinitionService();
+        List<CapabilityPlanContributor> contributors = new ArrayList<>(List.of(
+                new WorkerCapabilityContributor(new EmptyAgentCodeExecutionService(), new EmptyCodeExecutionConfigService()),
+                new HookCapabilityContributor(new EmptyAgentHookService(), new EmptyHookConfigService()),
+                new ModelPolicyCapabilityContributor(),
+                new KnowledgeCapabilityContributor(new EmptyAgentKnowledgeBaseService(), new EmptyKnowledgeBaseConfigService()),
+                new SkillCapabilityContributor(agentDefinitionService),
+                new SubAgentCapabilityContributor(new EmptyAgentSubAgentService(), agentDefinitionService),
+                new McpCapabilityContributor(new EmptyAgentMcpServerService(), new RecordingMcpServerService(), new RecordingMcpToolService()),
+                new ToolCapabilityContributor(agentDefinitionService)));
+
+        AnnotationAwareOrderComparator.sort(contributors);
+
+        assertEquals(List.of(
+                        ModelPolicyCapabilityContributor.class,
+                        ToolCapabilityContributor.class,
+                        SkillCapabilityContributor.class,
+                        McpCapabilityContributor.class,
+                        KnowledgeCapabilityContributor.class,
+                        HookCapabilityContributor.class,
+                        SubAgentCapabilityContributor.class,
+                        WorkerCapabilityContributor.class),
+                contributors.stream().map(Object::getClass).toList());
+    }
+
+    @Test
+    void attributesRejectMalformedEntries() {
+        assertThrows(IllegalArgumentException.class, () -> CapabilityPlanItemSupport.attributes("name"));
+        assertThrows(IllegalArgumentException.class, () -> CapabilityPlanItemSupport.attributes(100L, "value"));
     }
 
     private static CapabilityItem find(CapabilityPlan plan, CapabilityKind kind, String name) {
