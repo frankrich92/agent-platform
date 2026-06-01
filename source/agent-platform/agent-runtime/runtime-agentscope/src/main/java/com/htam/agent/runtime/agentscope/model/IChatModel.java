@@ -11,6 +11,9 @@ import io.agentscope.core.model.Model;
  **/
 public interface IChatModel {
     Model getModel(ModelConfigWrapper modelConfig);
+
+    Model getSimpleModel(ModelConfigWrapper modelConfig);
+
     ModelProviderType getProvider();
     int order();
 }

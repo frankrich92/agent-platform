@@ -48,6 +48,11 @@ public class SkillPackageMybatisRepository implements SkillPackageRepository {
     }
 
     @Override
+    public List<SkillPackage> listAll() {
+        return skillPackageMapper.selectList(Wrappers.<SkillPackage>lambdaQuery());
+    }
+
+    @Override
     public List<SkillPackage> listEnabledBriefByIds(List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return List.of();

@@ -9,6 +9,8 @@ import com.htam.agent.common.persistence.DomainTable;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 /**
  * 模型配置
  *
@@ -94,6 +96,21 @@ public class ModelConfig extends BaseEntity {
      */
     @DomainField(json = true)
     private JsonNode extendConfig;
+
+    /**
+     * 连接性检测状态：NOT_CHECKED/CHECKING/CONNECTED/FAILED
+     */
+    private String connectivityStatus;
+
+    /**
+     * 连接性检测消息
+     */
+    private String connectivityMessage;
+
+    /**
+     * 最后连接性检测时间
+     */
+    private LocalDateTime lastConnectivityCheck;
 
     public void fillModelConfigWrapper(ModelConfigWrapper configWrapper) {
         configWrapper.setModelCode(this.modelId);

@@ -6,20 +6,20 @@
 <script setup lang="ts">
 /* eslint-disable vue/multi-word-component-names */
 import { onMounted, ref, computed, h, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { Modal, Collapse } from 'ant-design-vue'
 import {SearchOutlined, AppstoreOutlined} from '@ant-design/icons-vue'
 import { useSkillStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import * as skillApi from '@/api/skill'
-import type { SkillPackageVO } from '@/types'
 import SkillCard from '@/components/skill/SkillCard.vue'
 import CreateCard from '@/components/skill/SkillCreateCard.vue'
-import SkillForm from '@/components/skill/SkillForm.vue'
 import ImportLocalForm from '@/components/skill/ImportLocalForm.vue'
 import ImportGitForm from '@/components/skill/ImportGitForm.vue'
 import ImportUploadForm from '@/components/skill/ImportUploadForm.vue'
 import {AgentModalApi} from "@/components/common/AgentModalApi.ts";
 import AgentInfiniteLoading from '@/components/common/AgentInfiniteLoading.vue'
+import { RouteNames } from '@/router/constants'
 
 /**
  * 资源项接口
@@ -32,9 +32,7 @@ interface ResourceItem {
 
 const store = useSkillStore()
 const { list, categories, selectedCategory, keyword, loading, hasMore } = storeToRefs(store)
-
-const formVisible = ref<boolean>(false)
-const currentData = ref<SkillPackageVO | undefined>(undefined)
+const router = useRouter()
 
 const importLocalVisible = ref(false)
 const importGitVisible = ref(false)
@@ -63,8 +61,7 @@ const categoryOptions = computed(() => {
  * 处理新增
  */
 function handleCreate() {
-  currentData.value = undefined
-  formVisible.value = true
+  router.push({ name: RouteNames.SKILL_EDITOR_NEW })
 }
 
 /**
@@ -200,9 +197,7 @@ async function handleView(id: string) {
  * 处理编辑
  */
 async function handleEdit(id: string) {
-  const response = await skillApi.detail(id)
-  currentData.value = response.data.data
-  formVisible.value = true
+  router.push({ name: RouteNames.SKILL_EDITOR, params: { id } })
 }
 
 /**
@@ -241,16 +236,6 @@ async function handleDelete(id: string) {
       resetListAndRebuild()
     }
   })
-}
-
-/**
- * 处理表单提交成功
- */
-async function handleFormSuccess() {
-  await store.fetchCategories()
-  await store.resetAndFetch()
-  isFirstLoad.value = true
-  infiniteLoadingKey.value++
 }
 
 /**
@@ -425,13 +410,6 @@ onMounted(() => {
         @infinite="handleInfiniteLoading"
       />
     </section>
-
-    <SkillForm
-      v-model:visible="formVisible"
-      :data="currentData"
-      :categories="categories"
-      @success="handleFormSuccess"
-    />
 
     <ImportLocalForm
       v-model:visible="importLocalVisible"

@@ -1,9 +1,13 @@
 package com.htam.agent.adapter.rest.capability.skill.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.htam.agent.capability.skill.SkillFileSystemService;
 import com.htam.agent.common.config.auth.RoleNeed;
 import com.htam.agent.common.dto.SkillPackageDTO;
+import com.htam.agent.common.entity.SkillFile;
 import com.htam.agent.common.entity.SkillPackage;
 import com.htam.agent.common.enums.Role;
+import com.htam.agent.common.enums.SkillFileType;
 import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.common.r.R;
 import com.htam.agent.common.util.BeanUtils;
@@ -14,6 +18,7 @@ import com.htam.agent.capability.skill.imports.SkillImportService;
 import com.htam.agent.capability.skill.imports.SkillInstaller;
 import com.htam.agent.capability.skill.imports.config.GitImportConfig;
 import com.htam.agent.capability.skill.imports.config.LocalImportConfig;
+import com.htam.agent.capability.skill.service.SkillFileService;
 import com.htam.agent.capability.skill.service.SkillPackageService;
 import com.htam.agent.capability.skill.service.SkillToolService;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -37,6 +42,7 @@ public class SkillPackageController {
     private final SkillImportService skillImportService;
     private final SkillPackageService skillPackageService;
     private final SkillToolService skillToolService;
+    private final SkillFileService skillFileService;
 
     /**
      * 分页查询
@@ -64,16 +70,16 @@ public class SkillPackageController {
      */
     @PostMapping
     @RoleNeed({Role.ADMIN, Role.EDIT})
-    public R<Boolean> save(@RequestBody SkillPackageVO vo) {
+    public R<Long> save(@RequestBody SkillPackageVO vo) {
         SkillPackage entity = BeanUtils.copy(vo, SkillPackage.class);
-        boolean save = skillPackageService.save(entity);
+        skillPackageService.save(entity);
         // 保存技能与工具的关联
         if (vo.getTools() != null && !vo.getTools().isEmpty()) {
             skillToolService.saveSkillTool(entity.getId(), vo.getTools());
         }
-        // 尝试装载脚本到本地
+        syncSkillFilesFromLegacy(entity, true);
         SkillScriptLoadHelper.loadScripts(entity);
-        return R.data(save);
+        return R.data(entity.getId());
     }
 
     /**
@@ -86,6 +92,7 @@ public class SkillPackageController {
         boolean b = skillPackageService.doUpdate(entity);
         // 更新技能与工具的关联
         skillToolService.saveSkillTool(entity.getId(), vo.getTools());
+        syncSkillFilesFromLegacy(entity, false);
         // 尝试装载脚本到本地
         if (entity.getScripts() == null || entity.getScripts().isNull() || entity.getScripts().isEmpty()) {
             SkillScriptLoadHelper.removeScripts(entity);
@@ -106,7 +113,9 @@ public class SkillPackageController {
         for (SkillPackage skillPackage : skillPackages) {
             // 卸载技能包目录
             SkillInstaller.uninstall(skillPackage.getName());
+            SkillFileSystemService.removeSkillDir(skillPackage.getName());
         }
+        skillFileService.deleteBySkillIds(ids);
         return R.data(skillPackageService.deleteByIds(ids));
     }
 
@@ -158,5 +167,66 @@ public class SkillPackageController {
             @RequestParam("cover") boolean cover) throws IOException {
 
         return R.data(skillImportService.importFromUpload(file, category, cover));
+    }
+
+    private void syncSkillFilesFromLegacy(SkillPackage entity, boolean createDefaultSkillMd) {
+        if (entity == null || entity.getId() == null || entity.getName() == null) {
+            return;
+        }
+        SkillFileSystemService.buildSkillDir(entity.getName());
+        SkillFile skillMd = skillFileService.getBySkillIdAndPath(entity.getId(), "SKILL.md");
+        if (entity.getSkillContent() != null || createDefaultSkillMd || skillMd == null) {
+            String content = entity.getSkillContent() != null
+                    ? entity.getSkillContent()
+                    : SkillFileSystemService.buildSkillMdContent(entity.getName(), entity.getDescription());
+            saveOrUpdateSkillFile(entity, SkillFileType.SKILL_MD, "SKILL.md", "SKILL.md", content, 0);
+        }
+        syncLegacyResources(entity, SkillFileType.REFERENCES, entity.getReferences(), "references");
+        syncLegacyResources(entity, SkillFileType.EXAMPLES, entity.getExamples(), "examples");
+        syncLegacyResources(entity, SkillFileType.SCRIPTS, entity.getScripts(), "scripts");
+    }
+
+    private void syncLegacyResources(SkillPackage entity, SkillFileType fileType, JsonNode resources, String defaultPrefix) {
+        if (resources == null || resources.isNull() || !resources.isArray()) {
+            return;
+        }
+        int sort = 0;
+        for (JsonNode resource : resources) {
+            String name = text(resource, "name", null);
+            if (name == null || name.isBlank()) {
+                continue;
+            }
+            String prefix = text(resource, "prefix", defaultPrefix);
+            String path = prefix + "/" + name;
+            if (!SkillFileSystemService.shouldPersistToDb(path)) {
+                continue;
+            }
+            saveOrUpdateSkillFile(entity, fileType, name, path, text(resource, "content", ""), sort++);
+        }
+    }
+
+    private void saveOrUpdateSkillFile(SkillPackage entity, SkillFileType fileType, String fileName,
+                                       String filePath, String content, int sort) {
+        SkillFile existing = skillFileService.getBySkillIdAndPath(entity.getId(), filePath);
+        SkillFile file = existing == null ? new SkillFile() : existing;
+        file.setSkillId(entity.getId());
+        file.setFileType(fileType);
+        file.setFileName(fileName);
+        file.setFilePath(filePath);
+        file.setContent(content == null ? "" : content);
+        file.setSort(sort);
+        if (existing == null) {
+            skillFileService.save(file);
+        } else {
+            skillFileService.updateById(file);
+        }
+        SkillFileSystemService.writeFile(entity.getName(), filePath, content);
+    }
+
+    private String text(JsonNode node, String field, String fallback) {
+        if (node == null || !node.has(field) || node.get(field).isNull()) {
+            return fallback;
+        }
+        return node.get(field).asText(fallback);
     }
 }

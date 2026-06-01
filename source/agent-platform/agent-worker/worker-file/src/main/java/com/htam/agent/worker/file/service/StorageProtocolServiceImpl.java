@@ -114,7 +114,7 @@ public class StorageProtocolServiceImpl implements StorageProtocolService {
             return createDefaultLocalProtocol();
         }
         if (list.size() > 1) {
-            throw new RuntimeException("存储配置不存咋唯一一个有效的配置");
+            throw new RuntimeException("存储配置不存在唯一一个有效的配置");
         }
         return list.getFirst();
     }
@@ -124,7 +124,7 @@ public class StorageProtocolServiceImpl implements StorageProtocolService {
             List<StorageProtocol> current = storageProtocolRepository.listCurrentValid();
             if (!FuncUtils.isEmpty(current)) {
                 if (current.size() > 1) {
-                    throw new RuntimeException("存储配置不存咋唯一一个有效的配置");
+                    throw new RuntimeException("存储配置不存在唯一一个有效的配置");
                 }
                 return current.getFirst();
             }

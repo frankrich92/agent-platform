@@ -103,8 +103,7 @@ public class AccountServiceImpl implements AccountService {
 
         // 验证密码
         String salt = account.getId().toString();
-        String encryptedPassword = CryptoUtils.md5(request.getPassword(), salt);
-        if (!encryptedPassword.equals(account.getPassword())) {
+        if (!passwordMatches(request.getPassword(), salt, account.getPassword())) {
             throw new RuntimeException("用户名或密码错误");
         }
 
@@ -204,8 +203,7 @@ public class AccountServiceImpl implements AccountService {
 
         // 验证旧密码
         String salt = account.getId().toString();
-        String encryptedOldPassword = CryptoUtils.md5(request.getOldPassword(), salt);
-        if (!encryptedOldPassword.equals(account.getPassword())) {
+        if (!passwordMatches(request.getOldPassword(), salt, account.getPassword())) {
             throw new RuntimeException("旧密码错误");
         }
 
@@ -412,6 +410,28 @@ public class AccountServiceImpl implements AccountService {
                 publisher.publishRoleChanged(accountId, role);
             }
         } catch (Exception ignored) {}
+    }
+
+    private boolean passwordMatches(String requestPassword, String salt, String storedPassword) {
+        if (FuncUtils.isEmpty(requestPassword) || FuncUtils.isEmpty(storedPassword)) {
+            return false;
+        }
+        String saltedRaw = CryptoUtils.md5(requestPassword, salt);
+        if (saltedRaw.equalsIgnoreCase(storedPassword)) {
+            return true;
+        }
+        String clientMd5 = CryptoUtils.md5(requestPassword);
+        if (CryptoUtils.md5(clientMd5, salt).equalsIgnoreCase(storedPassword)) {
+            return true;
+        }
+        if (clientMd5.equalsIgnoreCase(storedPassword)) {
+            return true;
+        }
+        return isMd5Hex(requestPassword) && requestPassword.equalsIgnoreCase(storedPassword);
+    }
+
+    private boolean isMd5Hex(String value) {
+        return value != null && value.matches("^[a-fA-F0-9]{32}$");
     }
 
     private String getAgentCodeByChatKey(String chatKey) {

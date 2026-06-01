@@ -58,6 +58,11 @@ public class ModelConfigServiceImpl implements ModelConfigService {
     }
 
     @Override
+    public boolean updateById(ModelConfig entity) {
+        return modelConfigRepository.updateById(entity);
+    }
+
+    @Override
     public ModelWrapper getModelWrapperById(Long id) {
         ModelConfig config = getById(id);
         if (config == null) {
@@ -112,7 +117,7 @@ public class ModelConfigServiceImpl implements ModelConfigService {
 
     private void publishAgentReregister(List<Long> agentIds) {
         agentIds.forEach(agentId ->
-                messagePublisher.publish(RedisChannelTopic.AGENT_REREGISTER_CHANNEL, String.valueOf(agentId)));
+                messagePublisher.publishAfterCommit(RedisChannelTopic.AGENT_REREGISTER_CHANNEL, String.valueOf(agentId)));
     }
 
     private List<AgentDefinition> getAgentDefinitions(List<Long> modelConfigIds) {

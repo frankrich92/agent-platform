@@ -22,6 +22,8 @@ public interface SkillPackageService {
 
     List<SkillPackage> listByIds(List<Long> ids);
 
+    List<SkillPackage> listAll();
+
     List<SkillPackage> listEnabledBriefByIds(List<Long> ids);
 
     List<SkillPackage> listWithScripts();

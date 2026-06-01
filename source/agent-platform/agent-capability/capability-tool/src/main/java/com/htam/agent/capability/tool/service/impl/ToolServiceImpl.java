@@ -162,7 +162,7 @@ public class ToolServiceImpl implements ToolService {
 
     private void publishAgentReregister(List<Long> agentIds) {
         agentIds.forEach(agentId ->
-                messagePublisher.publish(RedisChannelTopic.AGENT_REREGISTER_CHANNEL, String.valueOf(agentId)));
+                messagePublisher.publishAfterCommit(RedisChannelTopic.AGENT_REREGISTER_CHANNEL, String.valueOf(agentId)));
     }
 
 }

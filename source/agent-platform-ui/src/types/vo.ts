@@ -199,6 +199,9 @@ export interface ModelConfigVO {
   repeatPenalty: number
   seed: string
   extendConfig: Record<string, any> | null
+  connectivityStatus?: string
+  connectivityMessage?: string
+  lastConnectivityCheck?: string
   enabled: boolean
   createdAt: string
   updatedAt: string
@@ -265,6 +268,30 @@ export interface SkillPackageVO {
   updatedBy: string
   used: string[]
   tools:string[]
+}
+
+/**
+ * 技能包文件树节点
+ */
+export interface SkillFileTreeNode {
+  name: string
+  path: string
+  directory: boolean
+  fileId: string | null
+  fileType: 'SKILL_MD' | 'REFERENCES' | 'EXAMPLES' | 'SCRIPTS' | null
+  extension: string
+  fileSize: number
+  children: SkillFileTreeNode[]
+  content?: string
+  dirty?: boolean
+}
+
+/**
+ * 模型检查结果
+ */
+export interface CheckModelResult {
+  success: boolean
+  message: string
 }
 
 /**

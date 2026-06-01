@@ -1,5 +1,8 @@
 package com.htam.agent.capability.skill.imports;
 
+import com.htam.agent.capability.skill.SkillFileSystemService;
+import com.htam.agent.capability.skill.service.SkillFileService;
+import com.htam.agent.common.entity.SkillFile;
 import com.htam.agent.common.entity.SkillPackage;
 import com.htam.agent.common.vo.SkillImportResult;
 import com.htam.agent.capability.skill.SkillScriptLoadHelper;
@@ -30,6 +33,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class SkillImportService {
     private final SkillPackageService skillPackageService;
+    private final SkillFileService skillFileService;
 
     /**
      * 从 Git 导入
@@ -109,19 +113,29 @@ public class SkillImportService {
             }
 
             ImportedSkill importedSkill = source.skill(skillName);
-            SkillPackage skillPackage = SkillPackageBuilder.build(importedSkill, category);
+            SkillPackageBuilder.BuildResult buildResult = SkillPackageBuilder.buildWithFiles(importedSkill, category);
+            SkillPackage skillPackage = buildResult.getSkillPackage();
 
             SkillPackage oldSkillPackage = skillPackageService.getByName(skillName);
 
+            Long skillId;
             if (oldSkillPackage == null) {
                 skillPackageService.save(skillPackage);
+                skillId = skillPackage.getId();
             } else {
                 skillPackage.setId(oldSkillPackage.getId());
                 skillPackage.setEnabled(oldSkillPackage.getEnabled() != null ? oldSkillPackage.getEnabled() : Boolean.TRUE);
                 skillPackageService.updateById(skillPackage);
+                skillId = oldSkillPackage.getId();
+                skillFileService.deleteBySkillId(skillId);
             }
 
             SkillScriptLoadHelper.loadScripts(skillPackage);
+            for (SkillFile skillFile : buildResult.getSkillFiles()) {
+                skillFile.setSkillId(skillId);
+                skillFileService.save(skillFile);
+                SkillFileSystemService.writeFile(skillPackage.getName(), skillFile.getFilePath(), skillFile.getContent());
+            }
             importedCount++;
         }
 

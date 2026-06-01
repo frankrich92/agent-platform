@@ -7,6 +7,7 @@
 import { ref, watch } from 'vue'
 import { Modal, message } from 'ant-design-vue'
 import type {ModelConfigVO, ModelConfigDTO, ModelConfig} from '@/types'
+import { ModelConnectivityStatus } from '@/types'
 import * as modelApi from '@/api/model'
 import ModelConfigForm from './ModelConfigForm.vue'
 import { useAccountStore } from '@/stores'
@@ -75,6 +76,12 @@ const columns:any = [
     dataIndex: 'enabled',
     key: 'enabled',
     width: 90
+  },
+  {
+    title: '连接状态',
+    dataIndex: 'connectivityStatus',
+    key: 'connectivityStatus',
+    width: 120
   }
 ]
 
@@ -83,7 +90,7 @@ if (hasPermission) {
   columns.push({
     title: '操作',
     key: 'action',
-    width: 110,
+    width: 210,
     fixed: 'right'
   })
 }
@@ -219,6 +226,14 @@ function handleClose() {
 }
 
 const enableLoading = ref<boolean>(false)
+const checkLoading = ref<Set<string>>(new Set())
+
+const statusMeta: Record<string, { color: string; text: string }> = {
+  [ModelConnectivityStatus.NOT_CHECKED]: { color: 'default', text: '未检测' },
+  [ModelConnectivityStatus.CHECKING]: { color: 'processing', text: '检测中' },
+  [ModelConnectivityStatus.CONNECTED]: { color: 'success', text: '已连接' },
+  [ModelConnectivityStatus.FAILED]: { color: 'error', text: '连接失败' }
+}
 /**
  * 切换状态
  */
@@ -252,6 +267,27 @@ async function handleEnable(id: string) {
     item.enabled = !enabled
   } finally {
     enableLoading.value = false
+  }
+}
+
+async function handleCheckModel(record: ModelConfigVO) {
+  const id = String(record.id)
+  if (checkLoading.value.has(id)) {
+    return
+  }
+  checkLoading.value.add(id)
+  record.connectivityStatus = ModelConnectivityStatus.CHECKING
+  try {
+    const response = await modelApi.checkModel(id)
+    const result = response.data.data
+    if (result.success) {
+      message.success(result.message || '连接成功')
+    } else {
+      message.error(result.message || '连接失败')
+    }
+    await fetchModelList()
+  } finally {
+    checkLoading.value.delete(id)
   }
 }
 </script>
@@ -328,8 +364,25 @@ async function handleEnable(id: string) {
             </ATag>
           </template>
 
+          <template v-if="column.key === 'connectivityStatus'">
+            <ATooltip :title="record.connectivityMessage || statusMeta[record.connectivityStatus || ModelConnectivityStatus.NOT_CHECKED]?.text">
+              <ATag
+                :color="statusMeta[record.connectivityStatus || ModelConnectivityStatus.NOT_CHECKED]?.color || 'default'"
+                :bordered="false"
+              >
+                {{ statusMeta[record.connectivityStatus || ModelConnectivityStatus.NOT_CHECKED]?.text || '未知' }}
+              </ATag>
+            </ATooltip>
+          </template>
+
           <template v-if="column.key === 'action'" v-permission="['EDIT','ADMIN']">
             <ASpace>
+              <AButton
+                type="link"
+                size="small"
+                :loading="checkLoading.has(String(record.id))"
+                @click="handleCheckModel(record)"
+              >测试连接</AButton>
               <AButton type="link" size="small" @click="handleEdit(record)">编辑</AButton>
               <AButton type="link" size="small" danger @click="handleDelete(record)">删除</AButton>
             </ASpace>

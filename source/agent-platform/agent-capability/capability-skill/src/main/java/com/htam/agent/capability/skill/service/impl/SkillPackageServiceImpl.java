@@ -12,6 +12,7 @@ import com.htam.agent.repo.agent.AgentDefinitionRepository;
 import com.htam.agent.repo.capability.SkillPackageRepository;
 import com.htam.agent.repo.support.RepoPage;
 import com.htam.agent.capability.skill.service.AgentSkillPackageService;
+import com.htam.agent.capability.skill.service.SkillFileService;
 import com.htam.agent.capability.skill.service.SkillPackageService;
 import com.htam.agent.capability.skill.service.SkillToolService;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,7 @@ public class SkillPackageServiceImpl implements SkillPackageService {
     private final SkillPackageRepository skillPackageRepository;
     private final AgentSkillPackageService agentSkillPackageService;
     private final SkillToolService skillToolService;
+    private final SkillFileService skillFileService;
     private final MessagePublisher messagePublisher;
 
     @Override
@@ -61,6 +63,11 @@ public class SkillPackageServiceImpl implements SkillPackageService {
     @Override
     public List<SkillPackage> listByIds(List<Long> ids) {
         return skillPackageRepository.listByIds(ids);
+    }
+
+    @Override
+    public List<SkillPackage> listAll() {
+        return skillPackageRepository.listAll();
     }
 
     @Override
@@ -104,6 +111,7 @@ public class SkillPackageServiceImpl implements SkillPackageService {
         // 删除前先获取关联的智能体ID，以便后续触发重新注册
         List<Long> agentIds = agentSkillPackageService.getAgentIds(ids);
         skillPackageRepository.deleteByIds(ids);
+        skillFileService.deleteBySkillIds(ids);
         // 删除技能包与智能体的关联
         agentSkillPackageService.deleteBySkillPackageIds(ids);
         // 删除技能包与工具的关联
@@ -146,7 +154,7 @@ public class SkillPackageServiceImpl implements SkillPackageService {
 
     private void publishAgentReregister(List<Long> agentIds) {
         agentIds.forEach(agentId ->
-                messagePublisher.publish(RedisChannelTopic.AGENT_REREGISTER_CHANNEL, String.valueOf(agentId)));
+                messagePublisher.publishAfterCommit(RedisChannelTopic.AGENT_REREGISTER_CHANNEL, String.valueOf(agentId)));
     }
 
 }

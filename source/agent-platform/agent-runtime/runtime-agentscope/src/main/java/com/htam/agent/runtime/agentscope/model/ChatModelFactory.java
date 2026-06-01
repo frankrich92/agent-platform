@@ -136,4 +136,13 @@ public class ChatModelFactory {
                 .provider(modelProvider)
                 .build();
     }
+
+    public Model getSimpleModel(ModelConfigWrapper configWrapper) {
+        IChatModel IChatModel = MODEL_MAP.get(configWrapper.getProvider());
+        if (IChatModel == null) {
+            throw new RuntimeException("No chat model found for provider " + configWrapper.getProvider());
+        }
+
+        return IChatModel.getSimpleModel(configWrapper);
+    }
 }
