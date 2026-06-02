@@ -15,4 +15,9 @@ public class RedisChannelTopic {
     public static final String SK_SYNC_CHANNEL = "agent:sk:sync";
     public static final String JOB_CLUSTER_CONTROL = "agent:job:cluster:control";
     public static final String WS_CHANNEL_PATTERN = "agent:ws:cluster:*";
+
+    /**
+     * 系统参数变更频道。
+     */
+    public static final String PARAM_CHANGE_CHANNEL = "agent:params:change";
 }

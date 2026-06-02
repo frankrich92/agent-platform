@@ -27,7 +27,6 @@ import io.agentscope.core.state.StatePersistence;
 import io.agentscope.core.plan.PlanNotebook;
 import io.agentscope.core.rag.RAGMode;
 import io.agentscope.core.rag.model.RetrieveConfig;
-import io.agentscope.core.skill.SkillBox;
 import io.agentscope.core.studio.StudioManager;
 import io.agentscope.core.studio.StudioMessageHook;
 import io.agentscope.core.tool.ToolExecutionContext;
@@ -82,22 +81,15 @@ public class ReActAgentHelper {
      */
     public ReActAgent getReActAgent(AgentDefinition definition) {
         Model model = chatModelFactory.getModel(definition);
+        Toolkit toolkit = toolkitFactory.getToolkit(definition);
         ReActAgent.Builder builder = ReActAgent.builder()
                 .name(definition.getAgentCode())
                 .description(FuncUtils.isEmpty(definition.getDescription()) ? definition.getName() : definition.getDescription())
                 .maxIters(definition.getMaxIterations())
                 .model(model)
-                .sysPrompt(agentSysPromptFactory.getAgentSysPrompt(definition));
-
-        SkillBox skillBox = skillBoxFactory.getSkillBox(definition);
-        if (skillBox != null) {
-            builder.skillBox(skillBox);
-        }
-
-        Toolkit toolkit = toolkitFactory.getToolkit(definition);
-        if (toolkit != null) {
-            builder.toolkit(toolkit);
-        }
+                .sysPrompt(agentSysPromptFactory.getAgentSysPrompt(definition))
+                .toolkit(toolkit)
+                .skillBox(skillBoxFactory.getSkillBox(definition, toolkit));
 
         KnowledgeWrapper knowledgeWrapper = knowledgeFactory.getKnowledge(definition);
         if (knowledgeWrapper != null) {
@@ -181,12 +173,6 @@ public class ReActAgentHelper {
         builder.toolExecutionContext(context);
 
         // 构建reActAgent
-        ReActAgent reActAgent = builder.build();
-
-        if (skillBox != null) {
-            skillBoxFactory.configureCodeExecution(skillBox, definition.getId());
-        }
-
-        return reActAgent;
+        return builder.build();
     }
 }

@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.htam.agent.repo.agent.AgentCodeExecutionRepository;
 import com.htam.agent.repo.agent.CodeExecutionConfigRepository;
 import com.htam.agent.repo.capability.AgentSkillPackageRepository;
+import com.htam.agent.repo.capability.SkillFileRepository;
 import com.htam.agent.repo.capability.SkillPackageRepository;
 import com.htam.agent.repo.capability.SkillToolRepository;
 import com.htam.agent.common.skill.SkillMetadata;
@@ -44,6 +45,7 @@ public class SkillBoxFactory {
     private final ToolkitFactory toolkitFactory;
     private final SkillToolRepository skillToolRepository;
     private final SkillPackageRepository skillPackageRepository;
+    private final SkillFileRepository skillFileRepository;
     private final AgentSkillPackageRepository agentSkillPackageRepository;
     private final AgentCodeExecutionRepository agentCodeExecutionRepository;
     private final CodeExecutionConfigRepository codeExecutionConfigRepository;
@@ -55,9 +57,13 @@ public class SkillBoxFactory {
      * @return SkillBox
      */
     public SkillBox getSkillBox(AgentDefinition agentDefinition) {
-        Toolkit skillToolkit = new Toolkit();
-        skillToolkit.registerAgentTool(new LoadSkillContentTool(skillPackageRepository));
-        SkillBox skillBox = new SkillBox(skillToolkit);
+        return getSkillBox(agentDefinition, new Toolkit());
+    }
+
+    public SkillBox getSkillBox(AgentDefinition agentDefinition, Toolkit toolkit) {
+        Toolkit baseToolkit = toolkit == null ? new Toolkit() : toolkit;
+        baseToolkit.registerAgentTool(new LoadSkillContentTool(skillPackageRepository, skillFileRepository));
+        SkillBox skillBox = new SkillBox(baseToolkit);
 
         // 注册技能包
         List<Long> skillPackageIds = agentSkillPackageRepository.listByAgentDefinitionId(agentDefinition.getId())
@@ -66,11 +72,13 @@ public class SkillBoxFactory {
                 .toList();
         if (skillPackageIds.isEmpty()) {
             registerUploadedAttachmentSkill(skillBox);
+            configureCodeExecution(skillBox, agentDefinition.getId());
             return skillBox;
         }
 
         registerSkills(skillBox, skillPackageIds);
         registerUploadedAttachmentSkill(skillBox);
+        configureCodeExecution(skillBox, agentDefinition.getId());
 
         return skillBox;
     }
@@ -110,7 +118,7 @@ public class SkillBoxFactory {
 
         // 获取关联的工具
         Toolkit toolkit = toolkitFactory.getToolkit(getSkillToolIds(skillPackage.getId()));
-        toolkit.registerAgentTool(new LoadSkillContentTool(skillPackageRepository));
+        toolkit.registerAgentTool(new LoadSkillContentTool(skillPackageRepository, skillFileRepository));
 
         skillBox.registration().skill(skillBuilder.build()).tool(toolkit).apply();
     }

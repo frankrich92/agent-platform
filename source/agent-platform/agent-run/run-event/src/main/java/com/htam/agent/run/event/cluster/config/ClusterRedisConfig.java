@@ -8,9 +8,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.Executor;
 
 /**
  * 描述：Redis集群消息配置
@@ -38,6 +40,7 @@ public class ClusterRedisConfig {
 
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
+        container.setTaskExecutor(redisListenerExecutor());
 
         // 注册所有订阅者
         if (subscribers != null && !subscribers.isEmpty()) {
@@ -57,5 +60,16 @@ public class ClusterRedisConfig {
         }
 
         return container;
+    }
+
+    @Bean
+    public Executor redisListenerExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(2);
+        executor.setMaxPoolSize(8);
+        executor.setQueueCapacity(200);
+        executor.setThreadNamePrefix("redis-listener-");
+        executor.initialize();
+        return executor;
     }
 }

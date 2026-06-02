@@ -20,6 +20,8 @@ public interface ModelConfigService {
 
     boolean save(ModelConfig entity);
 
+    boolean updateById(ModelConfig entity);
+
     ModelWrapper getModelWrapperById(Long id);
 
     List<Object> usedWithAgent(List<Long> ids);

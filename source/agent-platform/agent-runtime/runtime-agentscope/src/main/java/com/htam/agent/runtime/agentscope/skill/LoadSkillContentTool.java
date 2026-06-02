@@ -1,8 +1,11 @@
 package com.htam.agent.runtime.agentscope.skill;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.htam.agent.common.entity.SkillFile;
 import com.htam.agent.common.entity.SkillPackage;
+import com.htam.agent.common.enums.SkillFileType;
 import com.htam.agent.common.skill.SkillMetadata;
+import com.htam.agent.repo.capability.SkillFileRepository;
 import com.htam.agent.repo.capability.SkillPackageRepository;
 import com.htam.agent.runtime.core.RuntimeInteractionRecorder;
 import io.agentscope.core.message.TextBlock;
@@ -16,9 +19,11 @@ import reactor.core.publisher.Mono;
 public class LoadSkillContentTool implements AgentTool {
 
     private final SkillPackageRepository skillPackageRepository;
+    private final SkillFileRepository skillFileRepository;
 
-    public LoadSkillContentTool(SkillPackageRepository skillPackageRepository) {
+    public LoadSkillContentTool(SkillPackageRepository skillPackageRepository, SkillFileRepository skillFileRepository) {
         this.skillPackageRepository = skillPackageRepository;
+        this.skillFileRepository = skillFileRepository;
     }
 
     @Override
@@ -49,7 +54,7 @@ public class LoadSkillContentTool implements AgentTool {
             SkillPackage skill = loadSkill(skillId);
             String result = skill == null || !Boolean.TRUE.equals(skill.getEnabled())
                     ? "Skill not found or disabled: " + skillId
-                    : fullSkillContent(skill);
+                    : fullSkillContent(skill, skillFileRepository.listBySkillId(skill.getId()));
             if (skill != null) {
                 RuntimeInteractionRecorder.recordSkillLoad(skill.getName(), "skill:" + skill.getId());
             }
@@ -71,7 +76,7 @@ public class LoadSkillContentTool implements AgentTool {
         }
     }
 
-    private static String fullSkillContent(SkillPackage skill) {
+    private static String fullSkillContent(SkillPackage skill, List<SkillFile> files) {
         SkillMetadata metadata = SkillMetadata.from(skill);
         StringBuilder content = new StringBuilder();
         content.append("skill_id: ").append(skill.getId()).append('\n');
@@ -85,11 +90,43 @@ public class LoadSkillContentTool implements AgentTool {
         appendLine(content, "source", metadata.source());
         appendLine(content, "summary_hash", metadata.summaryHash());
         content.append('\n').append("--- skill_content ---").append('\n');
-        content.append(nullToEmpty(skill.getSkillContent()));
+        String skillMd = firstFileContent(files, SkillFileType.SKILL_MD);
+        content.append(skillMd == null ? nullToEmpty(skill.getSkillContent()) : skillMd);
+        appendFileResources(content, "references", files, SkillFileType.REFERENCES);
+        appendFileResources(content, "examples", files, SkillFileType.EXAMPLES);
+        appendFileResources(content, "scripts", files, SkillFileType.SCRIPTS);
         appendResources(content, "references", skill.getReferences());
         appendResources(content, "examples", skill.getExamples());
         appendResources(content, "scripts", skill.getScripts());
         return content.toString();
+    }
+
+    private static String firstFileContent(List<SkillFile> files, SkillFileType type) {
+        if (files == null || files.isEmpty()) {
+            return null;
+        }
+        return files.stream()
+                .filter(file -> file.getFileType() == type)
+                .map(SkillFile::getContent)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private static void appendFileResources(StringBuilder content, String title, List<SkillFile> files, SkillFileType type) {
+        if (files == null || files.isEmpty()) {
+            return;
+        }
+        List<SkillFile> matched = files.stream()
+                .filter(file -> file.getFileType() == type)
+                .toList();
+        if (matched.isEmpty()) {
+            return;
+        }
+        content.append('\n').append("--- ").append(title).append(" ---").append('\n');
+        for (SkillFile file : matched) {
+            content.append('[').append(file.getFilePath()).append(']').append('\n');
+            content.append(nullToEmpty(file.getContent())).append('\n');
+        }
     }
 
     private static void appendResources(StringBuilder content, String title, JsonNode resources) {

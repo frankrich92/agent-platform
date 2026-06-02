@@ -7,12 +7,20 @@ import com.htam.agent.common.enums.Role;
 import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.common.r.R;
 import com.htam.agent.common.util.BeanUtils;
+import com.htam.agent.common.vo.CheckModelResult;
 import com.htam.agent.common.vo.ModelConfigVO;
 import com.htam.agent.capability.provider.service.ModelConfigService;
+import com.htam.agent.common.wrapper.ModelConfigWrapper;
+import com.htam.agent.common.wrapper.ModelWrapper;
+import com.htam.agent.runtime.agentscope.model.ChatModelFactory;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import io.agentscope.core.ReActAgent;
+import io.agentscope.core.message.Msg;
+import io.agentscope.core.model.Model;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -26,6 +34,7 @@ import java.util.List;
 public class ModelConfigController {
 
     private final ModelConfigService modelConfigService;
+    private final ChatModelFactory chatModelFactory;
 
     /**
      * 分页查询
@@ -54,8 +63,9 @@ public class ModelConfigController {
      */
     @PostMapping
     @RoleNeed({Role.ADMIN, Role.EDIT})
-    public R<Boolean> save(@RequestBody ModelConfig entity) {
-        return R.data(modelConfigService.save(entity));
+    public R<Long> save(@RequestBody ModelConfig entity) {
+        modelConfigService.save(entity);
+        return R.data(entity.getId());
     }
 
     /**
@@ -63,8 +73,9 @@ public class ModelConfigController {
      */
     @PutMapping
     @RoleNeed({Role.ADMIN, Role.EDIT})
-    public R<Boolean> update(@RequestBody ModelConfig entity) {
-        return R.data(modelConfigService.doUpdate(entity));
+    public R<Long> update(@RequestBody ModelConfig entity) {
+        modelConfigService.doUpdate(entity);
+        return R.data(entity.getId());
     }
 
     /**
@@ -82,5 +93,42 @@ public class ModelConfigController {
     @PostMapping("used-with-agent")
     public R<List<Object>> usedWithAgent(@RequestBody List<Long> ids) {
         return R.data(modelConfigService.usedWithAgent(ids));
+    }
+
+    @RequestMapping("/check/{modelId}")
+    @RoleNeed({Role.ADMIN, Role.EDIT})
+    public R<CheckModelResult> checkModel(@PathVariable("modelId") Long modelId) {
+        updateConnectivityResult(modelId, "CHECKING", null);
+        try {
+            ModelWrapper config = modelConfigService.getModelWrapperById(modelId);
+            ModelConfigWrapper configWrapper = new ModelConfigWrapper();
+            config.getConfig().fillModelConfigWrapper(configWrapper);
+            config.getProvider().fillModelConfigWrapper(configWrapper);
+            Model simpleModel = chatModelFactory.getSimpleModel(configWrapper);
+            ReActAgent agent = ReActAgent.builder()
+                    .name("CHECK_MODEL_AGENT")
+                    .model(simpleModel)
+                    .sysPrompt("For user inquiries, you must always respond with \"Connection test successful.\"")
+                    .build();
+            Msg response = agent.call(Msg.builder().textContent("hello").build()).block();
+            if (response == null || response.getTextContent() == null) {
+                updateConnectivityResult(modelId, "FAILED", "模型无响应");
+                return R.data(new CheckModelResult(false, "模型无响应"));
+            }
+            updateConnectivityResult(modelId, "CONNECTED", null);
+            return R.data(new CheckModelResult(true, "连接成功"));
+        } catch (Exception e) {
+            updateConnectivityResult(modelId, "FAILED", e.getMessage());
+            return R.data(new CheckModelResult(false, e.getMessage()));
+        }
+    }
+
+    private void updateConnectivityResult(Long modelId, String status, String message) {
+        ModelConfig entity = new ModelConfig();
+        entity.setId(modelId);
+        entity.setConnectivityStatus(status);
+        entity.setConnectivityMessage(message);
+        entity.setLastConnectivityCheck(LocalDateTime.now());
+        modelConfigService.updateById(entity);
     }
 }

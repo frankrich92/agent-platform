@@ -25,10 +25,20 @@ public class HttpTransportHelper {
                 .build();
     }
 
+    public static HttpTransport createOkHttpTransport(long connectTimeoutSeconds, long readTimeoutSeconds) {
+        return OkHttpTransport.builder()
+                .config(getHttpTransportConfig(connectTimeoutSeconds, readTimeoutSeconds))
+                .build();
+    }
+
     private static HttpTransportConfig getHttpTransportConfig() {
+        return getHttpTransportConfig(10, 60);
+    }
+
+    private static HttpTransportConfig getHttpTransportConfig(long connectTimeoutSeconds, long readTimeoutSeconds) {
         return HttpTransportConfig.builder()
-                .connectTimeout(Duration.ofSeconds(10))
-                .readTimeout(Duration.ofSeconds(60))
+                .connectTimeout(Duration.ofSeconds(connectTimeoutSeconds))
+                .readTimeout(Duration.ofSeconds(readTimeoutSeconds))
                 .ignoreSsl(true)
                 .build();
     }

@@ -186,10 +186,10 @@ public class AgentDefinitionServiceImpl implements AgentDefinitionService {
                 throw new RuntimeException("请先禁用定时任务");
             }
             if (vo.getEnabled()) {
-                messagePublisher.publish(RedisChannelTopic.AGENT_REREGISTER_CHANNEL, String.valueOf(vo.getId()));
+                messagePublisher.publishAfterCommit(RedisChannelTopic.AGENT_REREGISTER_CHANNEL, String.valueOf(vo.getId()));
             } else {
                 AgentDefinition agentDefinition = getById(vo.getId());
-                messagePublisher.publish(RedisChannelTopic.AGENT_UNREGISTER_CHANNEL, agentDefinition.getAgentCode());
+                messagePublisher.publishAfterCommit(RedisChannelTopic.AGENT_UNREGISTER_CHANNEL, agentDefinition.getAgentCode());
             }
 
             return true;
@@ -197,7 +197,7 @@ public class AgentDefinitionServiceImpl implements AgentDefinitionService {
 
         saveSubItems(vo);
 
-        messagePublisher.publish(RedisChannelTopic.AGENT_REREGISTER_CHANNEL, String.valueOf(vo.getId()));
+        messagePublisher.publishAfterCommit(RedisChannelTopic.AGENT_REREGISTER_CHANNEL, String.valueOf(vo.getId()));
         return true;
     }
 
@@ -248,7 +248,7 @@ public class AgentDefinitionServiceImpl implements AgentDefinitionService {
         agentCodeExecutionService.deleteAgentCodeExecution(ids);
 
         for (AgentDefinition agent_ : agents) {
-            messagePublisher.publish(RedisChannelTopic.AGENT_UNREGISTER_CHANNEL, agent_.getAgentCode());
+            messagePublisher.publishAfterCommit(RedisChannelTopic.AGENT_UNREGISTER_CHANNEL, agent_.getAgentCode());
         }
 
         return Boolean.TRUE;
