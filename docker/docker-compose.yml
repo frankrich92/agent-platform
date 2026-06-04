@@ -1,0 +1,151 @@
+services:
+  agent-postgres:
+    image: ${POSTGRES_IMAGE:-pgvector/pgvector:pg16}
+    container_name: agent-platform-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-agent_platform}
+      POSTGRES_USER: ${POSTGRES_USER:-htam_agent}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-htam_agent}
+      TZ: ${TZ:-Asia/Shanghai}
+    ports:
+      - "${POSTGRES_PORT:-52432}:5432"
+    volumes:
+      - ${DATA_PATH:-./data}/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-htam_agent} -d ${POSTGRES_DB:-agent_platform}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - agent-platform
+
+  agent-redis:
+    image: ${REDIS_IMAGE:-redis:7.4-alpine}
+    container_name: agent-platform-redis
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:-redis}"]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis}
+      TZ: ${TZ:-Asia/Shanghai}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - ${DATA_PATH:-./data}/redis:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD:-redis} ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - agent-platform
+
+  agent-elasticsearch:
+    image: ${ELASTICSEARCH_IMAGE:-docker.elastic.co/elasticsearch/elasticsearch:8.15.0}
+    container_name: agent-platform-elasticsearch
+    profiles:
+      - elasticsearch
+    restart: unless-stopped
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: ${ELASTICSEARCH_JAVA_OPTS:--Xms512m -Xmx512m}
+      TZ: ${TZ:-Asia/Shanghai}
+    ports:
+      - "${ELASTICSEARCH_PORT:-9200}:9200"
+    volumes:
+      - ${DATA_PATH:-./data}/elasticsearch:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - agent-platform
+
+  agent-weaviate:
+    image: ${WEAVIATE_IMAGE:-cr.weaviate.io/semitechnologies/weaviate:1.26.7}
+    container_name: agent-platform-weaviate
+    profiles:
+      - weaviate
+    restart: unless-stopped
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"
+      PERSISTENCE_DATA_PATH: /var/lib/weaviate
+      DEFAULT_VECTORIZER_MODULE: none
+      CLUSTER_HOSTNAME: node1
+      TZ: ${TZ:-Asia/Shanghai}
+    ports:
+      - "${WEAVIATE_PORT:-8080}:8080"
+    volumes:
+      - ${DATA_PATH:-./data}/weaviate:/var/lib/weaviate
+    networks:
+      - agent-platform
+
+  agent-backend:
+    build:
+      context: ..
+      dockerfile: docker/backend/Dockerfile
+    image: ${BACKEND_IMAGE:-agent-platform-backend:latest}
+    container_name: agent-platform-backend
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: 3060
+      POSTGRES_USER: ${POSTGRES_USER:-htam_agent}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-htam_agent}
+      MASTER_DATASOURCE_URL: jdbc:postgresql://agent-postgres:5432/${POSTGRES_DB:-agent_platform}
+      CONVERSATION_DATASOURCE_URL: jdbc:postgresql://agent-postgres:5432/${POSTGRES_DB:-agent_platform}
+      REDIS_HOST: agent-redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis}
+      REDIS_DATABASE: ${REDIS_DATABASE:-7}
+      VECTOR_STORE_TYPE: ${VECTOR_STORE_TYPE:-pgvector}
+      PGVECTOR_DATASOURCE_URL: jdbc:postgresql://agent-postgres:5432/${POSTGRES_DB:-agent_platform}
+      ELASTICSEARCH_URIS: ${ELASTICSEARCH_URIS:-http://agent-elasticsearch:9200}
+      ELASTICSEARCH_USERNAME: ${ELASTICSEARCH_USERNAME:-}
+      ELASTICSEARCH_PASSWORD: ${ELASTICSEARCH_PASSWORD:-}
+      ELASTICSEARCH_API_KEY: ${ELASTICSEARCH_API_KEY:-}
+      ELASTICSEARCH_INDEX_PREFIX: ${ELASTICSEARCH_INDEX_PREFIX:-agent_rag}
+      WEAVIATE_HOST: ${WEAVIATE_HOST:-agent-weaviate}
+      WEAVIATE_PORT: ${WEAVIATE_PORT:-8080}
+      WEAVIATE_SCHEME: ${WEAVIATE_SCHEME:-http}
+      WEAVIATE_API_KEY: ${WEAVIATE_API_KEY:-}
+      WEAVIATE_CLASS_PREFIX: ${WEAVIATE_CLASS_PREFIX:-AgentRag}
+      JWT_SECRET: ${JWT_SECRET:-ZJr8c2xF0y5b7yM+1H9v9cGZq6nZ5e0k5r3Cw7H8vJQ=}
+      JAVA_OPTS: ${BACKEND_JAVA_OPTS:--XX:MaxRAMPercentage=75.0}
+      TZ: ${TZ:-Asia/Shanghai}
+    ports:
+      - "${BACKEND_PORT:-3060}:3060"
+    volumes:
+      - ${DATA_PATH:-./data}/backend/storage:/app/storage
+      - ${LOG_PATH:-./logs}/backend:/app/logs
+    depends_on:
+      agent-postgres:
+        condition: service_healthy
+      agent-redis:
+        condition: service_healthy
+    networks:
+      - agent-platform
+
+  agent-frontend:
+    build:
+      context: ..
+      dockerfile: docker/frontend/Dockerfile
+    image: ${FRONTEND_IMAGE:-agent-platform-frontend:latest}
+    container_name: agent-platform-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3001}:80"
+    depends_on:
+      - agent-backend
+    networks:
+      - agent-platform
+
+networks:
+  agent-platform:
+    name: agent-platform

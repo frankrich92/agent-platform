@@ -11,6 +11,10 @@ import java.util.List;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
+/**
+ * 基于 Agent Profile 配置生成能力计划的默认实现。
+ * 各类 CapabilityPlanContributor 只负责贡献自身能力项，本类负责聚合并输出统一计划。
+ */
 @Service
 @Primary
 public class ProfileCapabilityPlanService implements CapabilityPlanService {

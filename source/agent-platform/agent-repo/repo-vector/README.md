@@ -1,0 +1,31 @@
+# repo-vector
+
+## 模块作用
+
+向量仓储模块，提供 pgvector、Milvus、Qdrant、Elasticsearch、Weaviate 配置和向量仓储路由。
+
+## 代码结构
+
+- `pom.xml`：Maven 模块声明，packaging 为 `jar`。
+- `src/main/java`：当前包含 8 个 Java 源文件。
+- 主要包：
+  - `com.htam.agent.common.config.db`
+  - `com.htam.agent.repo.vector`
+- 阅读入口：
+  - `MilvusConfig`
+  - `PgVectorDataSourceConfig`
+  - `QdrantConfig`
+  - `ElasticsearchConfig`
+  - `WeaviateConfig`
+  - `InMemoryVectorRepository`
+  - `PgVectorRepositoryAdapter`
+  - `VectorRepositoryRouter`
+- `src/test/java`：包含 3 个测试源文件，可用于理解模块当前验证重点。
+
+## 依赖边界
+
+业务模块依赖 repo-spi，具体 MyBatis、缓存或向量实现由装配层选择。
+
+## 阅读建议
+
+先看 `com.htam.agent.common.config.db` 下的服务接口或核心模型，再顺着实现类、仓储接口和测试用例理解运行链路。

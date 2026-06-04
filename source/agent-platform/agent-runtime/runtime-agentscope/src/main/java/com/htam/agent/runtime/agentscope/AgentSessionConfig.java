@@ -63,9 +63,10 @@ public class AgentSessionConfig {
             ObjectProvider<AguiRunEventObserver> eventObservers,
             ObjectProvider<AguiRequestUserProvider> requestUserProvider,
             AguiProperties props,
-            Session session) {
+        Session session) {
 
         if (registry == null) {
+            log.warn("AguiAgentRegistry not found, skip AguiMvcEndpoint configuration");
             return null;
         }
 
@@ -100,9 +101,10 @@ public class AgentSessionConfig {
             @Autowired(required = false) AguiAgentRegistry registry,
             @Autowired(required = false) ThreadSessionManager sessionManager,
             AguiProperties props,
-            Session session) {
+        Session session) {
 
         if (registry == null) {
+            log.warn("AguiAgentRegistry not found, skip AguiWebFluxHandler configuration");
             return null;
         }
 

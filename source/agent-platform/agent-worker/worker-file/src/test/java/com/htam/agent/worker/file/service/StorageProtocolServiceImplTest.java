@@ -15,6 +15,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class StorageProtocolServiceImplTest {
 
@@ -35,6 +36,27 @@ class StorageProtocolServiceImplTest {
         assertEquals("LOCAL", protocol.getProtocol());
         assertEquals(1, protocol.getValid());
         assertNotNull(protocol.getProtocolConfig());
+    }
+
+    @Test
+    void reportsClearErrorWhenMultipleValidProtocolsExist() {
+        InMemoryStorageProtocolRepository repository = new InMemoryStorageProtocolRepository();
+        repository.save(protocol("local-a"));
+        repository.save(protocol("local-b"));
+        StorageProtocolServiceImpl service = new StorageProtocolServiceImpl(repository);
+
+        RuntimeException exception = assertThrows(RuntimeException.class, service::getStorageService);
+
+        assertEquals("存储配置不存在唯一一个有效的配置", exception.getMessage());
+    }
+
+    private static StorageProtocol protocol(String name) {
+        StorageProtocol protocol = new StorageProtocol();
+        protocol.setName(name);
+        protocol.setProtocol("LOCAL");
+        protocol.setProtocolConfig("{}");
+        protocol.setValid(1);
+        return protocol;
     }
 
     private static void setDefaultLocalStorageDir(StorageProtocolServiceImpl service, String localDir) throws Exception {

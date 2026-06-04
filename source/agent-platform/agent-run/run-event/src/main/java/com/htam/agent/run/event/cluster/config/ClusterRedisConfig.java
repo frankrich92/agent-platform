@@ -12,7 +12,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * 描述：Redis集群消息配置
@@ -63,12 +63,16 @@ public class ClusterRedisConfig {
     }
 
     @Bean
-    public Executor redisListenerExecutor() {
+    public ThreadPoolTaskExecutor redisListenerExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(2);
+        executor.setCorePoolSize(4);
         executor.setMaxPoolSize(8);
         executor.setQueueCapacity(200);
+        executor.setKeepAliveSeconds(60);
         executor.setThreadNamePrefix("redis-listener-");
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        executor.setWaitForTasksToCompleteOnShutdown(true);
+        executor.setAwaitTerminationSeconds(30);
         executor.initialize();
         return executor;
     }

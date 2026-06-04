@@ -51,6 +51,8 @@
     <tika.version>2.9.2</tika.version>
     <qdrant.version>1.17.0</qdrant.version>
     <milvus.version>2.6.8</milvus.version>
+    <elasticsearch.version>8.15.0</elasticsearch.version>
+    <weaviate.version>5.3.0</weaviate.version>
     <jgit.version>7.3.0.202506031305-r</jgit.version>
     <nacos-client.version>3.1.1</nacos-client.version>
     <flyway.version>11.20.3</flyway.version>
@@ -173,6 +175,16 @@
         <groupId>io.milvus</groupId>
         <artifactId>milvus-sdk-java</artifactId>
         <version>${milvus.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.elasticsearch.client</groupId>
+        <artifactId>elasticsearch-rest-client</artifactId>
+        <version>${elasticsearch.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.weaviate</groupId>
+        <artifactId>client</artifactId>
+        <version>${weaviate.version}</version>
       </dependency>
       <dependency>
         <groupId>org.eclipse.jgit</groupId>
