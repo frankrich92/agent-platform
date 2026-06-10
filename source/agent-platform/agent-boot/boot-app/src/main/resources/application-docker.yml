@@ -1,0 +1,131 @@
+server:
+  port: ${SERVER_PORT:3060}
+
+agentscope:
+  agui:
+    path-prefix: /agent/agui
+    cors-enabled: true
+    enable-reasoning: true
+    server-side-memory: true
+    max-thread-sessions: ${AGUI_MAX_THREAD_SESSIONS:1000}
+    nacos:
+      server-addr: ${NACOS_SERVER_ADDR:}
+      username: ${NACOS_USERNAME:}
+      password: ${NACOS_PASSWORD:}
+
+agent:
+  file:
+    storage:
+      default-local-dir: ${AGENT_FILE_STORAGE_DIR:/app/storage}
+  run:
+    ledger:
+      structured-store: mybatis
+      event-store: jdbc
+      async-enabled: true
+      queue-capacity: ${AGENT_RUN_QUEUE_CAPACITY:10000}
+      shutdown-timeout-millis: 5000
+      fail-fast-on-overflow: false
+      max-retries: 3
+      retry-backoff-millis: 100
+
+spring:
+  data:
+    redis:
+      host: ${REDIS_HOST:agent-redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:redis}
+      database: ${REDIS_DATABASE:7}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+  datasource:
+    dynamic:
+      enabled: true
+      primary: master
+      strict: true
+      datasource:
+        master:
+          type: com.alibaba.druid.pool.DruidDataSource
+          driver-class-name: org.postgresql.Driver
+          url: ${MASTER_DATASOURCE_URL:jdbc:postgresql://agent-postgres:5432/agent_platform}
+          username: ${POSTGRES_USER:htam_agent}
+          password: ${POSTGRES_PASSWORD:htam_agent}
+        conversation:
+          type: com.alibaba.druid.pool.DruidDataSource
+          driver-class-name: org.postgresql.Driver
+          url: ${CONVERSATION_DATASOURCE_URL:${MASTER_DATASOURCE_URL:jdbc:postgresql://agent-postgres:5432/agent_platform}}
+          username: ${POSTGRES_USER:htam_agent}
+          password: ${POSTGRES_PASSWORD:htam_agent}
+      druid:
+        initial-size: 5
+        min-idle: 5
+        max-active: 20
+        max-wait: 60000
+        validation-query: SELECT 1
+        test-on-borrow: false
+        test-on-return: false
+        test-while-idle: true
+        time-between-eviction-runs-millis: 60000
+        min-evictable-idle-time-millis: 300000
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    validate-on-migrate: true
+
+jwt:
+  secret: ${JWT_SECRET:ZJr8c2xF0y5b7yM+1H9v9cGZq6nZ5e0k5r3Cw7H8vJQ=}
+
+rag:
+  store: ${VECTOR_STORE_TYPE:pgvector}
+  pgvector:
+    url: ${PGVECTOR_DATASOURCE_URL:jdbc:postgresql://agent-postgres:5432/agent_platform}
+    username: ${POSTGRES_USER:htam_agent}
+    password: ${POSTGRES_PASSWORD:htam_agent}
+    driver-class-name: org.postgresql.Driver
+  milvus:
+    host: ${MILVUS_HOST:agent-milvus}
+    port: ${MILVUS_PORT:19530}
+    username: ${MILVUS_USERNAME:}
+    password: ${MILVUS_PASSWORD:}
+    token: ${MILVUS_TOKEN:}
+    database: ${MILVUS_DATABASE:default}
+  qdrant:
+    host: ${QDRANT_HOST:agent-qdrant}
+    port: ${QDRANT_PORT:6334}
+    api-key: ${QDRANT_API_KEY:}
+    collection-prefix: ${QDRANT_COLLECTION_PREFIX:agent_rag}
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URIS:http://agent-elasticsearch:9200}
+    username: ${ELASTICSEARCH_USERNAME:}
+    password: ${ELASTICSEARCH_PASSWORD:}
+    api-key: ${ELASTICSEARCH_API_KEY:}
+    index-prefix: ${ELASTICSEARCH_INDEX_PREFIX:agent_rag}
+    connect-timeout: ${ELASTICSEARCH_CONNECT_TIMEOUT:5000}
+    socket-timeout: ${ELASTICSEARCH_SOCKET_TIMEOUT:60000}
+  weaviate:
+    host: ${WEAVIATE_HOST:agent-weaviate}
+    port: ${WEAVIATE_PORT:8080}
+    scheme: ${WEAVIATE_SCHEME:http}
+    api-key: ${WEAVIATE_API_KEY:}
+    class-prefix: ${WEAVIATE_CLASS_PREFIX:AgentRag}
+
+mybatis-plus:
+  mapper-locations: classpath*:com/htam/agent/**/mapper/**/*.xml
+  type-aliases-package: com.htam.agent.**.entity
+  global-config:
+    db-config:
+      id-type: assign_id
+      update-strategy: not_null
+      insert-strategy: not_null
+      logic-delete-field: delFlag
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  configuration:
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+    map-underscore-to-camel-case: true
+    call-setters-on-nulls: true

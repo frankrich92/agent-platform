@@ -84,7 +84,7 @@ jwt:
   secret: ${JWT_SECRET:ZJr8c2xF0y5b7yM+1H9v9cGZq6nZ5e0k5r3Cw7H8vJQ=}
 
 rag:
-  store: pgvector # pgvector | milvus | qdrant，向量存储类型
+  store: pgvector # pgvector | milvus | qdrant | elasticsearch | weaviate，向量存储类型
   pgvector:
     url: jdbc:postgresql://127.0.0.1:52432/agent_platform_vector
     username: htam_agent
@@ -102,6 +102,20 @@ rag:
     port: 6334
     api-key:
     collection-prefix: agent_rag
+  elasticsearch:
+    uris: http://127.0.0.1:9200
+    username:
+    password:
+    api-key:
+    index-prefix: agent_rag
+    connect-timeout: 5000
+    socket-timeout: 60000
+  weaviate:
+    host: localhost
+    port: 8080
+    scheme: http
+    api-key:
+    class-prefix: AgentRag
 
 mybatis-plus:
   mapper-locations: classpath*:com/htam/agent/**/mapper/**/*.xml

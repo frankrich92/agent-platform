@@ -252,6 +252,19 @@ async function handleImportSuccess(importCategory?: string) {
 }
 
 /**
+ * 处理分类设置成功
+ */
+async function handleSetCategory(_id: string, category: string) {
+  await store.fetchCategories()
+  keyword.value = ''
+  store.setKeyword('')
+  store.setCategory(category || null)
+  await store.resetAndFetch()
+  isFirstLoad.value = true
+  infiniteLoadingKey.value++
+}
+
+/**
  * 处理搜索
  */
 function handleSearch() {
@@ -398,8 +411,10 @@ onMounted(() => {
           v-for="item in list"
           :key="item.id"
           :data="item"
+          :categories="categories"
           @view="handleView"
           @edit="handleEdit"
+          @set-category="handleSetCategory"
           @enable="handleEnable"
           @delete="handleDelete"
         />

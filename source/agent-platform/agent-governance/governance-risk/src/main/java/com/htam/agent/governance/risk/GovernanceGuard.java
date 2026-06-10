@@ -10,6 +10,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * 风险治理统一守卫。
+ * 根据分层风险策略输出允许、拒绝或需审批的决策，并在需要时同步写入审批和审计台账。
+ */
 public class GovernanceGuard {
 
     private final LayeredRiskPolicyResolver riskPolicyResolver;

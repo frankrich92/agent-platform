@@ -58,3 +58,8 @@ Thumbs.db
 .omx/
 .qoder/
 .trae/
+
+# Playwright artifacts
+source/agent-platform-ui/test-results/
+source/agent-platform-ui/playwright-report/
+source/agent-platform-ui/.playwright-dev-server.pid

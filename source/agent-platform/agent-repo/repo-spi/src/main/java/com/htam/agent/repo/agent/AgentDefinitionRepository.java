@@ -6,6 +6,10 @@ import com.htam.agent.common.mp.support.PageParams;
 import com.htam.agent.repo.support.RepoPage;
 import java.util.List;
 
+/**
+ * AgentDefinition 仓储契约。
+ * Profile 业务层依赖该接口读取和维护智能体定义，具体持久化由 repo-mybatis 等实现模块提供。
+ */
 public interface AgentDefinitionRepository {
     RepoPage<AgentDefinition> page(PageParams pageParams,
                                    String name,

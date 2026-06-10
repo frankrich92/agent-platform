@@ -6,12 +6,21 @@ v3 需要新增一个可被其他业务系统嵌入的 Agent 工作台页面。�
 
 本需求属于当前项目 v3 需求迭代，不以历史归档版本作为当前版本来源。历史归档文档只能作为背景参考。
 
+当前高保真原型文件为 `docs/v3/prototypes/embed-workbench-prototype.html`。该原型体现的交互基线如下：
+
+- 左侧是工作空间导航，不再放置对话历史；历史对话统一收敛到右侧对话区。
+- 中间是文档工作区，包含打开文档 Tabs、面包屑、文档搜索、文档预览和 AI 插入片段。
+- 右侧是 Agent 对话区，包含新对话、历史对话弹窗、Agent/Skills 能力选择、工作空间上下文选择、附件上传和发送。
+- 页面支持左侧工作空间隐藏、右侧对话隐藏与恢复，以适配 iframe 内的有限宽度。
+- 原型中的“插入到文档”“生成初稿”“上传到工作空间”“逻辑删除”需要在正式实现时明确复用现有工作区/文件能力或提供降级行为。
+
 核心目标：
 
 - 新增嵌入式 Agent 工作台页面，不改造现有 Chat、Communication、管理页。
 - 支持 iframe 嵌入，页面自包含运行，无平台主布局导航。
 - 通过 `token + appCode` 换取本系统 token，后续请求只使用本系统 token。
 - 支持用户在本次会话内临时选择已授权 Agent、skills、MCP。
+- 以 `docs/v3/prototypes/embed-workbench-prototype.html` 作为当前高保真交互基线：左侧工作空间、中间文档工作区、右侧 Agent 对话。
 - 临时组装结果不保存为个人 Agent/Profile，但必须随会话与每次运行持久化，支持历史回放、审计和问题追踪。
 - 允许新增表保存嵌入上下文与能力快照，不修改既有 `chat_session`、`chat_message`、`agent_run` 等表结构。
 
@@ -23,12 +32,12 @@ v3 需要新增一个可被其他业务系统嵌入的 Agent 工作台页面。�
 - 新增嵌入鉴权接口：`POST /api/auth/embed-token`。
 - 新增工作台初始化接口：`GET /api/embed/workbench/bootstrap`。
 - 新增三栏嵌入式工作台布局：
-  - 左栏：Logo、折叠、新对话、会话历史、工作区文件树。
-  - 中栏：选中文件内容预览。
-  - 右栏：Agent 对话框和临时能力选择区。
+  - 左栏：工作空间树、新建目录、目录/文件选择和逻辑删除入口。
+  - 中栏：多文档 Tabs、面包屑、文档搜索、文档预览和 AI 插入内容展示。
+  - 右栏：Agent 对话框、新对话、历史对话、临时能力选择、工作空间上下文、附件上传。
 - 新增能力选择快照持久化表。
-- 发送消息时携带当前临时选择，由后端二次校验并写入运行快照。
-- 历史会话恢复时展示会话记录，并使用最近一次会话级选择作为 UI 默认值。
+- 发送消息时携带当前临时选择、当前文档、打开文档、工作空间上下文和附件引用，由后端二次校验并写入运行快照。
+- 历史会话恢复时展示会话记录，并使用最近一次会话级上下文作为 UI 默认值。
 
 ### 2.2 本期不包含
 
@@ -37,6 +46,7 @@ v3 需要新增一个可被其他业务系统嵌入的 Agent 工作台页面。�
 - 不改造现有 Chat、Communication、管理页。
 - 不修改既有会话、消息、运行账本表结构。
 - 不将外部 token 透传到后续业务接口。
+- 不在首期实现完整在线文档协同编辑；原型中的“插入到文档”首期作为 Agent 产物写入或文档片段插入能力落地，具体复用现有工作区/文件能力。
 
 ## 3. 页面设计
 
@@ -80,28 +90,55 @@ v3 需要新增一个可被其他业务系统嵌入的 Agent 工作台页面。�
 
 左栏：
 
-- 顶部：平台 Logo、折叠按钮、新对话按钮。
-- 中部：会话历史记录，支持上下滚动、选择会话、创建新会话。
-- 底部：工作区文件树，按目录结构展开，支持选择文件。
+- 定位为工作空间导航区，不承载对话历史。
+- 顶部展示“工作空间”标题和新建目录入口。
+- 主体展示工作空间树，按根空间、目录、文件层级展开。
+- 支持选择目录或文件；选择文件后在中栏打开文档。
+- 支持根空间下的新建目录和非根节点的逻辑删除确认。
+- 左栏可折叠隐藏，隐藏后中栏扩展占用空间。
 
 中栏：
 
-- 展示当前选中文件内容。
-- 文本文件展示内容，图片/音视频按现有预览能力展示。
-- 未选择文件时展示工作区空态。
+- 定位为文档工作区。
+- 顶部展示已打开文档 Tabs，支持切换和关闭。
+- 面包屑展示当前文档在工作空间树中的路径。
+- 支持搜索当前文档内容。
+- 主体展示当前选中文档内容、结构化段落、图示和 AI 插入片段。
+- 未选择文件或打开文档为空时展示文档空态。
 
 右栏：
 
-- Agent 对话框，复用现有消息列表、输入框、流式输出、停止生成、附件上传和工具过程展示能力。
-- 输入区附近展示临时能力选择区。
-- 能力选择区展示当前用户可用 Agent、skills、MCP。
+- 定位为 Agent 对话与任务控制区。
+- 顶部展示 Agent 品牌、创建新对话、历史对话弹窗和隐藏右栏入口。
+- 右栏隐藏后显示“对话”恢复按钮。
+- 对话控制区展示当前会话的主 Agent 和 skills/MCP 能力选择。
+- 消息区复用现有消息、流式、停止、工具过程展示能力，并支持 Agent 回复的“插入到文档”“生成初稿”等行动按钮。
+- 输入区支持文本输入、发送、附件上传，以及选择一个或多个工作空间作为本次提问上下文。
+- 历史对话通过右侧弹窗展示，不占用左侧工作空间区域。
 
-### 3.4 临时能力选择
+### 3.4 工作空间上下文与附件
+
+工作空间规则：
+
+- 工作空间树由 bootstrap 返回或由现有工作区接口加载，前端只展示当前用户在该 `appCode` 下可访问的根空间、目录和文件。
+- 用户可以在输入区通过 `+` 打开工作空间选择器，搜索并勾选一个或多个根空间作为当前提问上下文。
+- 上传文件时必须落到一个工作空间；默认保存到当前选择的工作空间，未选择时使用当前文档所属根空间或默认根空间。
+- 上传完成后文件应在工作空间树中可见，并可作为当前对话附件被 Agent 使用。
+- 删除目录或文件首期按逻辑删除处理，不要求物理删除已有存储对象。
+- 当前文档、打开文档列表、选中工作空间和附件引用都属于本次会话上下文；发送消息时需要提交给后端，并进入运行快照。
+
+文档写回规则：
+
+- Agent 回复可以生成可插入片段，前端提供“插入到文档”操作。
+- 插入结果应以工作区文档片段、Agent 产物或等价结构持久化，避免只存在浏览器内存。
+- 若目标文件类型暂不支持写回，前端应降级为“生成草稿/保存为 Agent 产物”。
+
+### 3.5 临时能力选择
 
 能力选择规则：
 
 - 用户必须选择一个主 Agent。
-- skills 和 MCP 只能从 bootstrap 返回的授权清单中选择。
+- skills 和 MCP 只能从 bootstrap 返回的授权清单中选择；高保真原型当前显式展示 Agent 与 Skills，MCP 可作为能力菜单独立展示或合并进 Skills/MCP 能力选择器，但请求字段必须保留。
 - 选择结果属于当前会话上下文，可以在后续消息前调整。
 - 选择结果不保存为新的 Agent 定义，不进入 Agent/Profile 管理列表。
 - 每次发送消息时都提交当前选择。
@@ -233,11 +270,34 @@ GET /api/embed/workbench/bootstrap?appCode=contract-system
         "protocol": "stdio"
       }
     ],
+    "workspace": {
+      "defaultWorkspaceId": "w-001",
+      "roots": [
+        {
+          "id": "w-001",
+          "name": "营销物料审核",
+          "type": "folder",
+          "childrenLoaded": true
+        }
+      ]
+    },
+    "pageConfig": {
+      "brandName": "Hermes",
+      "allowLeftCollapse": true,
+      "allowRightCollapse": true,
+      "allowUpload": true,
+      "allowDocumentInsert": true,
+      "allowLogicalDelete": true
+    },
     "lastSelection": {
       "sessionId": "9001",
       "agentId": "1001",
       "selectedSkillIds": ["2001"],
-      "selectedMcpIds": ["3001"]
+      "selectedMcpIds": ["3001"],
+      "currentDocId": "doc-001",
+      "openDocIds": ["doc-001"],
+      "selectedWorkspaceIds": ["w-001"],
+      "attachmentIds": []
     }
   },
   "msg": "成功"
@@ -255,7 +315,11 @@ GET /api/embed/workbench/bootstrap?appCode=contract-system
     "externalUserId": "u-001",
     "agentId": "1001",
     "selectedSkillIds": ["2001"],
-    "selectedMcpIds": ["3001"]
+    "selectedMcpIds": ["3001"],
+    "currentDocId": "doc-001",
+    "openDocIds": ["doc-001", "doc-002"],
+    "selectedWorkspaceIds": ["w-001"],
+    "attachmentIds": ["file-001"]
   }
 }
 ```
@@ -265,6 +329,7 @@ GET /api/embed/workbench/bootstrap?appCode=contract-system
 - `agentId` 必须是当前用户在该 `appCode` 下可用的 Agent。
 - `selectedSkillIds` 必须全部在当前用户授权清单内。
 - `selectedMcpIds` 必须全部在当前用户授权清单内。
+- `currentDocId`、`openDocIds`、`selectedWorkspaceIds`、`attachmentIds` 必须全部属于当前用户在该 `appCode` 下可访问的工作空间范围。
 - 校验通过后写入能力选择快照，再进入 CapabilityPlan。
 - 校验失败时拒绝本次运行，不写入运行快照。
 
@@ -291,6 +356,11 @@ source/agent-platform/agent-boot/boot-app/src/main/resources/db/migration/V7__em
 | `agent_code` | varchar(100) | 本次选择的 Agent Code。 |
 | `selected_skill_ids_json` | text | 本次选择的 skill ID 列表 JSON。 |
 | `selected_mcp_ids_json` | text | 本次选择的 MCP ID 列表 JSON。 |
+| `current_doc_id` | varchar(128) | 本次运行时中栏当前激活文档 ID。 |
+| `open_doc_ids_json` | text | 本次运行时打开的文档 Tabs ID 列表 JSON。 |
+| `selected_workspace_ids_json` | text | 本次运行时选择的工作空间上下文 ID 列表 JSON。 |
+| `attachment_ids_json` | text | 本次运行时引用的附件 ID 列表 JSON。 |
+| `ui_state_json` | text | 会话恢复所需的轻量 UI 状态，例如左/右栏显隐、当前工作空间路径。 |
 | `capability_snapshot_json` | text | 后端校验后的能力快照。 |
 | `created_by` | bigint | 本系统用户 ID。 |
 | `created_at` | timestamp | 创建时间。 |
@@ -306,6 +376,7 @@ source/agent-platform/agent-boot/boot-app/src/main/resources/db/migration/V7__em
 
 - 会话级当前选择：用于恢复 UI 默认选择，可按 `session_id` 查询最近一条记录。
 - 运行级不可变快照：每次发送消息生成一条带 `run_id` 的记录，用于审计、回放和排查。
+- 快照内容必须覆盖能力选择、当前文档、打开文档、工作空间上下文和附件引用；历史回复回放时以对应 `run_id` 快照为准。
 - 同一会话多次调整能力时，不覆盖历史运行快照。
 - 不修改 `chat_session`、`chat_message`、`agent_run` 表。
 
@@ -320,6 +391,8 @@ bootstrap 返回数据必须经过以下过滤：
 - Agent 已启用，并允许该 appCode 访问。
 - skills 已启用，并允许该 appCode 与当前用户访问。
 - MCP 已启用、运行状态可用，并允许该 appCode 与当前用户访问。
+- 工作空间、文件和附件只返回当前用户在该 appCode 下可访问的范围。
+- 页面配置只返回该宿主应用允许开启的能力，例如上传、文档插入、逻辑删除、左右栏隐藏。
 
 ### 7.2 运行前校验
 
@@ -329,15 +402,17 @@ bootstrap 返回数据必须经过以下过滤：
 2. 校验当前 token 对应的用户。
 3. 校验 `appCode` 仍启用。
 4. 校验 Agent、skills、MCP 仍在授权范围内。
-5. 生成能力快照并写入 `embed_conversation_context`。
-6. 使用校验后的能力集合生成 CapabilityPlan。
+5. 校验当前文档、打开文档、工作空间上下文和附件引用仍在授权范围内。
+6. 生成能力与上下文快照并写入 `embed_conversation_context`。
+7. 使用校验后的能力集合、工作空间上下文和附件引用生成 CapabilityPlan。
 
 ### 7.3 历史恢复
 
 - 会话列表仍使用现有会话能力。
 - 打开历史会话时，前端读取会话消息。
-- 能力选择区使用该会话最近一次 `embed_conversation_context` 作为默认展示。
+- 能力选择区、当前文档、打开文档 Tabs、工作空间上下文和附件提示使用该会话最近一次 `embed_conversation_context` 作为默认展示。
 - 每条回复的真实运行能力以对应 `run_id` 的快照为准。
+- 历史对话入口位于右侧对话区弹窗，不放在左侧工作空间树中。
 
 ## 8. 前端实现约束
 
@@ -345,11 +420,16 @@ bootstrap 返回数据必须经过以下过滤：
 - 可以复用现有组件：
   - Chat 消息列表。
   - Chat 输入框。
-  - 会话列表。
+  - 会话列表或历史对话弹窗。
   - 工作区文件树。
   - 工作区文件预览。
+  - 附件上传。
 - 新页面应有独立样式文件或局部样式，避免影响现有 Chat 页面。
-- 页面应适配 iframe 小宽度场景，至少保证右侧对话区可用。
+- 页面应适配 iframe 小宽度场景，支持左栏和右栏显隐；至少保证中栏文档和右侧对话可用。
+- 左侧只承载工作空间，不承载新对话和历史对话。
+- 中栏需要支持打开文档 Tabs、关闭文档、面包屑、当前文档搜索和空态。
+- 右侧需要支持新对话、历史对话弹窗、Agent/skills/MCP 能力选择、工作空间选择器、附件上传和发送。
+- 对话回复的“插入到文档”“生成初稿”等操作必须有明确降级策略：目标文件可写时写回，目标不可写时保存为 Agent 产物或放入输入框草稿。
 - 现有 `/chat/:agentId` 和 `/communication/:chatKey` 行为不得变化。
 
 ## 9. 验收标准
@@ -360,20 +440,27 @@ bootstrap 返回数据必须经过以下过滤：
 - 缺少 URL 参数时展示错误态。
 - 鉴权失败时展示错误态，不跳转登录页。
 - 页面展示左中右三栏。
-- 左栏支持新对话、会话历史滚动、工作区文件树。
-- 中栏支持选中文件预览。
-- 右栏支持对话发送、流式输出、停止生成。
+- 左栏支持工作空间树、新建目录、选择文件、逻辑删除确认，并可折叠隐藏。
+- 中栏支持打开文档 Tabs、切换/关闭文档、面包屑、当前文档搜索、选中文件预览和文档空态。
+- 右栏支持新对话、历史对话弹窗、隐藏/恢复对话区、对话发送、流式输出、停止生成。
 - 能力选择区能选择授权 Agent、skills、MCP。
+- 输入区能选择工作空间上下文并展示选择结果。
+- 附件上传能选择或拖拽文件，上传后保存到目标工作空间，并在对话附件提示中展示。
+- Agent 回复支持插入到文档或生成初稿；不可写目标有明确降级提示。
 - 发送消息时携带当前临时选择。
-- 打开历史会话时恢复消息记录和最近一次能力选择。
+- 发送消息时携带当前文档、打开文档、工作空间上下文和附件引用。
+- 打开历史会话时恢复消息记录、最近一次能力选择和最近一次工作台上下文。
 - 现有 Chat、Communication、管理页不受影响。
 
 ### 9.2 后端验收
 
 - `POST /api/auth/embed-token` 能用宿主 token 换取本系统 token。
 - `GET /api/embed/workbench/bootstrap` 只返回当前用户授权能力。
+- bootstrap 只返回当前用户在 appCode 下可访问的工作空间、文件和页面能力开关。
 - 未授权 Agent、skill、MCP 在发送消息时被拒绝。
+- 未授权工作空间、文件或附件在发送消息时被拒绝。
 - 授权能力在发送消息时写入 `embed_conversation_context`。
+- 当前文档、打开文档、工作空间上下文和附件引用在发送消息时写入 `embed_conversation_context`。
 - 每次运行都生成独立 `run_id` 快照。
 - 不修改既有会话、消息、运行账本表结构。
 
@@ -384,11 +471,14 @@ bootstrap 返回数据必须经过以下过滤：
 1. 宿主 token 初始化。
 2. bootstrap 获取授权能力。
 3. 选择 Agent、skills、MCP。
-4. 创建新会话。
-5. 发送消息并流式展示。
-6. 工作区文件树查看和文件预览。
-7. 刷新 iframe 后恢复平台 token、会话记录和最近一次能力选择。
-8. 后端可按 `session_id` 和 `run_id` 查询能力选择快照。
+4. 打开工作空间文件，切换和关闭文档 Tabs。
+5. 选择工作空间上下文并上传附件。
+6. 创建新会话，发送消息并流式展示。
+7. 使用 Agent 回复执行插入文档或生成初稿。
+8. 从右侧历史弹窗恢复历史会话。
+9. 隐藏和恢复左侧工作空间、右侧对话区。
+10. 刷新 iframe 后恢复平台 token、会话记录、最近一次能力选择和工作台上下文。
+11. 后端可按 `session_id` 和 `run_id` 查询能力与上下文快照。
 
 ## 10. 后续扩展
 

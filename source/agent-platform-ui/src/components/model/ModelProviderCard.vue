@@ -127,7 +127,7 @@ function handleConfigClick() {
       <div class="card-avatar flex-center" :class="{ disabled: !data.enabled }"><ApiOutlined /></div>
       <div class="card-name flex-1 truncate" :title="data.name" @click="emit('view', data.id as string)">{{ data.name }}</div>
       <ADropdown :trigger="['hover']">
-        <AButton type="text" size="small">
+        <AButton type="text" size="small" aria-label="模型供应商操作菜单">
           <EllipsisOutlined />
         </AButton>
         <template #overlay>

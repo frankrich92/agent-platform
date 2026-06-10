@@ -41,6 +41,13 @@ export function createEditItem(): CardMenuItem {
 }
 
 /**
+ * 创建「设置分类」菜单项
+ */
+export function createSetCategoryItem(): CardMenuItem {
+  return { key: 'setCategory', label: '设置分类', icon: () => h(SettingOutlined) }
+}
+
+/**
  * 创建「启用/禁用」菜单项
  *
  * @param enabled 当前是否启用
